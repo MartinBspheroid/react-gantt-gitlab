@@ -25,7 +25,8 @@ function Fullscreen({ hotkey = null, children }) {
   });
 
   useEffect(() => {
-    hotkeys.subscribe(v => v.add(hotkey, toggleFullscreen.current));
+    if(hotkey)
+      hotkeys.subscribe(v => v.add(hotkey, toggleFullscreen.current));
   }, []);
 
   useEffect(() => {

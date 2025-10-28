@@ -29,6 +29,7 @@ const ContextMenu = forwardRef(function ContextMenu(
     at = 'point',
     children,
     onClick,
+    css
   },
   ref,
 ) {
@@ -161,6 +162,7 @@ const ContextMenu = forwardRef(function ContextMenu(
         onClick={menuAction}
         at={at}
         ref={menuRef}
+        css={css}
       />
       <span onContextMenu={onContextMenu} data-menu-ignore="true">
         {typeof children === 'function' ? children() : children}
