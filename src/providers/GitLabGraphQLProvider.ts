@@ -1299,24 +1299,136 @@ export class GitLabGraphQLProvider {
   }
 
   /**
-   * Create issue link (not yet implemented for GraphQL)
+   * Create issue link using GraphQL Work Items API
    */
   async createIssueLink(link: Partial<ILink>): Promise<void> {
-    console.warn(
-      '[GitLabGraphQL] createIssueLink is not yet implemented for Work Items API',
-    );
-    // TODO: Implement using workItemAddLinkedItems mutation
-    throw new Error('Creating links is not yet supported with Work Items API');
+    if (!link.source || !link.target) {
+      throw new Error('Source and target are required for issue links');
+    }
+
+    console.log('[GitLabGraphQL] createIssueLink called with:', link);
+
+    // Get global IDs for both work items
+    const sourceGlobalId = await this.getWorkItemGlobalId(link.source);
+    const targetGlobalId = await this.getWorkItemGlobalId(link.target);
+
+    // Map Gantt link type to GitLab link type
+    // Note: Gantt's e2s means "source must finish before target starts"
+    // which is "blocks" in GitLab (source blocks target)
+    // GitLab API expects: RELATED, BLOCKED_BY, BLOCKS (not RELATES_TO or IS_BLOCKED_BY)
+    let linkType: string;
+    switch (link.type) {
+      case 'e2s':
+        linkType = 'BLOCKS';
+        break;
+      case 's2e':
+        linkType = 'BLOCKED_BY';
+        break;
+      default:
+        linkType = 'RELATED';
+        break;
+    }
+
+    console.log('[GitLabGraphQL] Creating link:', {
+      sourceGlobalId,
+      targetGlobalId,
+      linkType,
+    });
+
+    const mutation = `
+      mutation workItemAddLinkedItems($input: WorkItemAddLinkedItemsInput!) {
+        workItemAddLinkedItems(input: $input) {
+          workItem {
+            id
+            iid
+          }
+          errors
+        }
+      }
+    `;
+
+    const variables = {
+      input: {
+        id: sourceGlobalId,
+        workItemsIds: [targetGlobalId],
+        linkType: linkType,
+      },
+    };
+
+    const result = await this.graphqlClient.mutate<{
+      workItemAddLinkedItems: {
+        workItem: { id: string; iid: string };
+        errors: string[];
+      };
+    }>(mutation, variables);
+
+    if (
+      result.workItemAddLinkedItems.errors &&
+      result.workItemAddLinkedItems.errors.length > 0
+    ) {
+      console.error(
+        '[GitLabGraphQL] Failed to create link:',
+        result.workItemAddLinkedItems.errors,
+      );
+      throw new Error(
+        `Failed to create link: ${result.workItemAddLinkedItems.errors.join(', ')}`,
+      );
+    }
+
+    console.log('[GitLabGraphQL] Link created successfully');
   }
 
   /**
-   * Delete issue link (not yet implemented for GraphQL)
+   * Delete issue link using GraphQL Work Items API
    */
   async deleteIssueLink(linkId: TID, sourceIid: TID): Promise<void> {
-    console.warn(
-      '[GitLabGraphQL] deleteIssueLink is not yet implemented for Work Items API',
-    );
-    // TODO: Implement using workItemRemoveLinkedItems mutation
-    throw new Error('Deleting links is not yet supported with Work Items API');
+    console.log('[GitLabGraphQL] deleteIssueLink called with:', {
+      linkId,
+      sourceIid,
+    });
+
+    // Get global ID for source work item
+    const sourceGlobalId = await this.getWorkItemGlobalId(sourceIid);
+
+    const mutation = `
+      mutation workItemRemoveLinkedItems($input: WorkItemRemoveLinkedItemsInput!) {
+        workItemRemoveLinkedItems(input: $input) {
+          workItem {
+            id
+            iid
+          }
+          errors
+        }
+      }
+    `;
+
+    const variables = {
+      input: {
+        id: sourceGlobalId,
+        workItemsLinkIds: [linkId],
+      },
+    };
+
+    const result = await this.graphqlClient.mutate<{
+      workItemRemoveLinkedItems: {
+        workItem: { id: string; iid: string };
+        errors: string[];
+      };
+    }>(mutation, variables);
+
+    if (
+      result.workItemRemoveLinkedItems.errors &&
+      result.workItemRemoveLinkedItems.errors.length > 0
+    ) {
+      console.error(
+        '[GitLabGraphQL] Failed to delete link:',
+        result.workItemRemoveLinkedItems.errors,
+      );
+      throw new Error(
+        `Failed to delete link: ${result.workItemRemoveLinkedItems.errors.join(', ')}`,
+      );
+    }
+
+    console.log('[GitLabGraphQL] Link deleted successfully');
   }
 }

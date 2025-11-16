@@ -234,21 +234,15 @@ export function useGitLabSync(
       try {
         await provider.createIssueLink(link);
 
-        // Add to local state
-        const newLink: ILink = {
-          id: link.id || Date.now(),
-          source: link.source!,
-          target: link.target!,
-          type: link.type || 'e2s',
-        };
-
-        setLinks((prevLinks) => [...prevLinks, newLink]);
+        // Re-sync to get the actual link ID from GitLab
+        // This prevents duplicate links with different IDs
+        await sync();
       } catch (error) {
         console.error('Failed to create link:', error);
         throw error;
       }
     },
-    [provider],
+    [provider, sync],
   );
 
   /**
