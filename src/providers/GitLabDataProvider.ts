@@ -46,6 +46,17 @@ export class GitLabDataProvider {
   }
 
   /**
+   * Format date for GitLab API using local timezone
+   * Returns YYYY-MM-DD format without UTC conversion
+   */
+  private formatDateForGitLab(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
    * Check if running in development mode
    */
   private get isDev(): boolean {
@@ -536,11 +547,11 @@ export class GitLabDataProvider {
     }
 
     if (task.start) {
-      payload.start_date = task.start.toISOString().split('T')[0];
+      payload.start_date = this.formatDateForGitLab(task.start);
     }
 
     if (task.end) {
-      payload.due_date = task.end.toISOString().split('T')[0];
+      payload.due_date = this.formatDateForGitLab(task.end);
     }
 
     if (task.weight) {
@@ -662,13 +673,13 @@ export class GitLabDataProvider {
 
     if (task.start !== undefined) {
       startAndDueDateWidget.startDate = task.start
-        ? task.start.toISOString().split('T')[0]
+        ? this.formatDateForGitLab(task.start)
         : null;
     }
 
     if (task.end !== undefined) {
       startAndDueDateWidget.dueDate = task.end
-        ? task.end.toISOString().split('T')[0]
+        ? this.formatDateForGitLab(task.end)
         : null;
     }
 
