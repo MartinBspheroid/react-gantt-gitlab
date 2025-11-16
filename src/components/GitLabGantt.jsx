@@ -974,27 +974,29 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
       <div className="gantt-wrapper">
         <Toolbar api={api} />
-        <ContextMenu api={api}>
-          <Gantt
-            init={init}
-            tasks={filteredTasks}
-            links={links}
-            markers={markers}
-            scales={[
-              { unit: 'year', step: 1, format: 'yyyy' },
-              { unit: 'month', step: 1, format: 'MMMM' },
-              { unit: 'day', step: 1, format: 'd' },
-            ]}
-            start={dateRange.start}
-            end={dateRange.end}
-            columns={columns}
-            cellWidth={cellWidth}
-            cellHeight={cellHeight}
-            highlightTime={highlightTime}
-            readonly={false}
-            baselines={true}
-          />
-        </ContextMenu>
+        <div className="gantt-chart-container">
+          <ContextMenu api={api}>
+            <Gantt
+              init={init}
+              tasks={filteredTasks}
+              links={links}
+              markers={markers}
+              scales={[
+                { unit: 'year', step: 1, format: 'yyyy' },
+                { unit: 'month', step: 1, format: 'MMMM' },
+                { unit: 'day', step: 1, format: 'd' },
+              ]}
+              start={dateRange.start}
+              end={dateRange.end}
+              columns={columns}
+              cellWidth={cellWidth}
+              cellHeight={cellHeight}
+              highlightTime={highlightTime}
+              readonly={false}
+              baselines={true}
+            />
+          </ContextMenu>
+        </div>
         {api && <Editor api={api} bottomBar={editorBottomBar} autoSave={false} />}
       </div>
 
@@ -1002,7 +1004,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         .gitlab-gantt-container {
           display: flex;
           flex-direction: column;
-          height: 100vh;
+          height: 100%;
           overflow: hidden;
         }
 
@@ -1278,6 +1280,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           flex: 1;
           display: flex;
           flex-direction: column;
+          min-height: 0;
+        }
+
+        .gantt-chart-container {
+          flex: 1;
+          min-height: 0;
           overflow: hidden;
         }
 
