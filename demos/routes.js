@@ -14,7 +14,6 @@ import GanttSizes from './cases/GanttSizes.jsx';
 import GanttMultiple from './cases/GanttMultiple.jsx';
 import GanttPerformance from './cases/GanttPerformance.jsx';
 
-
 import GanttTooltips from './cases/GanttTooltips.jsx';
 import GanttToolbar from './cases/GanttToolbar.jsx';
 import GanttToolbarCustom from './cases/GanttToolbarCustom.jsx';
@@ -51,8 +50,15 @@ import HeaderMenu from './cases/GridHeaderMenu.jsx';
 import GridInlineEditors from './cases/GridInlineEditors.jsx';
 import GanttEditorReadonly from './cases/GanttEditorReadonly.jsx';
 import GanttEditorValidation from './cases/GanttEditorValidation.jsx';
+import GitLabIntegration from './cases/GitLabIntegration.jsx';
 
 export const links = [
+  [
+    '/gitlab-integration/:skin',
+    'GitLab Integration',
+    GitLabIntegration,
+    'GitLabIntegration',
+  ],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 
   ['/sizes/:skin', 'Scale / cell sizes', GanttSizes, 'GanttSizes'],

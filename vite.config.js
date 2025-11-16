@@ -65,6 +65,26 @@ export default defineConfig(({ command, mode }) => {
   // Library build configuration (original)
   return {
     plugins: [react()],
+    server: {
+      proxy: {
+        '/api/gitlab-proxy': {
+          target: 'https://gitlab.rayark.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/gitlab-proxy/, ''),
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              // Forward the Authorization header
+              if (req.headers['x-gitlab-token']) {
+                proxyReq.setHeader(
+                  'PRIVATE-TOKEN',
+                  req.headers['x-gitlab-token'],
+                );
+              }
+            });
+          },
+        },
+      },
+    },
     build: {
       lib: {
         //eslint-disable-next-line no-undef

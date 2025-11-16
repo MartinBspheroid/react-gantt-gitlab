@@ -270,7 +270,7 @@ function Bars(props) {
           } else if (mode === 'end') {
             left = l;
             width = w + dx;
-          } else if (mode === 'move') {
+          } else if (mode === 'move' || mode === 'move-baseline') {
             left = l + dx;
             width = w;
           }
@@ -342,7 +342,7 @@ function Bars(props) {
   }, [up]);
 
   useEffect(() => {
-    window.addEventListener('mouseup', mouseup);
+    window.addEventListener('mouseup', mouseup, { passive: true });
     return () => {
       window.removeEventListener('mouseup', mouseup);
     };
@@ -441,6 +441,7 @@ function Bars(props) {
   }, []);
 
   const baselineStyle = useCallback((task) => {
+    // For non-parent tasks, use original baseline positioning
     return {
       left: `${task.$x_base}px`,
       top: `${task.$y_base}px`,
@@ -501,7 +502,8 @@ function Bars(props) {
           `wx-bar wx-${taskTypeCss(task.type)}` +
           (touched && taskMove && task.id === taskMove.id ? ' wx-touch' : '') +
           (linkFrom && linkFrom.id === task.id ? ' wx-selected' : '') +
-          (task.$reorder ? ' wx-reorder-task' : '');
+          (task.$reorder ? ' wx-reorder-task' : '') +
+          (task.$parent ? ' wx-parent-task' : '');
         const leftLinkClass =
           'wx-link wx-left' +
           (linkFrom ? ' wx-visible' : '') +

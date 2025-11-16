@@ -338,7 +338,7 @@ export default function Grid(props) {
 
   useEffect(() => {
     const handler = () => endScroll();
-    window.addEventListener('touchend', handler);
+    window.addEventListener('touchend', handler, { passive: true });
     return () => window.removeEventListener('touchend', handler);
   }, [endScroll]);
 

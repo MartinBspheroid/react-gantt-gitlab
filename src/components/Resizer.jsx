@@ -77,8 +77,8 @@ function Resizer(props) {
       document.body.style.cursor = cursor;
       document.body.style.userSelect = 'none';
 
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
+      window.addEventListener('mousemove', move, { passive: true });
+      window.addEventListener('mouseup', up, { passive: true });
     },
     [cursor, move, up, value],
   );

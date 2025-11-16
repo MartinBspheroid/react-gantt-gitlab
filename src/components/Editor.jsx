@@ -153,9 +153,9 @@ function Editor({
     return localItems.filter(({ comp, key, options }) => {
       switch (comp) {
         case 'date': {
-          return (
-            (!milestone || (key !== 'end' && key !== 'base_end')) && !summary
-          );
+          // Allow date fields for summary tasks (for independent parent dates)
+          // Only hide end date for milestone
+          return !milestone || (key !== 'end' && key !== 'base_end');
         }
         case 'select': {
           return options.length > 1;
@@ -164,7 +164,8 @@ function Editor({
           return unscheduledTasks && !summary;
         }
         case 'counter': {
-          return !summary && !milestone;
+          // Allow duration for summary tasks
+          return !milestone;
         }
         case 'slider': {
           return !milestone;

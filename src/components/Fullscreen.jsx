@@ -33,7 +33,7 @@ function Fullscreen({ hotkey = null, children }) {
     const setFullscreenState = () => {
       setInFullscreen(document.fullscreenElement === nodeRef.current);
     };
-    document.addEventListener('fullscreenchange', setFullscreenState);
+    document.addEventListener('fullscreenchange', setFullscreenState, { passive: true });
     return () => {
       document.removeEventListener('fullscreenchange', setFullscreenState);
     };

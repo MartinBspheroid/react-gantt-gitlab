@@ -202,11 +202,12 @@ function Chart(props) {
     if (!node) return;
 
     const handler = onWheel;
-    node.addEventListener('wheel', handler);
+    // Use passive: false only when zoom is enabled to allow preventDefault
+    node.addEventListener('wheel', handler, { passive: !zoom });
     return () => {
       node.removeEventListener('wheel', handler);
     };
-  }, [onWheel])
+  }, [onWheel, zoom])
 
   return (
     <div
