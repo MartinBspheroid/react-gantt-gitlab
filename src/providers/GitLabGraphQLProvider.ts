@@ -160,6 +160,20 @@ export class GitLabGraphQLProvider {
                     }
                   }
                 }
+                ... on WorkItemWidgetLinkedItems {
+                  linkedItems {
+                    nodes {
+                      linkId
+                      linkType
+                      linkCreatedAt
+                      linkUpdatedAt
+                      workItem {
+                        id
+                        iid
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -204,8 +218,10 @@ export class GitLabGraphQLProvider {
     // Calculate spanning dates for parent tasks
     tasks = this.calculateSpanningDates(tasks);
 
-    // TODO: Fetch links (blocked by relationships)
-    const links: ILink[] = [];
+    // Fetch links (related work items)
+    console.log('[GitLabGraphQL] Fetching work item links...');
+    const links = await this.fetchWorkItemLinks(workItems);
+    console.log('[GitLabGraphQL] Found', links.length, 'links');
 
     return {
       tasks,
@@ -1113,5 +1129,183 @@ export class GitLabGraphQLProvider {
    */
   async deleteIssue(id: TID): Promise<void> {
     return this.deleteWorkItem(id);
+  }
+
+  /**
+   * Fetch links (related work items) for all work items
+   */
+  private async fetchWorkItemLinks(workItems: any[]): Promise<ILink[]> {
+    const links: ILink[] = [];
+    let linkIdCounter = 1;
+
+    console.log(
+      '[GitLabGraphQL] Processing',
+      workItems.length,
+      'work items for links',
+    );
+
+    // Create a map of IID to work item for quick lookup
+    // Note: Store both string and number versions for compatibility
+    const iidMap = new Map<number, any>();
+    workItems.forEach((wi) => {
+      const iid = typeof wi.iid === 'string' ? parseInt(wi.iid, 10) : wi.iid;
+      iidMap.set(iid, wi);
+    });
+
+    console.log('[GitLabGraphQL] iidMap keys:', Array.from(iidMap.keys()));
+
+    // Track processed links to avoid duplicates
+    // GitLab stores bidirectional relationships, so we need to deduplicate
+    // Use a set of normalized link identifiers: "source-target-type"
+    const processedLinks = new Set<string>();
+
+    // Extract links from each work item
+    for (const workItem of workItems) {
+      // Find the LinkedItems widget
+      const linkedItemsWidget = workItem.widgets?.find(
+        (w: any) => w.__typename === 'WorkItemWidgetLinkedItems',
+      ) as any;
+
+      console.log(
+        `[GitLabGraphQL] WorkItem ${workItem.iid} linkedItemsWidget:`,
+        linkedItemsWidget,
+      );
+
+      if (!linkedItemsWidget?.linkedItems?.nodes) {
+        continue;
+      }
+
+      // Convert source IID to number
+      const sourceIid =
+        typeof workItem.iid === 'string'
+          ? parseInt(workItem.iid, 10)
+          : workItem.iid;
+
+      // Process each linked item
+      for (const linkedItem of linkedItemsWidget.linkedItems.nodes) {
+        const targetIidStr = linkedItem.workItem?.iid;
+        const linkType = linkedItem.linkType;
+
+        if (!targetIidStr) {
+          continue;
+        }
+
+        // Convert IID to number for comparison and storage
+        const targetIid =
+          typeof targetIidStr === 'string'
+            ? parseInt(targetIidStr, 10)
+            : targetIidStr;
+
+        console.log(
+          `[GitLabGraphQL] Checking link from ${sourceIid} to ${targetIid} (type: ${linkType})`,
+        );
+
+        if (!iidMap.has(targetIid)) {
+          // Skip if target is not in our task list
+          console.log(
+            `[GitLabGraphQL] Skipping link to ${targetIid} (not in task list)`,
+          );
+          continue;
+        }
+
+        // Map GitLab link types to Gantt link types
+        // Note: GitLab returns lowercase with underscores (relates_to, blocks, is_blocked_by)
+        let ganttLinkType: ILink['type'];
+        let linkSource: number;
+        let linkTarget: number;
+        const normalizedLinkType = linkType?.toLowerCase();
+
+        // Determine link direction based on GitLab link type
+        // sourceIid = current work item, targetIid = linked work item
+        if (normalizedLinkType === 'blocks') {
+          // "A blocks B" means A must finish before B starts
+          // Arrow: A -> B
+          linkSource = sourceIid;
+          linkTarget = targetIid;
+          ganttLinkType = 'e2s'; // End-to-Start
+        } else if (normalizedLinkType === 'is_blocked_by') {
+          // "A is_blocked_by B" means B must finish before A starts
+          // Arrow: B -> A (reversed!)
+          linkSource = targetIid;
+          linkTarget = sourceIid;
+          ganttLinkType = 'e2s'; // End-to-Start
+        } else {
+          // relates_to - non-directional, use arbitrary direction
+          linkSource = sourceIid;
+          linkTarget = targetIid;
+          ganttLinkType = 'e2s'; // Default to End-to-Start
+        }
+
+        // Create normalized link identifier for deduplication
+        // For directional links (blocks/is_blocked_by), we need to check both directions
+        // because GitLab stores the relationship on both sides
+        let linkIdentifier: string;
+        let reverseIdentifier: string;
+
+        if (normalizedLinkType === 'blocks') {
+          // "A blocks B" means A must finish before B starts (A -> B)
+          linkIdentifier = `${sourceIid}-${targetIid}-blocks`;
+          reverseIdentifier = `${targetIid}-${sourceIid}-is_blocked_by`;
+        } else if (normalizedLinkType === 'is_blocked_by') {
+          // "A is_blocked_by B" means B must finish before A starts (B -> A)
+          linkIdentifier = `${targetIid}-${sourceIid}-blocks`;
+          reverseIdentifier = `${sourceIid}-${targetIid}-is_blocked_by`;
+        } else {
+          // For relates_to, use sorted IDs to avoid duplicates
+          const [id1, id2] = [sourceIid, targetIid].sort((a, b) => a - b);
+          linkIdentifier = `${id1}-${id2}-relates_to`;
+          reverseIdentifier = linkIdentifier; // Same as forward for non-directional
+        }
+
+        // Check if we've already processed this link (or its reverse)
+        if (
+          processedLinks.has(linkIdentifier) ||
+          processedLinks.has(reverseIdentifier)
+        ) {
+          console.log(
+            `[GitLabGraphQL] Skipping duplicate link: ${sourceIid} -> ${targetIid} (${linkType})`,
+          );
+          continue;
+        }
+
+        // Mark this link as processed
+        processedLinks.add(linkIdentifier);
+
+        console.log(
+          `[GitLabGraphQL] Adding link: ${linkSource} -> ${linkTarget} (${linkType} => ${ganttLinkType})`,
+        );
+
+        links.push({
+          id: linkIdCounter++,
+          source: linkSource,
+          target: linkTarget,
+          type: ganttLinkType,
+        });
+      }
+    }
+
+    return links;
+  }
+
+  /**
+   * Create issue link (not yet implemented for GraphQL)
+   */
+  async createIssueLink(link: Partial<ILink>): Promise<void> {
+    console.warn(
+      '[GitLabGraphQL] createIssueLink is not yet implemented for Work Items API',
+    );
+    // TODO: Implement using workItemAddLinkedItems mutation
+    throw new Error('Creating links is not yet supported with Work Items API');
+  }
+
+  /**
+   * Delete issue link (not yet implemented for GraphQL)
+   */
+  async deleteIssueLink(linkId: TID, sourceIid: TID): Promise<void> {
+    console.warn(
+      '[GitLabGraphQL] deleteIssueLink is not yet implemented for Work Items API',
+    );
+    // TODO: Implement using workItemRemoveLinkedItems mutation
+    throw new Error('Deleting links is not yet supported with Work Items API');
   }
 }
