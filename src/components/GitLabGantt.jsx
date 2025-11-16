@@ -997,7 +997,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             />
           </ContextMenu>
         </div>
-        {api && <Editor api={api} bottomBar={editorBottomBar} autoSave={false} />}
+        {api && <Editor api={api} bottomBar={false} autoSave={false} />}
       </div>
 
       <style>{`
@@ -1287,6 +1287,25 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           flex: 1;
           min-height: 0;
           overflow: hidden;
+        }
+
+        /* Make task bars semi-transparent to see grid and holidays */
+        .wx-task {
+          opacity: 0.7;
+        }
+
+        .wx-summary {
+          opacity: 0.7;
+        }
+
+        .wx-task:hover,
+        .wx-summary:hover {
+          opacity: 0.85;
+        }
+
+        .wx-task.wx-selected,
+        .wx-summary.wx-selected {
+          opacity: 0.9;
         }
 
         .gitlab-gantt-loading,
