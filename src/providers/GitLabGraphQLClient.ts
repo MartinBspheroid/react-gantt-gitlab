@@ -31,15 +31,15 @@ export class GitLabGraphQLClient {
    * Get GraphQL endpoint URL
    */
   private getEndpoint(): string {
+    const endpoint = `${this.config.gitlabUrl}/api/graphql`;
+
     // In development, use Vite proxy
     if (this.isDev) {
-      return '/api/gitlab-proxy/api/graphql';
+      return endpoint.replace(this.config.gitlabUrl, '/api/gitlab-proxy');
     }
 
     // In production, check if CORS proxy is configured
     const corsProxy = import.meta.env.VITE_CORS_PROXY;
-    const endpoint = `${this.config.gitlabUrl}/api/graphql`;
-
     if (corsProxy) {
       return `${corsProxy}/${endpoint}`;
     }

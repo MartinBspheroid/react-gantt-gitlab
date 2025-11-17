@@ -17,6 +17,22 @@ export class GitLabConfigManager {
   }
 
   /**
+   * Normalize GitLab URL to remove project/group paths
+   * Extracts only the base GitLab instance URL
+   */
+  static normalizeGitLabUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      // Return only protocol + hostname + port (if any)
+      return `${urlObj.protocol}//${urlObj.host}`;
+    } catch (error) {
+      // If URL parsing fails, return as-is
+      console.warn('Failed to normalize GitLab URL:', url, error);
+      return url;
+    }
+  }
+
+  /**
    * Load configurations from localStorage
    */
   private loadFromStorage(): void {
@@ -71,6 +87,8 @@ export class GitLabConfigManager {
     const id = this.generateId();
     const newConfig: GitLabConfig = {
       ...config,
+      // Normalize GitLab URL to remove project/group paths
+      gitlabUrl: GitLabConfigManager.normalizeGitLabUrl(config.gitlabUrl),
       id,
     };
 
@@ -98,6 +116,10 @@ export class GitLabConfigManager {
       ...existing,
       ...updates,
       id, // Preserve ID
+      // Normalize GitLab URL if it's being updated
+      gitlabUrl: updates.gitlabUrl
+        ? GitLabConfigManager.normalizeGitLabUrl(updates.gitlabUrl)
+        : existing.gitlabUrl,
     };
 
     this.configs.set(id, updated);
