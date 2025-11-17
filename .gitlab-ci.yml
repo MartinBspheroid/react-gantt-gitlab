@@ -5,6 +5,8 @@ stages:
 
 pages:
   stage: deploy
+  tags:
+    - docker
   cache:
     paths:
       - node_modules/
