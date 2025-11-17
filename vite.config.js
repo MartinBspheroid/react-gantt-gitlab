@@ -12,7 +12,8 @@ export default defineConfig(({ command, mode }) => {
   if (isDemoBuild) {
     // Demo build configuration - includes all dependencies
     // Use relative path for GitHub/GitLab Pages compatibility
-    const base = process.env.VITE_BASE_PATH || './';
+    // GitLab Pages typically uses root path '/' while GitHub Pages may use subpath
+    const base = process.env.VITE_BASE_PATH || '/';
 
     return {
       plugins: [react()],
