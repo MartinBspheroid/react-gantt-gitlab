@@ -247,15 +247,26 @@ export class GitLabConfigManager {
     token: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      // Use proxy in development to avoid CORS issues
+      // Use proxy in development or production to avoid CORS issues
       const isDev = import.meta.env.DEV;
-      const apiUrl = isDev
-        ? `/api/gitlab-proxy/api/v4/user`
-        : `${config.gitlabUrl}/api/v4/user`;
+      const corsProxy = import.meta.env.VITE_CORS_PROXY;
 
-      const headers: HeadersInit = isDev
-        ? { 'X-GitLab-Token': config.token }
-        : { 'PRIVATE-TOKEN': config.token };
+      let apiUrl: string;
+      let headers: HeadersInit;
+
+      if (isDev) {
+        // Development: use Vite proxy
+        apiUrl = `/api/gitlab-proxy/api/v4/user`;
+        headers = { 'X-GitLab-Token': config.token };
+      } else if (corsProxy) {
+        // Production with CORS proxy
+        apiUrl = `${corsProxy}/${config.gitlabUrl}/api/v4/user`;
+        headers = { 'PRIVATE-TOKEN': config.token };
+      } else {
+        // Production without CORS proxy (direct access)
+        apiUrl = `${config.gitlabUrl}/api/v4/user`;
+        headers = { 'PRIVATE-TOKEN': config.token };
+      }
 
       const response = await fetch(apiUrl, { headers });
 
