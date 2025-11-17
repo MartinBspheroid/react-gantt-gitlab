@@ -64,16 +64,24 @@ export class GitLabDataProvider {
   }
 
   /**
-   * Convert GitLab URL to proxy URL in dev mode
+   * Convert GitLab URL to proxy URL in dev mode or with CORS proxy
    */
   private getProxyUrl(url: string): string {
-    if (!this.isDev) {
-      return url;
+    // In development, use Vite proxy
+    if (this.isDev) {
+      const gitlabUrl = this.config.gitlabUrl;
+      return url.replace(gitlabUrl, '/api/gitlab-proxy');
     }
 
-    // In development, use proxy to avoid CORS
-    const gitlabUrl = this.config.gitlabUrl;
-    return url.replace(gitlabUrl, '/api/gitlab-proxy');
+    // In production, check if CORS proxy is configured
+    const corsProxy = import.meta.env.VITE_CORS_PROXY;
+    if (corsProxy) {
+      // Add CORS proxy prefix to the URL
+      return `${corsProxy}/${url}`;
+    }
+
+    // No proxy, return original URL
+    return url;
   }
 
   /**

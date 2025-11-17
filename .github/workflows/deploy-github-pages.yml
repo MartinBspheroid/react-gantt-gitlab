@@ -35,6 +35,8 @@ jobs:
         run: npm run build:pages
         env:
           VITE_BASE_PATH: /react-gantt-gitlab/
+          # Optional: Add CORS proxy URL if needed
+          # VITE_CORS_PROXY: ${{ secrets.CORS_PROXY_URL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
