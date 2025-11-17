@@ -829,6 +829,14 @@ export class GitLabGraphQLProvider {
   }
 
   private async getWorkItemGlobalId(iid: TID): Promise<string> {
+    // Check if this is a temporary ID (not yet saved to GitLab)
+    const iidStr = String(iid);
+    if (iidStr.startsWith('temp://') || iidStr.includes('temp')) {
+      throw new Error(
+        `Cannot get global ID for temporary task ID: ${iid}. Please wait for the task to be saved first.`,
+      );
+    }
+
     const query = `
       query getWorkItem($fullPath: ID!, $iid: String!) {
         ${this.config.type}(fullPath: $fullPath) {
@@ -850,7 +858,7 @@ export class GitLabGraphQLProvider {
 
     const variables = {
       fullPath: this.getFullPath(),
-      iid: String(iid),
+      iid: iidStr,
     };
 
     console.log('[GitLabGraphQL] Querying work item for global ID...');
