@@ -1528,7 +1528,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
         /* Weekend and holiday highlighting */
         .wx-gantt-holidays .wx-weekend {
-          background-color: #f5f5f5 !important;
+          background-color: var(--wx-gantt-holiday-background) !important;
           position: absolute !important;
           height: 100% !important;
           z-index: 0 !important;
