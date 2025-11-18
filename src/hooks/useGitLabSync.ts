@@ -180,6 +180,21 @@ export function useGitLabSync(
 
         console.log('[useGitLabSync] Task created from GitLab:', createdTask);
 
+        // If this is a subtask, wait a bit for GitLab to process the parent-child relationship
+        // then sync to get the updated hierarchy
+        if (task.parent && task.parent !== 0) {
+          console.log(
+            '[useGitLabSync] Subtask created, waiting for GitLab to process hierarchy...',
+          );
+          // Wait 2 seconds for GitLab to process the hierarchy
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Sync to get the updated data from GitLab
+          await sync();
+          // Return the synced task with correct parent relationship
+          const syncedTask = tasks.find((t) => t.id === createdTask.id);
+          return syncedTask || createdTask;
+        }
+
         // Add the new task to local state
         // This will cause Gantt to update via the tasks prop
         setTasks((prevTasks) => [...prevTasks, createdTask]);
@@ -190,7 +205,7 @@ export function useGitLabSync(
         throw error;
       }
     },
-    [provider],
+    [provider, sync, tasks],
   );
 
   /**
