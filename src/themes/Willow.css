@@ -10,14 +10,13 @@
   --wx-gantt-bar-border-radius: 3px;
   --wx-gantt-milestone-border-radius: 3px;
 
-  /* GitLab Task (subtask) = green */
+  /* Default colors for Basic Gantt */
   --wx-gantt-task-color: #00ba94;
   --wx-gantt-task-font-color: #ffffff;
   --wx-gantt-task-fill-color: #099f81;
   --wx-gantt-task-border-color: #099f81;
   --wx-gantt-task-border: 1px solid transparent;
 
-  /* GitLab Issue (parent) = blue */
   --wx-gantt-summary-color: #3983eb;
   --wx-gantt-summary-font-color: #fff;
   --wx-gantt-summary-fill-color: #1f6bd9;
@@ -80,15 +79,16 @@
   --wx-sidebar-close-icon: #c0c3ce;
 }
 
-/* GitLab-specific bar styling */
+/* GitLab Integration specific styling - override default colors */
 .wx-willow-theme .wx-gitlab-issue {
-  color: var(--wx-gantt-summary-font-color);
-  background-color: var(--wx-gantt-summary-color);
-  border: var(--wx-gantt-summary-border);
+  /* GitLab Issue = blue */
+  color: #fff;
+  background-color: #3983eb;
+  border: 1px solid transparent;
 }
 
 .wx-willow-theme .wx-gitlab-issue.wx-selected {
-  border: 1px solid var(--wx-gantt-summary-border-color);
+  border: 1px solid #1f6bd9;
   box-shadow: var(--wx-gantt-bar-shadow);
 }
 
@@ -97,17 +97,18 @@
 }
 
 .wx-willow-theme .wx-gitlab-issue .wx-progress-percent {
-  background-color: var(--wx-gantt-summary-fill-color);
+  background-color: #1f6bd9;
 }
 
 .wx-willow-theme .wx-gitlab-task {
-  color: var(--wx-gantt-task-font-color);
-  background-color: var(--wx-gantt-task-color);
-  border: var(--wx-gantt-task-border);
+  /* GitLab Task = green */
+  color: #ffffff;
+  background-color: #00ba94;
+  border: 1px solid transparent;
 }
 
 .wx-willow-theme .wx-gitlab-task.wx-selected {
-  border: 1px solid var(--wx-gantt-task-border-color);
+  border: 1px solid #099f81;
   box-shadow: var(--wx-gantt-bar-shadow);
 }
 
@@ -116,5 +117,5 @@
 }
 
 .wx-willow-theme .wx-gitlab-task .wx-progress-percent {
-  background-color: var(--wx-gantt-task-fill-color);
+  background-color: #099f81;
 }

@@ -504,7 +504,7 @@ function Bars(props) {
           (linkFrom && linkFrom.id === task.id ? ' wx-selected' : '') +
           (task.$reorder ? ' wx-reorder-task' : '') +
           (task.$parent ? ' wx-parent-task' : '') +
-          (task.$isIssue ? ' wx-gitlab-issue' : ' wx-gitlab-task');
+          (task.$isIssue !== undefined ? (task.$isIssue ? ' wx-gitlab-issue' : ' wx-gitlab-task') : '');
         const leftLinkClass =
           'wx-link wx-left' +
           (linkFrom ? ' wx-visible' : '') +

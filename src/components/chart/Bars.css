@@ -1,7 +1,6 @@
 .wx-baseline.wx-GKbcLEGA {
   position: absolute;
-  /* Baseline represents GitLab Task original range, so use green (same as task color) */
-  background-color: #00ba94;
+  background-color: #a883e4;
   border-radius: var(--wx-gantt-baseline-border-radius);
   z-index: 1;
 }
