@@ -12,16 +12,18 @@
   --wx-gantt-bar-border-radius: 3px;
   --wx-gantt-milestone-border-radius: 3px;
 
-  --wx-gantt-task-color: #37a9ef;
+  /* GitLab Task (subtask) = green */
+  --wx-gantt-task-color: #00ba94;
   --wx-gantt-task-font-color: #ffffffe5;
-  --wx-gantt-task-fill-color: #098cdc;
-  --wx-gantt-task-border-color: #098cdc;
+  --wx-gantt-task-fill-color: #099f81;
+  --wx-gantt-task-border-color: #099f81;
   --wx-gantt-task-border: 1px solid transparent;
 
-  --wx-gantt-summary-color: #00ba94;
+  /* GitLab Issue (parent) = blue */
+  --wx-gantt-summary-color: #37a9ef;
   --wx-gantt-summary-font-color: #ffffffe5;
-  --wx-gantt-summary-fill-color: #099f81;
-  --wx-gantt-summary-border-color: #099f81;
+  --wx-gantt-summary-fill-color: #098cdc;
+  --wx-gantt-summary-border-color: #098cdc;
   --wx-gantt-summary-border: 1px solid transparent;
 
   --wx-gantt-progress-marker-height: 26px;

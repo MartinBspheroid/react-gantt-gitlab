@@ -1451,14 +1451,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         /* Baseline bar styling - keep default height with padding */
         .wx-baseline {
           pointer-events: none !important;
-          background-color: #00CED1 !important; /* Cyan/turquoise color */
+          background-color: #00ba94 !important; /* Green - represents GitLab Task original range */
           z-index: 1 !important;
           opacity: 0.7 !important;
         }
 
-        /* Parent task bar - keep default height with padding */
+        /* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
         .wx-bar.wx-parent-task {
-          background-color: #00ba94 !important; /* Green color for parent */
           z-index: 2 !important;
         }
       `}</style>

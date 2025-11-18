@@ -23,6 +23,9 @@ interface WorkItem {
   closedAt: string | null;
   state: string;
   webUrl: string;
+  workItemType?: {
+    name: string;
+  };
   widgets: Array<{
     type?: string;
     description?: string;
@@ -113,6 +116,9 @@ export class GitLabGraphQLProvider {
               closedAt
               state
               webUrl
+              workItemType {
+                name
+              }
               widgets {
                 __typename
                 ... on WorkItemWidgetDescription {
@@ -341,9 +347,8 @@ export class GitLabGraphQLProvider {
           // Baseline bar shows the subtask span (read-only reference)
           return {
             ...task,
-            // Use 'task' type to avoid summary's auto-calculation behavior
-            // Mark it as parent for styling
-            type: 'task',
+            // Keep the task's type (already set based on GitLab workItemType)
+            // Issue -> 'summary' (blue), Task -> 'task' (green)
             $parent: true, // Custom flag for CSS styling
             // Keep original dates for main bar
             start: parentStart,
@@ -468,6 +473,12 @@ export class GitLabGraphQLProvider {
       parent = 0; // We don't map milestones to parent in this version
     }
 
+    // Determine Gantt type based on GitLab work item type
+    // Issue (parent or standalone) -> 'summary' (blue)
+    // Task (subtask) -> 'task' (green)
+    const ganttType =
+      workItem.workItemType?.name === 'Task' ? 'task' : 'summary';
+
     const task: ITask = {
       id: Number(workItem.iid),
       text: workItem.title,
@@ -475,7 +486,7 @@ export class GitLabGraphQLProvider {
       end: endDate,
       duration,
       progress,
-      type: 'task',
+      type: ganttType,
       details: description,
       parent,
       assigned: assignees,
@@ -488,6 +499,7 @@ export class GitLabGraphQLProvider {
         id: workItem.id, // Global ID
         iid: Number(workItem.iid),
         state: workItem.state,
+        workItemType: workItem.workItemType?.name,
       },
     };
 

@@ -10,17 +10,19 @@
   --wx-gantt-bar-border-radius: 50px;
   --wx-gantt-milestone-border-radius: 3px;
 
-  --wx-gantt-task-color: #448aff;
-  --wx-gantt-task-font-color: #fff;
-  --wx-gantt-task-fill-color: #246cd9;
-  --wx-gantt-task-border-color: #448aff;
-  --wx-gantt-task-border: 1px solid #246cd9;
+  /* GitLab Task (subtask) = green */
+  --wx-gantt-task-color: #1de9b6;
+  --wx-gantt-task-font-color: #5f5f5f;
+  --wx-gantt-task-fill-color: #00d19a;
+  --wx-gantt-task-border-color: #1de9b6;
+  --wx-gantt-task-border: 1px solid #00d19a;
 
-  --wx-gantt-summary-color: #1de9b6;
-  --wx-gantt-summary-font-color: #5f5f5f;
-  --wx-gantt-summary-fill-color: #00d19a;
-  --wx-gantt-summary-border-color: #1de9b6;
-  --wx-gantt-summary-border: 1px solid #00d19a;
+  /* GitLab Issue (parent) = blue */
+  --wx-gantt-summary-color: #448aff;
+  --wx-gantt-summary-font-color: #fff;
+  --wx-gantt-summary-fill-color: #246cd9;
+  --wx-gantt-summary-border-color: #448aff;
+  --wx-gantt-summary-border: 1px solid #246cd9;
 
   --wx-gantt-milestone-color: #d33daf;
 
@@ -88,17 +90,19 @@
   --wx-gantt-bar-border-radius: 50px;
   --wx-gantt-milestone-border-radius: 3px;
 
-  --wx-gantt-task-color: #448aff;
-  --wx-gantt-task-font-color: #fff;
-  --wx-gantt-task-fill-color: #246cd9;
-  --wx-gantt-task-border-color: #448aff;
-  --wx-gantt-task-border: 1px solid #246cd9;
+  /* GitLab Task (subtask) = green */
+  --wx-gantt-task-color: #1de9b6;
+  --wx-gantt-task-font-color: #5f5f5f;
+  --wx-gantt-task-fill-color: #00d19a;
+  --wx-gantt-task-border-color: #1de9b6;
+  --wx-gantt-task-border: 1px solid #00d19a;
 
-  --wx-gantt-summary-color: #1de9b6;
-  --wx-gantt-summary-font-color: #5f5f5f;
-  --wx-gantt-summary-fill-color: #00d19a;
-  --wx-gantt-summary-border-color: #1de9b6;
-  --wx-gantt-summary-border: 1px solid #00d19a;
+  /* GitLab Issue (parent) = blue */
+  --wx-gantt-summary-color: #448aff;
+  --wx-gantt-summary-font-color: #fff;
+  --wx-gantt-summary-fill-color: #246cd9;
+  --wx-gantt-summary-border-color: #448aff;
+  --wx-gantt-summary-border: 1px solid #246cd9;
 
   --wx-gantt-milestone-color: #d33daf;
 
