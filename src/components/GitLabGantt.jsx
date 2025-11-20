@@ -241,7 +241,19 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   // Initialize Gantt API
   const init = useCallback(
     (ganttApi) => {
-      setApi(ganttApi);
+      console.log('[init] ENTRY POINT - Gantt API initialization started');
+      console.log('[init] ganttApi object:', ganttApi);
+      console.log('[init] ganttApi.getState:', typeof ganttApi.getState);
+
+      try {
+        setApi(ganttApi);
+        console.log('[init] setApi completed successfully');
+      } catch (error) {
+        console.error('[init] ERROR in setApi:', error);
+        console.error('[init] ERROR stack:', error.stack);
+        throw error;
+      }
+
       // Expose API to window for debugging
       window.ganttApi = ganttApi;
 
@@ -607,7 +619,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         // Show dialog to input task details before creating
-        const title = prompt('Enter task title:', ev.task.text || 'New Task');
+        const title = prompt(
+          'Enter Task title:',
+          ev.task.text || 'New Task'
+        );
+
         if (!title) {
           return false; // User cancelled
         }
@@ -616,7 +632,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         ev.task.text = title;
 
         // Optionally ask for description
-        const description = prompt('Enter task description (optional):');
+        const description = prompt('Enter description (optional):');
         if (description) {
           ev.task.details = description;
         }
@@ -632,11 +648,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         try {
-          // Create task in GitLab
-          // This will also add it to React state (in useGitLabSync)
+          console.log('[GitLab] Creating Task...');
           const newTask = await createTask(ev.task);
 
-          console.log('[GitLab] Task created from GitLab:', {
+          console.log('[GitLab] Item created from GitLab:', {
             tempId: ev.id,
             newId: newTask.id,
             newTask,
@@ -802,7 +817,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             // Only update the moved task
             console.log(`[GitLab] Inserting task ${ev.id} with order ${newOrder}`);
             await provider.updateTasksOrder([{ id: ev.id, order: newOrder }]);
-            console.log('[GitLab] Order saved:', {[ev.id]: newOrder});
+            console.log('[GitLab] Order saved:', { [ev.id]: newOrder });
           }
         } catch (error) {
           console.error('Failed to update task order:', error);
@@ -1155,11 +1170,63 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       <div className="gantt-wrapper">
         <Toolbar api={api} />
         <div className="gantt-chart-container">
-          <ContextMenu api={api}>
-            <Gantt
-              init={init}
-              tasks={filteredTasks}
-              links={links}
+          {syncState.isLoading || allTasks.length === 0 ? (
+            <div className="loading-message">
+              <p>Loading GitLab data...</p>
+            </div>
+          ) : (
+            <ContextMenu api={api}>
+              {(() => {
+                console.log('[GitLabGantt RENDER] About to render Gantt component');
+                console.log('[GitLabGantt RENDER] filteredTasks:', filteredTasks.length);
+                console.log('[GitLabGantt RENDER] links:', links.length);
+                console.log('[GitLabGantt RENDER] markers:', markers.length);
+
+                // Validate tasks structure before passing to Gantt
+                const invalidTasks = filteredTasks.filter(task => {
+                  return !task.id || !task.text || !task.start;
+                });
+
+                if (invalidTasks.length > 0) {
+                  console.error('[GitLabGantt RENDER] Found invalid tasks:', invalidTasks);
+                }
+
+                // Log all tasks with their parent relationships to find the problematic structure
+                console.log('[GitLabGantt RENDER] Task hierarchy:');
+                filteredTasks.forEach((task, index) => {
+                  console.log(`  [${index}] id=${task.id}, parent=${task.parent}, type=${task.type}, text="${task.text}"`);
+                });
+
+                // Check for orphaned children (parent doesn't exist in the list)
+                const taskIds = new Set(filteredTasks.map(t => t.id));
+                const orphanedTasks = filteredTasks.filter(task => {
+                  return task.parent && task.parent !== 0 && !taskIds.has(task.parent);
+                });
+
+                if (orphanedTasks.length > 0) {
+                  console.error('[GitLabGantt RENDER] Found orphaned tasks (parent does not exist):', orphanedTasks);
+                }
+
+                try {
+                  return (
+                    <Gantt
+                    init={(api) => {
+                      console.log('[Gantt init callback] CALLED with api:', api);
+                      try {
+                        console.log('[Gantt init] Calling init function...');
+                        const result = init(api);
+                        console.log('[Gantt init] init function returned:', result);
+                        return result;
+                      } catch (error) {
+                        console.error('[Gantt init] ERROR in init callback:', error);
+                        console.error('[Gantt init] ERROR name:', error.name);
+                        console.error('[Gantt init] ERROR message:', error.message);
+                        console.error('[Gantt init] ERROR stack:', error.stack);
+                        throw error;
+                      }
+                    }}
+                    tasks={filteredTasks}
+                    links={links}
               markers={markers}
               scales={[
                 { unit: 'year', step: 1, format: 'yyyy' },
@@ -1174,8 +1241,18 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               highlightTime={highlightTime}
               readonly={false}
               baselines={true}
-            />
-          </ContextMenu>
+                  />
+                );
+              } catch (error) {
+                console.error('[GitLabGantt RENDER] ERROR rendering Gantt:', error);
+                console.error('[GitLabGantt RENDER] ERROR name:', error.name);
+                console.error('[GitLabGantt RENDER] ERROR message:', error.message);
+                console.error('[GitLabGantt RENDER] ERROR stack:', error.stack);
+                throw error;
+              }
+            })()}
+            </ContextMenu>
+          )}
         </div>
         {api && <Editor api={api} bottomBar={false} autoSave={false} />}
       </div>

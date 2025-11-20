@@ -582,6 +582,50 @@ export class GitLabDataProvider {
   }
 
   /**
+   * Create new milestone in GitLab
+   */
+  async createMilestone(milestone: Partial<ITask>): Promise<ITask> {
+    const endpoint = `/projects/${this.getEncodedProjectId()}/milestones`;
+
+    const payload: any = {
+      title: milestone.text || 'New Milestone',
+    };
+
+    if (milestone.details) {
+      payload.description = milestone.details;
+    }
+
+    if (milestone.start) {
+      payload.start_date = this.formatDateForGitLab(milestone.start);
+    }
+
+    if (milestone.end) {
+      payload.due_date = this.formatDateForGitLab(milestone.end);
+    }
+
+    const m = await this.request<GitLabMilestone>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    return {
+      id: m.id,
+      text: `[Milestone] ${m.title}`,
+      start: m.start_date ? new Date(m.start_date) : undefined,
+      end: m.due_date ? new Date(m.due_date) : undefined,
+      type: 'summary',
+      parent: 0,
+      open: true,
+      details: m.description,
+      _gitlab: {
+        type: 'milestone',
+        id: m.id,
+        web_url: m.web_url,
+      },
+    };
+  }
+
+  /**
    * Update issue in GitLab using GraphQL for dates, REST API for other fields
    */
   async updateIssue(

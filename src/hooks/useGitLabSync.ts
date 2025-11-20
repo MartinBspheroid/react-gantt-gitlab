@@ -208,6 +208,8 @@ export function useGitLabSync(
     [provider, sync, tasks],
   );
 
+  // createMilestone removed - not supported by current provider
+
   /**
    * Delete a task
    */

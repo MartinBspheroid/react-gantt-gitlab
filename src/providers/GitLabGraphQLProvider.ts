@@ -102,9 +102,10 @@ export class GitLabGraphQLProvider {
    * Fetch all work items (issues) using GraphQL
    */
   async getData(options: GitLabSyncOptions = {}): Promise<GitLabDataResponse> {
-    console.log('[GitLabGraphQL] Fetching work items...');
+    console.log('[GitLabGraphQL] Fetching work items and milestones...');
 
-    const query = `
+    // Query for work items
+    const workItemsQuery = `
       query getWorkItems($fullPath: ID!, $state: IssuableState) {
         ${this.config.type}(fullPath: $fullPath) {
           workItems(types: [ISSUE, TASK], state: $state, first: 100) {
@@ -152,6 +153,7 @@ export class GitLabGraphQLProvider {
                   milestone {
                     id
                     title
+                    iid
                   }
                 }
                 ... on WorkItemWidgetHierarchy {
@@ -187,42 +189,83 @@ export class GitLabGraphQLProvider {
       }
     `;
 
+    // Query for milestones
+    const milestonesQuery = `
+      query getMilestones($fullPath: ID!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          milestones(state: active, first: 100) {
+            nodes {
+              id
+              iid
+              title
+              description
+              state
+              dueDate
+              startDate
+              webPath
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      }
+    `;
+
     const variables: any = {
       fullPath: this.getFullPath(),
       state: options.includeClosed ? undefined : 'opened',
     };
 
-    const result = await this.graphqlClient.query<WorkItemsResponse>(
-      query,
-      variables,
-    );
+    // Execute both queries in parallel
+    const [workItemsResult, milestonesResult] = await Promise.all([
+      this.graphqlClient.query<WorkItemsResponse>(workItemsQuery, variables),
+      this.graphqlClient.query<any>(milestonesQuery, {
+        fullPath: this.getFullPath(),
+      }),
+    ]);
 
     const workItems =
       this.config.type === 'group'
-        ? result.group?.workItems.nodes || []
-        : result.project?.workItems.nodes || [];
+        ? workItemsResult.group?.workItems.nodes || []
+        : workItemsResult.project?.workItems.nodes || [];
 
-    console.log(`[GitLabGraphQL] Fetched ${workItems.length} work items`);
+    const milestones =
+      this.config.type === 'group'
+        ? milestonesResult.group?.milestones.nodes || []
+        : milestonesResult.project?.milestones.nodes || [];
 
-    // Log raw work items to debug date issues
-    workItems.forEach((wi) => {
-      const dateWidget = wi.widgets.find(
-        (w) => w.startDate !== undefined || w.dueDate !== undefined,
-      );
-      console.log(`[GitLabGraphQL] WorkItem ${wi.iid} raw dates:`, {
-        startDate: dateWidget?.startDate,
-        dueDate: dateWidget?.dueDate,
-      });
-    });
+    console.log(
+      `[GitLabGraphQL] Fetched ${workItems.length} work items and ${milestones.length} milestones`,
+    );
+
+    // Convert milestones to tasks
+    const milestoneTasks: ITask[] = milestones.map((m) =>
+      this.convertMilestoneToTask(m),
+    );
+
+    console.log('[GitLabGraphQL] Milestone tasks:', milestoneTasks.length);
 
     // Convert work items to tasks
-    let tasks: ITask[] = workItems.map((wi) => this.convertWorkItemToTask(wi));
+    const workItemTasks: ITask[] = workItems.map((wi) =>
+      this.convertWorkItemToTask(wi),
+    );
+
+    // Combine all tasks
+    let tasks: ITask[] = [...milestoneTasks, ...workItemTasks];
 
     // Sort tasks by display order if available
     tasks = this.sortTasksByOrder(tasks);
 
     // Calculate spanning dates for parent tasks
     tasks = this.calculateSpanningDates(tasks);
+
+    // LOG: Validate final tasks structure before returning
+    console.log('[GitLabGraphQL] Final tasks count:', tasks.length);
+    tasks.forEach((task, index) => {
+      if (!task.id || !task.text) {
+        console.error(`[GitLabGraphQL] Invalid task at index ${index}:`, task);
+      }
+    });
 
     // Fetch links (related work items)
     console.log('[GitLabGraphQL] Fetching work item links...');
@@ -232,14 +275,14 @@ export class GitLabGraphQLProvider {
     return {
       tasks,
       links,
-      milestones: [], // TODO: Fetch milestones if needed
+      milestones: [], // Milestones are now included in tasks
       epics: [], // TODO: Fetch epics if needed
     };
   }
 
   /**
    * Sort tasks by display order (within same parent)
-   * Tasks with order metadata are sorted first, then by creation date
+   * Special handling for root level: Milestones sorted by date, Issues by displayOrder
    */
   private sortTasksByOrder(tasks: ITask[]): ITask[] {
     // Group tasks by parent
@@ -254,31 +297,62 @@ export class GitLabGraphQLProvider {
 
     // Sort each parent group
     const sortedTasks: ITask[] = [];
-    tasksByParent.forEach((parentTasks) => {
-      parentTasks.sort((a, b) => {
-        const orderA = a.$custom?.displayOrder;
-        const orderB = b.$custom?.displayOrder;
+    tasksByParent.forEach((parentTasks, parentId) => {
+      if (parentId === 0) {
+        // Root level: separate milestones and issues
+        const milestones = parentTasks.filter(
+          (t) => t._gitlab?.type === 'milestone',
+        );
+        const issues = parentTasks.filter(
+          (t) => t._gitlab?.type !== 'milestone',
+        );
 
-        // Both have order: sort by order
-        if (orderA !== undefined && orderB !== undefined) {
-          return orderA - orderB;
-        }
+        // Sort milestones by due date > start date > title
+        milestones.sort((a, b) => {
+          if (a.end && b.end) {
+            return a.end.getTime() - b.end.getTime();
+          }
+          if (a.end) return -1;
+          if (b.end) return 1;
+          if (a.start && b.start) {
+            return a.start.getTime() - b.start.getTime();
+          }
+          if (a.start) return -1;
+          if (b.start) return 1;
+          return (a.text || '').localeCompare(b.text || '');
+        });
 
-        // Only a has order: a comes first
-        if (orderA !== undefined) {
-          return -1;
-        }
+        // Sort issues by displayOrder > id
+        issues.sort((a, b) => {
+          const orderA = a.$custom?.displayOrder;
+          const orderB = b.$custom?.displayOrder;
 
-        // Only b has order: b comes first
-        if (orderB !== undefined) {
-          return 1;
-        }
+          if (orderA !== undefined && orderB !== undefined) {
+            return orderA - orderB;
+          }
+          if (orderA !== undefined) return -1;
+          if (orderB !== undefined) return 1;
+          return Number(a.id) - Number(b.id);
+        });
 
-        // Neither has order: sort by ID (creation order)
-        return Number(a.id) - Number(b.id);
-      });
+        // Milestones first, then issues
+        sortedTasks.push(...milestones, ...issues);
+      } else {
+        // Non-root level: sort by displayOrder > id
+        parentTasks.sort((a, b) => {
+          const orderA = a.$custom?.displayOrder;
+          const orderB = b.$custom?.displayOrder;
 
-      sortedTasks.push(...parentTasks);
+          if (orderA !== undefined && orderB !== undefined) {
+            return orderA - orderB;
+          }
+          if (orderA !== undefined) return -1;
+          if (orderB !== undefined) return 1;
+          return Number(a.id) - Number(b.id);
+        });
+
+        sortedTasks.push(...parentTasks);
+      }
     });
 
     return sortedTasks;
@@ -315,6 +389,8 @@ export class GitLabGraphQLProvider {
           // Baseline shows the span of all children for reference
           return {
             ...task,
+            // If this is a milestone with children, upgrade to 'summary' type
+            type: task.$isMilestone ? 'summary' : task.type,
             // Keep the task's type (already set based on GitLab workItemType)
             // Issue -> 'summary' (blue), Task -> 'task' (green)
             $parent: true, // Custom flag for CSS styling
@@ -367,6 +443,58 @@ export class GitLabGraphQLProvider {
       .trim();
     // Add new order metadata at the beginning
     return `<!-- gantt:order=${order} -->\n${cleanDescription}`;
+  }
+
+  /**
+   * Convert GitLab Milestone to Gantt Task
+   */
+  private convertMilestoneToTask(milestone: any): ITask {
+    // Construct full web URL from webPath
+    const webUrl = milestone.webPath
+      ? `${this.config.gitlabUrl}${milestone.webPath}`
+      : undefined;
+
+    // Use numeric ID with offset to avoid conflicts with work item IIDs
+    // Offset: 10000 (e.g., milestone iid=1 becomes 10001)
+    const milestoneTaskId = 10000 + Number(milestone.iid);
+
+    // Ensure milestones have valid dates
+    // If no start date, use creation date or today
+    const startDate = milestone.startDate
+      ? new Date(milestone.startDate)
+      : milestone.createdAt
+        ? new Date(milestone.createdAt)
+        : new Date();
+
+    // If no due date, use start date + 30 days as placeholder
+    const endDate = milestone.dueDate
+      ? new Date(milestone.dueDate)
+      : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    // Calculate duration in days (same logic as work items)
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const duration = Math.max(1, days);
+
+    return {
+      id: milestoneTaskId,
+      text: `[Milestone] ${milestone.title}`,
+      start: startDate,
+      end: endDate,
+      duration,
+      type: 'task', // Use 'task' type to avoid Gantt store issues with empty summary
+      parent: 0, // Milestones are always at root level
+      // Do NOT set open: true without data property - causes Gantt store error
+      // Gantt will handle open state based on children
+      details: milestone.description || '',
+      $isMilestone: true, // Custom flag for identifying milestones
+      _gitlab: {
+        type: 'milestone',
+        id: milestone.iid,
+        globalId: milestone.id, // Store global ID for mutations
+        web_url: webUrl,
+      },
+    };
   }
 
   /**
@@ -430,14 +558,16 @@ export class GitLabGraphQLProvider {
     const { description, order } =
       this.extractOrderFromDescription(rawDescription);
 
-    // Determine parent: use hierarchy parent if available, otherwise use milestone
-    let parent = 0;
+    // Determine parent: hierarchy > milestone > root
+    let parent: number = 0;
     if (hierarchyWidget?.parent) {
+      // This is a subtask - parent is another work item
       parent = Number(hierarchyWidget.parent.iid);
     } else if (milestoneWidget?.milestone) {
-      // Use milestone as parent for backward compatibility
-      parent = 0; // We don't map milestones to parent in this version
+      // This issue belongs to a milestone - parent is milestone ID with offset
+      parent = 10000 + Number(milestoneWidget.milestone.iid);
     }
+    // else: standalone issue at root level (parent = 0)
 
     // Always use 'task' type to avoid Gantt's auto-calculation for summary types
     // Use custom flag $isIssue to distinguish GitLab Issue from Task for styling
