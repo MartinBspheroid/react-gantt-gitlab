@@ -1646,8 +1646,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           align-items: center;
           gap: 16px;
           padding: 12px 16px;
-          background: #fff;
-          border-bottom: 1px solid #ddd;
+          background: var(--wx-gitlab-header-background);
+          border-bottom: 1px solid var(--wx-gitlab-header-border);
           flex-wrap: wrap;
         }
 
@@ -1662,9 +1662,9 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           gap: 16px;
           align-items: center;
           padding: 4px 12px;
-          background: #f8f9fa;
+          background: var(--wx-gitlab-control-background);
           border-radius: 4px;
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--wx-gitlab-control-border);
         }
 
         .control-label {
@@ -1672,7 +1672,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           align-items: center;
           gap: 8px;
           font-size: 13px;
-          color: #666;
+          color: var(--wx-gitlab-control-text);
           white-space: nowrap;
         }
 
@@ -1691,21 +1691,22 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           min-width: 30px;
           text-align: right;
           font-weight: 600;
-          color: #333;
+          color: var(--wx-gitlab-control-value);
         }
 
         .unit-select {
           padding: 4px 8px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-button-border);
           border-radius: 4px;
           font-size: 13px;
-          background: white;
+          background: var(--wx-gitlab-button-background);
+          color: var(--wx-gitlab-button-text);
           cursor: pointer;
           min-width: 80px;
         }
 
         .unit-select:hover {
-          border-color: #999;
+          border-color: var(--wx-gitlab-button-hover-text);
         }
 
         .unit-select:focus {
@@ -1715,31 +1716,32 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
         .project-select-compact {
           padding: 6px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-button-border);
           border-radius: 4px;
           font-size: 14px;
-          background: white;
+          background: var(--wx-gitlab-button-background);
+          color: var(--wx-gitlab-button-text);
           cursor: pointer;
           min-width: 200px;
         }
 
         .btn-settings {
           padding: 6px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-button-border);
           border-radius: 4px;
-          background: white;
+          background: var(--wx-gitlab-button-background);
           cursor: pointer;
           transition: background 0.2s, color 0.2s;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          color: #666;
+          color: var(--wx-gitlab-button-text);
           font-size: 14px;
         }
 
         .btn-settings:hover {
-          color: #333;
-          background: #f5f5f5;
+          color: var(--wx-gitlab-button-hover-text);
+          background: var(--wx-gitlab-button-hover-background);
         }
 
         .settings-modal-overlay {
@@ -1748,7 +1750,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: var(--wx-gitlab-modal-overlay);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1756,7 +1758,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         .settings-modal-content {
-          background: white;
+          background: var(--wx-gitlab-modal-background);
           border-radius: 8px;
           width: 90%;
           max-width: 800px;
@@ -1770,19 +1772,20 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           justify-content: space-between;
           align-items: center;
           padding: 16px 20px;
-          border-bottom: 1px solid #ddd;
-          background: #f8f9fa;
+          border-bottom: 1px solid var(--wx-gitlab-modal-border);
+          background: var(--wx-gitlab-modal-header-background);
         }
 
         .settings-modal-header h3 {
           margin: 0;
           font-size: 18px;
           font-weight: 600;
+          color: var(--wx-gitlab-modal-text);
         }
 
         .settings-section {
           padding: 20px;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--wx-gitlab-modal-section-border);
         }
 
         .settings-section:last-child {
@@ -1793,20 +1796,22 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           margin: 0 0 12px 0;
           font-size: 16px;
           font-weight: 600;
-          color: #333;
+          color: var(--wx-gitlab-modal-text);
         }
 
         .settings-hint {
           margin: 0 0 8px 0;
           font-size: 13px;
-          color: #666;
+          color: var(--wx-gitlab-modal-hint-text);
         }
 
         .holidays-textarea {
           width: 100%;
           padding: 8px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-filter-input-border);
           border-radius: 4px;
+          background: var(--wx-gitlab-filter-input-background);
+          color: var(--wx-gitlab-modal-text);
           font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
           font-size: 13px;
           resize: vertical;
@@ -1826,17 +1831,18 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
         .preset-btn {
           padding: 6px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-button-border);
           border-radius: 4px;
-          background: white;
+          background: var(--wx-gitlab-button-background);
+          color: var(--wx-gitlab-button-text);
           cursor: pointer;
           font-size: 13px;
           transition: all 0.2s;
         }
 
         .preset-btn:hover {
-          background: #f5f5f5;
-          border-color: #999;
+          background: var(--wx-gitlab-button-hover-background);
+          border-color: var(--wx-gitlab-button-hover-text);
         }
 
         .preset-btn-clear {
@@ -1854,7 +1860,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           border: none;
           font-size: 28px;
           cursor: pointer;
-          color: #666;
+          color: var(--wx-gitlab-button-text);
           line-height: 1;
           padding: 0;
           width: 32px;
@@ -1862,7 +1868,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         .btn-close-modal:hover {
-          color: #333;
+          color: var(--wx-gitlab-button-hover-text);
         }
 
         /* Today marker styling - MUCH more prominent */
@@ -1893,13 +1899,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         .stat-label {
-          color: #666;
+          color: var(--wx-gitlab-control-text);
           font-weight: 500;
         }
 
         .stat-value {
           font-weight: 600;
-          color: #333;
+          color: var(--wx-gitlab-control-value);
         }
 
         .stat-completed {

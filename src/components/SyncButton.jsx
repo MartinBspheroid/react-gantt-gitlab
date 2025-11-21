@@ -122,11 +122,11 @@ export function SyncButton({ onSync, syncState, filterOptions }) {
 
         .sync-info {
           font-size: 12px;
-          color: #666;
+          color: var(--wx-gitlab-control-text);
         }
 
         .sync-time {
-          color: #666;
+          color: var(--wx-gitlab-control-text);
         }
 
         .sync-error {

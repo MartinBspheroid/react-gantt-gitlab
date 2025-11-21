@@ -63,7 +63,7 @@ function DemoExplorerContent({
   };
 
   return (
-    <div className={`wx-demos layout ${show ? 'active' : ''}`}>
+    <div className={`wx-demos layout wx-${skin}-theme ${show ? 'active' : ''}`}>
       <div
         className={`wx-demos sidebar ${show ? 'active' : ''}`}
         role="tabpanel"

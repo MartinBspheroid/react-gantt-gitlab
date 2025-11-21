@@ -305,8 +305,8 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           flex-direction: column;
           gap: 8px;
           padding: 12px;
-          background: #f5f5f5;
-          border-bottom: 1px solid #ddd;
+          background: var(--wx-gitlab-filter-background);
+          border-bottom: 1px solid var(--wx-gitlab-filter-border);
         }
 
         .selector-header {
@@ -318,10 +318,11 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
         .project-select {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-button-border);
           border-radius: 4px;
           font-size: 14px;
-          background: white;
+          background: var(--wx-gitlab-button-background);
+          color: var(--wx-gitlab-button-text);
         }
 
         .btn-add, .btn-edit, .btn-delete, .btn-test, .btn-save, .btn-cancel {
@@ -408,7 +409,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: var(--wx-gitlab-modal-overlay);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -416,7 +417,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
         }
 
         .modal-content {
-          background: white;
+          background: var(--wx-gitlab-modal-background);
           border-radius: 8px;
           width: 90%;
           max-width: 600px;
@@ -430,12 +431,13 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           justify-content: space-between;
           align-items: center;
           padding: 16px 20px;
-          border-bottom: 1px solid #ddd;
+          border-bottom: 1px solid var(--wx-gitlab-modal-border);
         }
 
         .modal-header h3 {
           margin: 0;
           font-size: 18px;
+          color: var(--wx-gitlab-modal-text);
         }
 
         .btn-close {
@@ -443,7 +445,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           border: none;
           font-size: 28px;
           cursor: pointer;
-          color: #666;
+          color: var(--wx-gitlab-button-text);
           line-height: 1;
           padding: 0;
           width: 32px;
@@ -451,7 +453,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
         }
 
         .btn-close:hover {
-          color: #333;
+          color: var(--wx-gitlab-button-hover-text);
         }
 
         .modal-body {
@@ -467,14 +469,17 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           margin-bottom: 6px;
           font-weight: 500;
           font-size: 14px;
+          color: var(--wx-gitlab-modal-text);
         }
 
         .form-group input,
         .form-group select {
           width: 100%;
           padding: 8px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-filter-input-border);
           border-radius: 4px;
+          background: var(--wx-gitlab-filter-input-background);
+          color: var(--wx-gitlab-modal-text);
           font-size: 14px;
           box-sizing: border-box;
         }
@@ -482,7 +487,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
         .form-group small {
           display: block;
           margin-top: 4px;
-          color: #666;
+          color: var(--wx-gitlab-modal-hint-text);
           font-size: 12px;
         }
 
@@ -510,7 +515,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId }) {
           justify-content: flex-end;
           gap: 8px;
           padding: 16px 20px;
-          border-top: 1px solid #ddd;
+          border-top: 1px solid var(--wx-gitlab-modal-border);
         }
       `}</style>
     </div>

@@ -247,8 +247,8 @@ export function FilterPanel({
 
       <style>{`
         .gitlab-filter-panel {
-          background: #f5f5f5;
-          border-bottom: 1px solid #ddd;
+          background: var(--wx-gitlab-filter-background);
+          border-bottom: 1px solid var(--wx-gitlab-filter-border);
         }
 
         .filter-header {
@@ -266,6 +266,7 @@ export function FilterPanel({
           border: none;
           font-size: 14px;
           font-weight: 500;
+          color: var(--wx-gitlab-filter-text);
           cursor: pointer;
           padding: 4px 8px;
           border-radius: 4px;
@@ -273,12 +274,12 @@ export function FilterPanel({
         }
 
         .filter-toggle:hover {
-          background: rgba(0, 0, 0, 0.05);
+          background: var(--wx-gitlab-filter-hover-background);
         }
 
         .toggle-icon {
           font-size: 10px;
-          color: #666;
+          color: var(--wx-gitlab-control-text);
         }
 
         .filter-badge {
@@ -323,13 +324,15 @@ export function FilterPanel({
         .filter-label {
           font-size: 13px;
           font-weight: 600;
-          color: #333;
+          color: var(--wx-gitlab-filter-text);
         }
 
         .filter-search {
           padding: 8px 12px;
-          border: 1px solid #ccc;
+          border: 1px solid var(--wx-gitlab-filter-input-border);
           border-radius: 4px;
+          background: var(--wx-gitlab-filter-input-background);
+          color: var(--wx-gitlab-filter-text);
           font-size: 14px;
         }
 
@@ -350,17 +353,17 @@ export function FilterPanel({
         }
 
         .filter-options.scrollable::-webkit-scrollbar-track {
-          background: #f1f1f1;
+          background: var(--wx-gitlab-filter-hover-background);
           border-radius: 3px;
         }
 
         .filter-options.scrollable::-webkit-scrollbar-thumb {
-          background: #888;
+          background: var(--wx-gitlab-control-text);
           border-radius: 3px;
         }
 
         .filter-options.scrollable::-webkit-scrollbar-thumb:hover {
-          background: #555;
+          background: var(--wx-gitlab-control-value);
         }
 
         .filter-checkbox {
@@ -370,6 +373,7 @@ export function FilterPanel({
           cursor: pointer;
           font-size: 13px;
           padding: 4px 0;
+          color: var(--wx-gitlab-filter-text);
         }
 
         .filter-checkbox input[type="checkbox"] {
@@ -383,7 +387,8 @@ export function FilterPanel({
         }
 
         .label-tag {
-          background: #e1e4e8;
+          background: var(--wx-gitlab-control-background);
+          color: var(--wx-gitlab-filter-text);
           padding: 2px 8px;
           border-radius: 3px;
           font-size: 12px;

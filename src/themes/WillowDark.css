@@ -80,6 +80,48 @@
 
   /* sidebar */
   --wx-sidebar-close-icon: #384047;
+
+  /* GitLab Gantt Header & Controls */
+  --wx-gitlab-header-background: #2c2f33;
+  --wx-gitlab-header-border: #384047;
+  --wx-gitlab-control-background: #23262a;
+  --wx-gitlab-control-border: #384047;
+  --wx-gitlab-control-text: #9fa1ae;
+  --wx-gitlab-control-value: #e6e6e6;
+  --wx-gitlab-button-background: #2c2f33;
+  --wx-gitlab-button-border: #384047;
+  --wx-gitlab-button-hover-background: #33373c;
+  --wx-gitlab-button-text: #9fa1ae;
+  --wx-gitlab-button-hover-text: #e6e6e6;
+
+  /* GitLab Filter Panel */
+  --wx-gitlab-filter-background: #23262a;
+  --wx-gitlab-filter-border: #384047;
+  --wx-gitlab-filter-text: #e6e6e6;
+  --wx-gitlab-filter-hover-background: rgba(255, 255, 255, 0.05);
+  --wx-gitlab-filter-input-background: #2c2f33;
+  --wx-gitlab-filter-input-border: #384047;
+
+  /* GitLab Settings Modal */
+  --wx-gitlab-modal-overlay: rgba(0, 0, 0, 0.7);
+  --wx-gitlab-modal-background: #2c2f33;
+  --wx-gitlab-modal-header-background: #23262a;
+  --wx-gitlab-modal-border: #384047;
+  --wx-gitlab-modal-section-border: #384047;
+  --wx-gitlab-modal-text: #e6e6e6;
+  --wx-gitlab-modal-hint-text: #9fa1ae;
+
+  /* Demo Sidebar & Top Bar */
+  --wx-demo-sidebar-background: #23262a;
+  --wx-demo-sidebar-border: #384047;
+  --wx-demo-text-primary: #e6e6e6;
+  --wx-demo-text-secondary: #9fa1ae;
+  --wx-demo-button-border: #384047;
+  --wx-demo-button-hover-background: #2c2f33;
+  --wx-demo-button-active-background: #33373c;
+  --wx-demo-demo-hover-background: #2c2f33;
+  --wx-demo-demo-active-border: #37a9ef;
+  --wx-demo-segmented-background: #2c2f33;
 }
 
 /* GitLab Integration specific styling - override default colors */

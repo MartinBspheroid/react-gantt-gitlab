@@ -19,7 +19,7 @@
   align-items: center;
   gap: 40px;
   padding: 16px;
-  border-bottom: 1px solid #ebebeb;
+  border-bottom: 1px solid var(--wx-demo-sidebar-border);
 }
 
 .wx-demos.header-title-box {
@@ -50,7 +50,7 @@
   justify-content: space-between;
   position: sticky;
   top: 0px;
-  background-color: #fbfbfb;
+  background-color: var(--wx-demo-sidebar-background);
   padding: 19px 16px 19px 18px;
 }
 
@@ -78,7 +78,7 @@
 .wx-demos.box-title .wx-demos.separator {
   width: 1px;
   height: 20px;
-  background: #ebebeb;
+  background: var(--wx-demo-sidebar-border);
 }
 
 .wx-demos.sidebar.active {
@@ -91,31 +91,31 @@
   width: 300px;
   gap: 16px;
   height: 100%;
-  border-right: 1px solid #ebebeb;
+  border-right: 1px solid var(--wx-demo-sidebar-border);
   overflow-y: auto;
   font-family: Roboto, Arial, Helvetica, sans-serif;
   font-size: 16px;
   line-height: 20px;
-  background-color: #fbfbfb;
-  border-bottom: 1px solid #ebebeb;
+  background-color: var(--wx-demo-sidebar-background);
+  border-bottom: 1px solid var(--wx-demo-sidebar-border);
 }
 
 .wx-demos.btn-box button.toggle-btn {
   display: flex;
   gap: 8px;
-  border: 1px solid #ebebeb;
-  color: #42454d;
+  border: 1px solid var(--wx-demo-button-border);
+  color: var(--wx-demo-text-primary);
 }
 
 .wx-demos.btn-box button.toggle-btn:hover,
 .wx-demos.btn-box button.toggle-btn:focus {
-  border: 1px solid #ebebeb;
-  color: #42454d;
-  background: #f7f7f7;
+  border: 1px solid var(--wx-demo-button-border);
+  color: var(--wx-demo-text-primary);
+  background: var(--wx-demo-button-hover-background);
 }
 
 .wx-demos.btn-box button.toggle-btn:active {
-  background: #f1f1f1;
+  background: var(--wx-demo-button-active-background);
 }
 .wx-demos a {
   display: flex;
@@ -146,7 +146,7 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
-  color: #42454d;
+  color: var(--wx-demo-text-primary);
 }
 
 .wx-demos.title {
@@ -154,7 +154,7 @@
   font-size: 18px;
   font-weight: 500;
   line-height: 24px;
-  color: #42454d;
+  color: var(--wx-demo-text-primary);
 }
 
 .wx-demos.segmented-box div.segmented-themes {
@@ -166,15 +166,15 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 18px;
-  color: #595b66;
+  color: var(--wx-demo-text-secondary);
   background-color: transparent;
 }
 
 .wx-demos.segmented-box div.segmented-themes button.wx-selected {
   border-radius: 2px;
   font-weight: 500;
-  color: #42454d;
-  background: #fff;
+  color: var(--wx-demo-text-primary);
+  background: var(--wx-demo-segmented-background);
   box-shadow: 0px 0px 7px 0px rgba(66, 69, 76, 0.07);
 }
 
@@ -220,21 +220,21 @@
   font-weight: 400;
   padding-left: 16px;
   border-left: 4px solid transparent;
-  color: #595b66;
+  color: var(--wx-demo-text-secondary);
   list-style: none;
   cursor: pointer;
   text-decoration: none;
 }
 
 .wx-demos.demo.active {
-  border-left-color: #087a9f;
+  border-left-color: var(--wx-demo-demo-active-border);
 }
 
 .wx-demos.demo.active,
 .wx-demos.demo:hover {
   font-weight: 500;
-  color: #42454d;
-  background-color: #f1f1f1;
+  color: var(--wx-demo-text-primary);
+  background-color: var(--wx-demo-demo-hover-background);
 }
 
 /* Group styles */
@@ -244,7 +244,7 @@
   height: 37px;
   font-weight: 600;
   padding-left: 16px;
-  color: #42454d;
+  color: var(--wx-demo-text-primary);
   list-style: none;
   cursor: pointer;
   user-select: none;
