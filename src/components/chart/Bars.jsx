@@ -581,7 +581,7 @@ function Bars(props) {
               <div
                 className={
                   'wx-GKbcLEGA wx-baseline' +
-                  (task.type === 'milestone' ? ' wx-milestone' : '')
+                  (task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-milestone' : '')
                 }
                 style={baselineStyle(task)}
               ></div>

@@ -2044,6 +2044,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           opacity: 0.7 !important;
         }
 
+        /* Milestone baseline should be blue (contains issues) */
+        .wx-baseline.wx-milestone {
+          background-color: #37a9ef !important; /* Blue - represents GitLab Issue original range */
+        }
+
         /* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
         .wx-bar.wx-parent-task {
           z-index: 2 !important;

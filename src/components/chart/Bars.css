@@ -5,8 +5,7 @@
   z-index: 1;
 }
 .wx-baseline.wx-milestone.wx-GKbcLEGA {
-  transform: rotate(45deg) scale(0.75);
-  border-radius: var(--wx-gantt-milestone-border-radius);
+  background-color: #37a9ef; /* Blue color for milestone baseline (contains issues) */
 }
 .wx-bars.wx-GKbcLEGA {
   position: absolute;
