@@ -31,11 +31,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify Font Awesome installation
+        run: |
+          echo "Checking Font Awesome installation..."
+          ls -la node_modules/@fortawesome/fontawesome-free/css/all.min.css || echo "Font Awesome not found!"
+
       - name: Build
         run: npm run build:pages
         env:
           VITE_BASE_PATH: /react-gantt-gitlab/
           VITE_CORS_PROXY: https://gitlab-cors-proxy.farllee.workers.dev
+
+      - name: Verify build output
+        run: |
+          echo "Build output:"
+          ls -la dist-demos/
+          echo "Assets:"
+          ls -la dist-demos/assets/
+          echo "index.html content:"
+          cat dist-demos/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
