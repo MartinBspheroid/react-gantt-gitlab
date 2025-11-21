@@ -60,6 +60,12 @@
   gap: 12px;
 }
 
+.wx-demos.box-title img.box-title-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .wx-demos.box-title img:hover,
 .wx-demos.box-title img:focus {
   opacity: 0.6;

@@ -197,7 +197,7 @@ export function reorder(node, config) {
   if (node.style.position !== 'absolute') node.style.position = 'relative';
 
   node.addEventListener('mousedown', handleMousedown);
-  node.addEventListener('touchstart', handleTouchstart);
+  node.addEventListener('touchstart', handleTouchstart, { passive: true });
 
   return {
     destroy() {

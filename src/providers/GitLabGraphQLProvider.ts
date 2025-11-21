@@ -6,6 +6,7 @@
 import type { ITask, ILink, TID } from '@svar-ui/gantt-store';
 import type { GitLabSyncOptions, GitLabDataResponse } from '../types/gitlab';
 import { GitLabGraphQLClient } from './GitLabGraphQLClient';
+import { gitlabRestRequest } from './GitLabApiUtils';
 
 export interface GitLabGraphQLProviderConfig {
   gitlabUrl: string;
@@ -79,6 +80,7 @@ export class GitLabGraphQLProvider {
   private config: GitLabGraphQLProviderConfig;
   private graphqlClient: GitLabGraphQLClient;
   private updateQueue: Map<number | string, Promise<void>> = new Map();
+  private isDev: boolean;
 
   constructor(config: GitLabGraphQLProviderConfig) {
     this.config = config;
@@ -86,6 +88,7 @@ export class GitLabGraphQLProvider {
       gitlabUrl: config.gitlabUrl,
       token: config.token,
     });
+    this.isDev = import.meta.env.DEV;
   }
 
   /**
@@ -389,10 +392,8 @@ export class GitLabGraphQLProvider {
           // Baseline shows the span of all children for reference
           return {
             ...task,
-            // If this is a milestone with children, upgrade to 'summary' type
-            type: task.$isMilestone ? 'summary' : task.type,
-            // Keep the task's type (already set based on GitLab workItemType)
-            // Issue -> 'summary' (blue), Task -> 'task' (green)
+            // Keep the task's type unchanged (milestone stays as 'milestone', issues stay as they are)
+            // Milestone type will be rendered with purple color via CSS
             $parent: true, // Custom flag for CSS styling
             // Keep task's own dates - these are independent and adjustable
             // start, end, duration remain unchanged from GitLab
@@ -458,17 +459,17 @@ export class GitLabGraphQLProvider {
     // Offset: 10000 (e.g., milestone iid=1 becomes 10001)
     const milestoneTaskId = 10000 + Number(milestone.iid);
 
-    // Ensure milestones have valid dates
+    // Ensure milestones have valid dates with proper timezone handling
     // If no start date, use creation date or today
     const startDate = milestone.startDate
-      ? new Date(milestone.startDate)
+      ? new Date(milestone.startDate + 'T00:00:00')
       : milestone.createdAt
         ? new Date(milestone.createdAt)
         : new Date();
 
-    // If no due date, use start date + 30 days as placeholder
+    // If no due date, use start date with end of day time to ensure visibility even for same-day milestones
     const endDate = milestone.dueDate
-      ? new Date(milestone.dueDate)
+      ? new Date(milestone.dueDate + 'T23:59:59')
       : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     // Calculate duration in days (same logic as work items)
@@ -482,12 +483,12 @@ export class GitLabGraphQLProvider {
       start: startDate,
       end: endDate,
       duration,
-      type: 'task', // Use 'task' type to avoid Gantt store issues with empty summary
+      type: 'task', // Use 'task' type to show bar with baseline support
       parent: 0, // Milestones are always at root level
       // Do NOT set open: true without data property - causes Gantt store error
       // Gantt will handle open state based on children
       details: milestone.description || '',
-      $isMilestone: true, // Custom flag for identifying milestones
+      $isMilestone: true, // Custom flag for identifying milestones (for CSS styling)
       _gitlab: {
         type: 'milestone',
         id: milestone.iid,
@@ -614,6 +615,14 @@ export class GitLabGraphQLProvider {
    */
   async updateWorkItem(id: TID, task: Partial<ITask>): Promise<void> {
     console.log('[GitLabGraphQL] updateWorkItem called with:', { id, task });
+
+    // Check if this is a milestone (ID >= 10000)
+    if (Number(id) >= 10000) {
+      console.log(
+        '[GitLabGraphQL] Detected milestone update, routing to updateMilestone',
+      );
+      return this.updateMilestone(id, task);
+    }
 
     // Wait for any pending update for this task to complete
     const pendingUpdate = this.updateQueue.get(id);
@@ -1009,6 +1018,9 @@ export class GitLabGraphQLProvider {
       ? 'gid://gitlab/WorkItems::Type/5' // Task type
       : 'gid://gitlab/WorkItems::Type/1'; // Issue type
 
+    // Set appropriate default name based on work item type
+    const defaultName = isSubtask ? 'New GitLab Task' : 'New GitLab Issue';
+
     const mutation = `
       mutation CreateWorkItem($input: WorkItemCreateInput!) {
         workItemCreate(input: $input) {
@@ -1051,7 +1063,7 @@ export class GitLabGraphQLProvider {
       input: {
         ...pathInput,
         workItemTypeId,
-        title: task.text || 'New Task',
+        title: task.text || defaultName,
         ...(task.details && {
           descriptionWidget: {
             description: task.details,
@@ -1061,14 +1073,20 @@ export class GitLabGraphQLProvider {
           ? {
               startAndDueDateWidget: {
                 ...(task.start && {
-                  startDate: task.start.toISOString().split('T')[0],
+                  startDate: this.formatDateForGitLab(task.start),
                 }),
                 ...(endDate && {
-                  dueDate: endDate.toISOString().split('T')[0],
+                  dueDate: this.formatDateForGitLab(endDate),
                 }),
               },
             }
           : {}),
+        // Add milestone assignment if specified
+        ...(task._gitlab?.milestoneGlobalId && {
+          milestoneWidget: {
+            milestoneId: task._gitlab.milestoneGlobalId,
+          },
+        }),
       },
     };
 
@@ -1262,6 +1280,135 @@ export class GitLabGraphQLProvider {
    */
   async deleteIssue(id: TID): Promise<void> {
     return this.deleteWorkItem(id);
+  }
+
+  /**
+   * Create a new milestone using REST API
+   * Note: GitLab GraphQL API does not support milestone creation
+   */
+  async createMilestone(milestone: Partial<ITask>): Promise<ITask> {
+    console.log('[GitLabGraphQL] Creating milestone via REST API:', milestone);
+
+    // Build payload for REST API
+    const payload: any = {
+      title: milestone.text || 'New Milestone',
+    };
+
+    if (milestone.details) {
+      payload.description = milestone.details;
+    }
+
+    if (milestone.start) {
+      payload.start_date = this.formatDateForGitLab(milestone.start);
+    }
+
+    if (milestone.end) {
+      payload.due_date = this.formatDateForGitLab(milestone.end);
+    } else if (milestone.start && milestone.duration) {
+      // Calculate end date from start + duration
+      const endDate = new Date(milestone.start);
+      endDate.setDate(endDate.getDate() + milestone.duration - 1);
+      payload.due_date = this.formatDateForGitLab(endDate);
+    }
+
+    // Get project ID and encode it for URL
+    const projectId = this.getFullPath();
+    const encodedProjectId = encodeURIComponent(projectId);
+
+    // Use shared REST API utility
+    const createdMilestone = await gitlabRestRequest(
+      `/projects/${encodedProjectId}/milestones`,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
+
+    console.log('[GitLabGraphQL] Milestone created:', createdMilestone);
+
+    // Convert the REST API response to ITask format
+    return this.convertMilestoneToTask(createdMilestone);
+  }
+
+  /**
+   * Update an existing milestone using REST API
+   * Note: GitLab GraphQL API does not support milestone updates
+   */
+  async updateMilestone(id: TID, milestone: Partial<ITask>): Promise<void> {
+    console.log('[GitLabGraphQL] Updating milestone via REST API:', {
+      id,
+      milestone,
+    });
+
+    // Extract milestone ID from globalId
+    // globalId format: "gid://gitlab/Milestone/1130"
+    // GitLab REST API uses the internal ID (not iid) for milestone_id parameter
+    let milestoneId: string;
+
+    if (milestone._gitlab?.globalId) {
+      // Extract internal ID from globalId (e.g., "gid://gitlab/Milestone/1130" -> "1130")
+      const match = milestone._gitlab.globalId.match(/\/Milestone\/(\d+)$/);
+      if (match) {
+        milestoneId = match[1];
+      } else {
+        // Fallback to iid if globalId format is unexpected
+        milestoneId = String(milestone._gitlab.id || Number(id) - 10000);
+      }
+    } else if (milestone._gitlab?.id) {
+      // Fallback: use iid
+      milestoneId = String(milestone._gitlab.id);
+    } else {
+      // Last resort: calculate from task ID
+      milestoneId = String(Number(id) - 10000);
+    }
+
+    // Build payload for REST API
+    const payload: any = {};
+
+    if (milestone.text !== undefined) {
+      payload.title = milestone.text;
+    }
+
+    if (milestone.details !== undefined) {
+      payload.description = milestone.details;
+    }
+
+    if (milestone.start !== undefined) {
+      payload.start_date = milestone.start
+        ? this.formatDateForGitLab(milestone.start)
+        : null;
+    }
+
+    if (milestone.end !== undefined) {
+      payload.due_date = milestone.end
+        ? this.formatDateForGitLab(milestone.end)
+        : null;
+    }
+
+    // Get project ID and encode it for URL
+    const projectId = this.getFullPath();
+    const encodedProjectId = encodeURIComponent(projectId);
+
+    // Use shared REST API utility
+    const updatedMilestone = await gitlabRestRequest(
+      `/projects/${encodedProjectId}/milestones/${milestoneId}`,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      },
+    );
+
+    console.log('[GitLabGraphQL] Milestone updated:', updatedMilestone);
   }
 
   /**

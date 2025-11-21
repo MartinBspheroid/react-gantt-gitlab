@@ -1,0 +1,19 @@
+.wx-smart-task.wx-content {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wx-smart-task.wx-text-out {
+  position: absolute;
+  left: 100%;
+  padding-left: 8px;
+  line-height: normal;
+  display: block;
+  color: var(--wx-color-font);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}

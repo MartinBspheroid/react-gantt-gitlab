@@ -4,6 +4,7 @@ import Toolbar from './components/Toolbar.jsx';
 import ContextMenu from './components/ContextMenu.jsx';
 import Editor from './components/Editor.jsx';
 import HeaderMenu from './components/grid/HeaderMenu.jsx';
+import SmartTaskContent from './components/SmartTaskContent.jsx';
 
 import Tooltip from './widgets/Tooltip.jsx';
 
@@ -30,6 +31,7 @@ export {
   Toolbar,
   Tooltip,
   Editor,
+  SmartTaskContent,
   Material,
   Willow,
   WillowDark,

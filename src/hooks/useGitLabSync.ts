@@ -29,6 +29,7 @@ export interface GitLabSyncResult {
   sync: (options?: GitLabSyncOptions) => Promise<void>;
   syncTask: (id: number | string, updates: Partial<ITask>) => Promise<void>;
   createTask: (task: Partial<ITask>) => Promise<ITask>;
+  createMilestone: (milestone: Partial<ITask>) => Promise<ITask>;
   deleteTask: (id: number | string) => Promise<void>;
   createLink: (link: Partial<ILink>) => Promise<void>;
   deleteLink: (
@@ -180,24 +181,19 @@ export function useGitLabSync(
 
         console.log('[useGitLabSync] Task created from GitLab:', createdTask);
 
-        // If this is a subtask, wait a bit for GitLab to process the parent-child relationship
-        // then sync to get the updated hierarchy
+        // If this is a subtask, mark it as needing sync
+        // The caller (GitLabGantt) should handle syncing to preserve fold state
         if (task.parent && task.parent !== 0) {
           console.log(
-            '[useGitLabSync] Subtask created, waiting for GitLab to process hierarchy...',
+            '[useGitLabSync] Subtask created, caller should sync to update hierarchy',
           );
-          // Wait 2 seconds for GitLab to process the hierarchy
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          // Sync to get the updated data from GitLab
-          await sync();
-          // Return the synced task with correct parent relationship
-          const syncedTask = tasks.find((t) => t.id === createdTask.id);
-          return syncedTask || createdTask;
+          // Add a flag to indicate sync is needed
+          (createdTask as any)._needsSync = true;
+        } else {
+          // Add the new task to local state
+          // This will cause Gantt to update via the tasks prop
+          setTasks((prevTasks) => [...prevTasks, createdTask]);
         }
-
-        // Add the new task to local state
-        // This will cause Gantt to update via the tasks prop
-        setTasks((prevTasks) => [...prevTasks, createdTask]);
 
         return createdTask;
       } catch (error) {
@@ -205,10 +201,41 @@ export function useGitLabSync(
         throw error;
       }
     },
-    [provider, sync, tasks],
+    [provider, tasks],
   );
 
-  // createMilestone removed - not supported by current provider
+  /**
+   * Create a new milestone
+   */
+  const createMilestone = useCallback(
+    async (milestone: Partial<ITask>): Promise<ITask> => {
+      if (!provider) {
+        throw new Error('GitLab provider not initialized');
+      }
+
+      // Check if provider supports createMilestone
+      if (!('createMilestone' in provider)) {
+        throw new Error('Current provider does not support milestone creation');
+      }
+
+      try {
+        const createdMilestone = await (provider as any).createMilestone(
+          milestone,
+        );
+
+        console.log('[useGitLabSync] Milestone created:', createdMilestone);
+
+        // Add the new milestone to local state
+        setTasks((prevTasks) => [...prevTasks, createdMilestone]);
+
+        return createdMilestone;
+      } catch (error) {
+        console.error('Failed to create milestone:', error);
+        throw error;
+      }
+    },
+    [provider],
+  );
 
   /**
    * Delete a task
@@ -345,6 +372,7 @@ export function useGitLabSync(
     sync,
     syncTask,
     createTask,
+    createMilestone,
     deleteTask,
     createLink,
     deleteLink,

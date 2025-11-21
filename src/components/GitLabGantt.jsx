@@ -8,6 +8,7 @@ import Gantt from './Gantt.jsx';
 import Editor from './Editor.jsx';
 import Toolbar from './Toolbar.jsx';
 import ContextMenu from './ContextMenu.jsx';
+import SmartTaskContent from './SmartTaskContent.jsx';
 import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
 import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
 import { useGitLabSync } from '../hooks/useGitLabSync.ts';
@@ -48,6 +49,32 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [lengthUnit, setLengthUnit] = useState(() => {
+    const saved = localStorage.getItem('gantt-length-unit');
+    return saved || 'day';
+  });
+
+  // Calculate effective cellWidth based on lengthUnit
+  const effectiveCellWidth = useMemo(() => {
+    if (lengthUnit === 'day') {
+      // Only in 'day' mode, use user-controlled cellWidth
+      return cellWidth;
+    }
+    // For other units, use fixed defaults
+    switch (lengthUnit) {
+      case 'hour':
+        return 80; // Wider cells for hour view to reduce total count
+      case 'week':
+        return 100;
+      case 'month':
+        return 120;
+      case 'quarter':
+        return 150;
+      default:
+        return cellWidth;
+    }
+  }, [lengthUnit, cellWidth]);
+
   // Save cell width to localStorage
   useEffect(() => {
     localStorage.setItem('gantt-cell-width', cellWidth.toString());
@@ -67,6 +94,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   useEffect(() => {
     localStorage.setItem('gantt-workdays', JSON.stringify(workdays));
   }, [workdays]);
+
+  // Save length unit to localStorage
+  useEffect(() => {
+    localStorage.setItem('gantt-length-unit', lengthUnit);
+  }, [lengthUnit]);
 
   // Load all configs for project switcher
   useEffect(() => {
@@ -119,6 +151,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     sync,
     syncTask,
     createTask,
+    createMilestone,
     deleteTask,
     createLink,
     deleteLink,
@@ -126,6 +159,62 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
   // Ref to store fold state before data updates
   const openStateRef = useRef(new Map());
+
+  // Generate a unique key for localStorage based on project/group
+  const getStorageKey = useCallback(() => {
+    if (!currentConfig) return 'gitlab-gantt-foldstate-default';
+    if (currentConfig.type === 'project' && currentConfig.projectId) {
+      return `gitlab-gantt-foldstate-project-${currentConfig.projectId}`;
+    } else if (currentConfig.type === 'group' && currentConfig.groupId) {
+      return `gitlab-gantt-foldstate-group-${currentConfig.groupId}`;
+    }
+    return 'gitlab-gantt-foldstate-default';
+  }, [currentConfig]);
+
+  // Load fold state from localStorage when config changes
+  useEffect(() => {
+    if (!currentConfig) return;
+
+    try {
+      const storageKey = getStorageKey();
+      const savedState = localStorage.getItem(storageKey);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        openStateRef.current = new Map(Object.entries(parsed));
+        console.log('[GitLabGantt] Loaded fold state from localStorage:', {
+          key: storageKey,
+          count: openStateRef.current.size,
+          states: Array.from(openStateRef.current.entries()),
+        });
+      } else {
+        console.log('[GitLabGantt] No saved fold state found for key:', storageKey);
+        openStateRef.current = new Map();
+      }
+    } catch (error) {
+      console.error('[GitLabGantt] Failed to load fold state from localStorage:', error);
+    }
+  }, [currentConfig, getStorageKey]);
+
+  // Save fold state to localStorage whenever it changes
+  const saveFoldStateToStorage = useCallback(() => {
+    try {
+      const storageKey = getStorageKey();
+      const stateObj = Object.fromEntries(openStateRef.current);
+      localStorage.setItem(storageKey, JSON.stringify(stateObj));
+      console.log('[GitLabGantt] Saved fold state to localStorage:', {
+        key: storageKey,
+        count: openStateRef.current.size,
+      });
+    } catch (error) {
+      console.error('[GitLabGantt] Failed to save fold state to localStorage:', error);
+    }
+  }, [getStorageKey]);
+
+  // Use ref to make saveFoldStateToStorage accessible in init callback
+  const saveFoldStateRef = useRef(saveFoldStateToStorage);
+  useEffect(() => {
+    saveFoldStateRef.current = saveFoldStateToStorage;
+  }, [saveFoldStateToStorage]);
 
   // Wrapped sync function that preserves fold state
   const syncWithFoldState = useCallback(
@@ -148,6 +237,9 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             count: newOpenState.size,
             states: Array.from(newOpenState.entries()),
           });
+
+          // Persist to localStorage
+          saveFoldStateToStorage();
         } catch (error) {
           console.error('[GitLabGantt] Failed to save fold state:', error);
         }
@@ -156,7 +248,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       // Call original sync
       await sync(options);
     },
-    [api, sync]
+    [api, sync, saveFoldStateToStorage]
   );
 
   // Update ref when allTasks changes
@@ -178,15 +270,25 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
           // Restore open state from saved map
           currentTasks.forEach((task) => {
-            if (openStateRef.current.has(task.id)) {
-              const savedOpen = openStateRef.current.get(task.id);
-              if (task.open !== savedOpen) {
-                console.log(
-                  `[GitLabGantt] Restoring fold state for task ${task.id}:`,
-                  savedOpen
-                );
-                api.exec('open-task', { id: task.id, mode: savedOpen });
-              }
+            // Check both string and number versions of the ID
+            const taskIdStr = String(task.id);
+            const taskIdNum = Number(task.id);
+
+            let savedOpen = null;
+            if (openStateRef.current.has(taskIdStr)) {
+              savedOpen = openStateRef.current.get(taskIdStr);
+            } else if (openStateRef.current.has(taskIdNum)) {
+              savedOpen = openStateRef.current.get(taskIdNum);
+            } else if (openStateRef.current.has(task.id)) {
+              savedOpen = openStateRef.current.get(task.id);
+            }
+
+            if (savedOpen !== null && task.open !== savedOpen) {
+              console.log(
+                `[GitLabGantt] Restoring fold state for task ${task.id}:`,
+                savedOpen
+              );
+              api.exec('open-task', { id: task.id, mode: savedOpen });
             }
           });
         } catch (error) {
@@ -206,16 +308,84 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     return GitLabFilters.calculateStats(filteredTasks);
   }, [filteredTasks]);
 
-  // Fixed date range for timeline: 1 month before today, 1 year after today
+  // Dynamic date range based on lengthUnit to avoid performance issues
   const dateRange = useMemo(() => {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const end = new Date(now.getFullYear() + 1, now.getMonth(), 0);
+    let start, end;
 
-    console.log('[GitLab] Timeline range:', start, 'to', end);
+    switch (lengthUnit) {
+      case 'hour':
+        // For hour view, show only 2 weeks to avoid rendering thousands of cells
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+        break;
+      case 'day':
+        // Standard range: 1 month before, 1 year after
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear() + 1, now.getMonth(), 0);
+        break;
+      case 'week':
+        // For week view, show 3 months before and 6 months after
+        start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 6, 0);
+        break;
+      case 'month':
+        // For month view, show 6 months before and 2 years after
+        start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        end = new Date(now.getFullYear() + 2, now.getMonth(), 0);
+        break;
+      case 'quarter':
+        // For quarter view, show 1 year before and 3 years after
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() + 3, 11, 31);
+        break;
+      default:
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear() + 1, now.getMonth(), 0);
+    }
+
+    console.log('[GitLab] Timeline range for', lengthUnit, ':', start, 'to', end);
 
     return { start, end };
-  }, []); // Empty deps - only calculate once on mount
+  }, [lengthUnit]); // Recalculate when lengthUnit changes
+
+  // Dynamic scales based on lengthUnit (lengthUnit = the smallest time unit to display)
+  const scales = useMemo(() => {
+    switch (lengthUnit) {
+      case 'hour':
+        return [
+          { unit: 'day', step: 1, format: 'MMM d' },
+          { unit: 'hour', step: 2, format: 'HH:mm' }, // Show every 2 hours to reduce cells
+        ];
+      case 'day':
+        return [
+          { unit: 'year', step: 1, format: 'yyyy' },
+          { unit: 'month', step: 1, format: 'MMMM' },
+          { unit: 'day', step: 1, format: 'd' },
+        ];
+      case 'week':
+        return [
+          { unit: 'month', step: 1, format: 'MMM' },
+          { unit: 'week', step: 1, format: 'w' },
+        ];
+      case 'month':
+        return [
+          { unit: 'year', step: 1, format: 'yyyy' },
+          { unit: 'month', step: 1, format: 'MMM' },
+        ];
+      case 'quarter':
+        return [
+          { unit: 'year', step: 1, format: 'yyyy' },
+          { unit: 'quarter', step: 1, format: 'QQQ' },
+        ];
+      default:
+        return [
+          { unit: 'year', step: 1, format: 'yyyy' },
+          { unit: 'month', step: 1, format: 'MMMM' },
+          { unit: 'day', step: 1, format: 'd' },
+        ];
+    }
+  }, [lengthUnit]);
 
   // Track pending editor changes (for Save button)
   const pendingEditorChangesRef = useRef(new Map());
@@ -237,6 +407,36 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     }),
     []
   );
+
+  // Handler for adding a new milestone
+  const handleAddMilestone = useCallback(async () => {
+    if (!api) return;
+
+    const title = prompt('Enter Milestone title:', 'New Milestone');
+    if (!title) return;
+
+    const description = prompt('Enter description (optional):');
+
+    const startDateStr = prompt('Enter start date (YYYY-MM-DD, optional):');
+    const dueDateStr = prompt('Enter due date (YYYY-MM-DD, optional):');
+
+    try {
+      const milestone = {
+        text: title,
+        details: description || '',
+        parent: 0,
+        ...(startDateStr && { start: new Date(startDateStr) }),
+        ...(dueDateStr && { end: new Date(dueDateStr) }),
+      };
+
+      console.log('[GitLabGantt] Creating milestone:', milestone);
+      await createMilestone(milestone);
+      console.log('[GitLabGantt] Milestone created successfully');
+    } catch (error) {
+      console.error('[GitLabGantt] Failed to create milestone:', error);
+      alert(`Failed to create milestone: ${error.message}`);
+    }
+  }, [api, createMilestone]);
 
   // Initialize Gantt API
   const init = useCallback(
@@ -353,6 +553,20 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         setTimeout(() => attemptScroll(2), 100);
       }
 
+      // Listen to fold/unfold events to save state
+      ganttApi.on('open-task', (ev) => {
+        // Update openStateRef with the new state
+        if (ev.id && ev.mode !== undefined) {
+          openStateRef.current.set(ev.id, ev.mode);
+          console.log('[GitLab] Task fold state changed:', {
+            id: ev.id,
+            open: ev.mode,
+          });
+          // Save to localStorage using ref
+          saveFoldStateRef.current();
+        }
+      });
+
       // Track editor open
       ganttApi.on('open-editor', (ev) => {
         isEditorOpenRef.current = true;
@@ -437,11 +651,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       // Listen to update-task AFTER the update completes
       // Using 'on' instead of 'intercept' to get final values after drag
       ganttApi.on('update-task', (ev) => {
-        // Skip milestone summary tasks
-        if (ev.task._gitlab?.type === 'milestone') {
-          return;
-        }
-
         // Handle temporary IDs
         const isTempId = typeof ev.id === 'string' && ev.id.startsWith('temp');
 
@@ -612,16 +821,84 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         // At intercept time, parent info is in ev.target and ev.mode, not ev.task.parent
         if (ev.mode === 'child' && ev.target && ev.target !== 0) {
           const parentTask = ganttApi.getTask(ev.target);
-          if (parentTask && parentTask.parent && parentTask.parent !== 0) {
-            alert('Cannot create subtasks under a subtask. Only two levels are allowed.');
+
+          // Check if parent is a milestone
+          if (parentTask && parentTask.$isMilestone) {
+            // Creating issue under milestone - this is allowed
+            console.log('[GitLab] Creating issue under milestone:', parentTask.id);
+
+            // Don't use ev.task.text as default if it's the generic "New Task" from Gantt
+            const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : 'New GitLab Issue';
+            const title = prompt(
+              'Enter GitLab Issue title:',
+              defaultTitle
+            );
+
+            if (!title) {
+              return false; // User cancelled
+            }
+
+            // Update the task with user input
+            ev.task.text = title;
+
+            // Optionally ask for description
+            const description = prompt('Enter description (optional):');
+            if (description) {
+              ev.task.details = description;
+            }
+
+            // Mark this task to be created with milestone assignment
+            // Store the milestone's global ID for the mutation
+            ev.task._assignToMilestone = parentTask._gitlab.globalId; // Store milestone global ID
+
+            return true;
+          }
+
+          // Check if parent is a GitLab Task (subtask)
+          // Only GitLab Tasks cannot have children (third level not allowed)
+          // Issues under milestones CAN have children (Tasks)
+          const isParentGitLabTask = parentTask && !parentTask.$isIssue && !parentTask.$isMilestone;
+
+          if (isParentGitLabTask) {
+            alert('Cannot create subtasks under a GitLab Task. Only Issues can have Tasks as children.');
             return false;
+          }
+
+          // Check if parent is a GitLab Issue
+          const isParentGitLabIssue = parentTask && parentTask.$isIssue;
+
+          if (isParentGitLabIssue) {
+            // Creating task under issue
+            // Don't use ev.task.text as default if it's the generic "New Task" from Gantt
+            const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : 'New GitLab Task';
+            const title = prompt(
+              'Enter GitLab Task title:',
+              defaultTitle
+            );
+
+            if (!title) {
+              return false; // User cancelled
+            }
+
+            // Update the task with user input
+            ev.task.text = title;
+
+            // Optionally ask for description
+            const description = prompt('Enter description (optional):');
+            if (description) {
+              ev.task.details = description;
+            }
+
+            return true;
           }
         }
 
-        // Show dialog to input task details before creating
+        // Creating top-level issue (no parent)
+        // Don't use ev.task.text as default if it's the generic "New Task" from Gantt
+        const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : 'New GitLab Issue';
         const title = prompt(
-          'Enter Task title:',
-          ev.task.text || 'New Task'
+          'Enter GitLab Issue title:',
+          defaultTitle
         );
 
         if (!title) {
@@ -648,24 +925,73 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         try {
+          // Save fold state BEFORE any operations that might change it
+          // This is crucial because deleting the temporary task might close the parent
+          const savedOpenState = new Map();
+          if (api) {
+            try {
+              const state = api.getState();
+              const currentTasks = state.tasks || [];
+              currentTasks.forEach((task) => {
+                if (task.open !== undefined) {
+                  savedOpenState.set(task.id, task.open);
+                }
+              });
+              console.log('[GitLab] Saved fold state before task creation:', {
+                count: savedOpenState.size,
+                states: Array.from(savedOpenState.entries()),
+              });
+            } catch (error) {
+              console.error('[GitLab] Failed to save fold state:', error);
+            }
+          }
+
+          // Check if this is an issue being created under a milestone
+          if (ev.task._assignToMilestone) {
+            console.log('[GitLab] Creating Issue under milestone:', ev.task._assignToMilestone);
+
+            // Issues under milestones should not use hierarchy (parent=0)
+            // The milestone relationship is managed via GitLab's milestone widget
+            ev.task.parent = 0;
+
+            // Add milestone info to task for provider to use
+            ev.task._gitlab = {
+              ...ev.task._gitlab,
+              milestoneGlobalId: ev.task._assignToMilestone,
+            };
+          }
+
           console.log('[GitLab] Creating Task...');
           const newTask = await createTask(ev.task);
 
-          console.log('[GitLab] Item created from GitLab:', {
+          console.log('[GitLab] Task created from GitLab:', {
             tempId: ev.id,
             newId: newTask.id,
             newTask,
+            needsSync: newTask._needsSync,
           });
-
-          // Strategy: Delete temp task, let React state drive the update
-          // The new task was already added to state by createTask()
-          // Gantt will receive it via the tasks prop and display it
 
           // Delete the temporary task (with baseline)
           ganttApi.exec('delete-task', {
             id: ev.id,
             skipHandler: true, // Don't trigger delete handler
           });
+
+          // If this was an issue under a milestone OR a subtask, sync to update the hierarchy
+          if (ev.task._assignToMilestone || newTask._needsSync) {
+            console.log('[GitLab] Syncing to update hierarchy with fold state preservation...');
+            // Wait a bit for GitLab to process the hierarchy
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // Temporarily override openStateRef to use our saved state
+            const originalOpenState = openStateRef.current;
+            openStateRef.current = savedOpenState;
+
+            await syncWithFoldState();
+
+            // Restore original openStateRef
+            openStateRef.current = originalOpenState;
+          }
 
           console.log('[GitLab] Temporary task deleted, waiting for React state to update Gantt with real task');
         } catch (error) {
@@ -849,7 +1175,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
       });
     },
-    [syncTask, createTask, deleteTask, createLink, deleteLink, links, syncWithFoldState]
+    [syncTask, createTask, createMilestone, deleteTask, createLink, deleteLink, links, syncWithFoldState]
   );
 
   // Today marker - ensure correct date without timezone issues
@@ -1023,8 +1349,9 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               value={cellWidth}
               onChange={(e) => setCellWidth(Number(e.target.value))}
               className="slider"
+              disabled={lengthUnit !== 'day'}
             />
-            <span className="control-value">{cellWidth}</span>
+            <span className="control-value">{lengthUnit === 'day' ? cellWidth : effectiveCellWidth}</span>
           </label>
           <label className="control-label">
             Height:
@@ -1037,6 +1364,20 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               className="slider"
             />
             <span className="control-value">{cellHeight}</span>
+          </label>
+          <label className="control-label">
+            Unit:
+            <select
+              value={lengthUnit}
+              onChange={(e) => setLengthUnit(e.target.value)}
+              className="unit-select"
+            >
+              <option value="hour">Hour</option>
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="quarter">Quarter</option>
+            </select>
           </label>
         </div>
 
@@ -1168,7 +1509,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       )}
 
       <div className="gantt-wrapper">
-        <Toolbar api={api} />
+        <Toolbar api={api} onAddMilestone={handleAddMilestone} />
         <div className="gantt-chart-container">
           {syncState.isLoading || allTasks.length === 0 ? (
             <div className="loading-message">
@@ -1210,6 +1551,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 try {
                   return (
                     <Gantt
+                    key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
                     init={(api) => {
                       console.log('[Gantt init callback] CALLED with api:', api);
                       try {
@@ -1228,19 +1570,17 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                     tasks={filteredTasks}
                     links={links}
               markers={markers}
-              scales={[
-                { unit: 'year', step: 1, format: 'yyyy' },
-                { unit: 'month', step: 1, format: 'MMMM' },
-                { unit: 'day', step: 1, format: 'd' },
-              ]}
+              scales={scales}
+              lengthUnit={lengthUnit}
               start={dateRange.start}
               end={dateRange.end}
               columns={columns}
-              cellWidth={cellWidth}
+              cellWidth={effectiveCellWidth}
               cellHeight={cellHeight}
               highlightTime={highlightTime}
               readonly={false}
               baselines={true}
+              taskTemplate={SmartTaskContent}
                   />
                 );
               } catch (error) {
@@ -1306,11 +1646,35 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           cursor: pointer;
         }
 
+        .slider:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
         .control-value {
           min-width: 30px;
           text-align: right;
           font-weight: 600;
           color: #333;
+        }
+
+        .unit-select {
+          padding: 4px 8px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          font-size: 13px;
+          background: white;
+          cursor: pointer;
+          min-width: 80px;
+        }
+
+        .unit-select:hover {
+          border-color: #999;
+        }
+
+        .unit-select:focus {
+          outline: none;
+          border-color: #1f75cb;
         }
 
         .project-select-compact {
@@ -1463,7 +1827,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         /* Today marker styling - MUCH more prominent */
         .today-marker {
           position: relative;
-          border-left: 4px solid #FF0000 !important;
+          border-left: 6px solid #ff4d4d41 !important;
           background: transparent !important;
           z-index: 100 !important;
           box-shadow: none !important;
@@ -1563,6 +1927,17 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         .wx-task.wx-selected,
         .wx-summary.wx-selected {
           opacity: 0.9;
+        }
+
+        /* Milestone styling - use purple color for milestones (ID >= 10000) */
+        /* Gantt uses data-id attribute for task bars */
+        .wx-bar[data-id^="1000"] {
+          background-color: var(--wx-gantt-milestone-color) !important;
+          border-color: var(--wx-gantt-milestone-color) !important;
+        }
+
+        .wx-bar[data-id^="1000"] .wx-content {
+          background-color: var(--wx-gantt-milestone-color) !important;
         }
 
         .gitlab-gantt-loading,

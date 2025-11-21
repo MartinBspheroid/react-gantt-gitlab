@@ -21,8 +21,7 @@ function DemoExplorerContent({
   const [show, setShow] = useState(false);
 
   const baseLink =
-    'https://github.com/svar-widgets/react-' +
-    productTag +
+    'https://gitlab.rayark.com/farllee/react-gantt-gitlab' +
     '/tree/main/demos/cases/';
 
   useEffect(() => {
@@ -140,8 +139,7 @@ function DemoExplorerContent({
             <div className="wx-demos btn-box">
               <a href={githubLink} target="_blank" rel="noopener noreferrer">
                 <Button type="secondary" css="toggle-btn">
-                  <img src={GitHubLogoIcon} alt="GitHub icon" />
-                  See code on GitHub
+                  See code on GitLab
                 </Button>
               </a>
             </div>

@@ -547,7 +547,7 @@ export class GitLabDataProvider {
     const endpoint = `/projects/${this.getEncodedProjectId()}/issues`;
 
     const payload: any = {
-      title: task.text || 'New Task',
+      title: task.text || 'New GitLab Issue',
     };
 
     if (task.details) {
