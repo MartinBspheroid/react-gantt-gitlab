@@ -70,12 +70,6 @@ export class GitLabGraphQLClient {
     const endpoint = this.getEndpoint();
     const headers = this.getHeaders();
 
-    console.log('[GitLabGraphQL] Executing query:', {
-      endpoint,
-      query,
-      variables,
-    });
-
     const response = await fetch(endpoint, {
       method: 'POST',
       headers,
@@ -96,8 +90,6 @@ export class GitLabGraphQLClient {
     if (!result.data) {
       throw new Error('GraphQL response has no data');
     }
-
-    console.log('[GitLabGraphQL] Query result:', result.data);
 
     return result.data;
   }

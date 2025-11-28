@@ -106,7 +106,7 @@ export class GitLabGraphQLProvider {
    * Fetch all work items (issues) using GraphQL
    */
   async getData(options: GitLabSyncOptions = {}): Promise<GitLabDataResponse> {
-    console.log('[GitLabGraphQL] Fetching work items and milestones...');
+    // Fetching work items and milestones
 
     // Query for work items
     const workItemsQuery = `
@@ -277,24 +277,7 @@ export class GitLabGraphQLProvider {
           relativePositionMap.set(Number(issue.iid), issue.relativePosition);
         }
       });
-
-      console.log(
-        `[GitLabGraphQL] Built relativePosition map with ${relativePositionMap.size} entries`,
-      );
-
-      // Debug: Log relativePosition for Test6 (id=8) and Test7 (id=14)
-      const test6Pos = relativePositionMap.get(8);
-      const test7Pos = relativePositionMap.get(14);
-      if (test6Pos !== undefined || test7Pos !== undefined) {
-        console.log(
-          `[GitLabGraphQL] 🔍 DEBUG relativePosition: Test6(#8)=${test6Pos}, Test7(#14)=${test7Pos}`,
-        );
-      }
     }
-
-    console.log(
-      `[GitLabGraphQL] Fetched ${workItems.length} work items and ${milestones.length} milestones`,
-    );
 
     // Build children order map for Tasks
     // For each parent, store the order of its children based on array index
@@ -323,16 +306,10 @@ export class GitLabGraphQLProvider {
       }
     }
 
-    console.log(
-      `[GitLabGraphQL] Built childrenOrderMap for ${childrenOrderMap.size} parents`,
-    );
-
     // Convert milestones to tasks
     const milestoneTasks: ITask[] = milestones.map((m) =>
       this.convertMilestoneToTask(m),
     );
-
-    console.log('[GitLabGraphQL] Milestone tasks:', milestoneTasks.length);
 
     // Convert work items to tasks (with relativePosition map and children order map)
     const workItemTasks: ITask[] = workItems.map((wi) =>
@@ -349,7 +326,6 @@ export class GitLabGraphQLProvider {
     tasks = this.calculateSpanningDates(tasks);
 
     // LOG: Validate final tasks structure before returning
-    console.log('[GitLabGraphQL] Final tasks count:', tasks.length);
     tasks.forEach((task, index) => {
       if (!task.id || !task.text) {
         console.error(`[GitLabGraphQL] Invalid task at index ${index}:`, task);
@@ -357,9 +333,7 @@ export class GitLabGraphQLProvider {
     });
 
     // Fetch links (related work items)
-    console.log('[GitLabGraphQL] Fetching work item links...');
     const links = await this.fetchWorkItemLinks(workItems);
-    console.log('[GitLabGraphQL] Found', links.length, 'links');
 
     return {
       tasks,
@@ -692,13 +666,6 @@ export class GitLabGraphQLProvider {
       },
     };
 
-    console.log(
-      '[GitLabGraphQL] Converted work item:',
-      workItem.iid,
-      '→',
-      task,
-    );
-
     return task;
   }
 
@@ -707,20 +674,14 @@ export class GitLabGraphQLProvider {
    * Uses queue to prevent race conditions
    */
   async updateWorkItem(id: TID, task: Partial<ITask>): Promise<void> {
-    console.log('[GitLabGraphQL] updateWorkItem called with:', { id, task });
-
     // Check if this is a milestone (ID >= 10000)
     if (Number(id) >= 10000) {
-      console.log(
-        '[GitLabGraphQL] Detected milestone update, routing to updateMilestone',
-      );
       return this.updateMilestone(id, task);
     }
 
     // Wait for any pending update for this task to complete
     const pendingUpdate = this.updateQueue.get(id);
     if (pendingUpdate) {
-      console.log('[GitLabGraphQL] Waiting for pending update to complete...');
       await pendingUpdate;
     }
 
@@ -769,12 +730,6 @@ export class GitLabGraphQLProvider {
     issueIid: number,
     afterIssueId: number,
   ): Promise<void> {
-    console.log('[GitLabGraphQL] Reordering issue via REST API:', {
-      issueIid,
-      afterIssueId,
-      note: '⚠️  Using move_before_id due to inverted GitLab API behavior (confirmed bug)',
-    });
-
     const projectPath = this.getFullPath();
     const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}/reorder`;
 
@@ -795,8 +750,6 @@ export class GitLabGraphQLProvider {
         }),
       },
     );
-
-    console.log('[GitLabGraphQL] Issue reordered successfully');
   }
 
   /**
@@ -815,12 +768,6 @@ export class GitLabGraphQLProvider {
     issueIid: number,
     beforeIssueId: number,
   ): Promise<void> {
-    console.log('[GitLabGraphQL] Reordering issue BEFORE via REST API:', {
-      issueIid,
-      beforeIssueId,
-      note: '⚠️  Using move_after_id due to inverted GitLab API behavior (confirmed bug)',
-    });
-
     const projectPath = this.getFullPath();
     const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}/reorder`;
 
@@ -841,8 +788,6 @@ export class GitLabGraphQLProvider {
         }),
       },
     );
-
-    console.log('[GitLabGraphQL] Issue reordered before successfully');
   }
 
   /**
@@ -855,11 +800,6 @@ export class GitLabGraphQLProvider {
     taskGlobalId: string,
     afterTaskGlobalId: string,
   ): Promise<void> {
-    console.log('[GitLabGraphQL] Reordering task via GraphQL:', {
-      taskGlobalId,
-      afterTaskGlobalId,
-    });
-
     const mutation = `
       mutation {
         workItemUpdate(input: {
@@ -897,8 +837,6 @@ export class GitLabGraphQLProvider {
         `Failed to reorder task: ${result.workItemUpdate.errors.join(', ')}`,
       );
     }
-
-    console.log('[GitLabGraphQL] Task reordered successfully');
   }
 
   /**
@@ -911,11 +849,6 @@ export class GitLabGraphQLProvider {
     taskGlobalId: string,
     beforeTaskGlobalId: string,
   ): Promise<void> {
-    console.log('[GitLabGraphQL] Reordering task BEFORE via GraphQL:', {
-      taskGlobalId,
-      beforeTaskGlobalId,
-    });
-
     const mutation = `
       mutation {
         workItemUpdate(input: {
@@ -953,8 +886,6 @@ export class GitLabGraphQLProvider {
         `Failed to reorder task before: ${result.workItemUpdate.errors.join(', ')}`,
       );
     }
-
-    console.log('[GitLabGraphQL] Task reordered before successfully');
   }
 
   /**
@@ -968,8 +899,6 @@ export class GitLabGraphQLProvider {
     targetId: TID,
     mode: 'before' | 'after',
   ): Promise<void> {
-    console.log(`[GitLabGraphQL] Reordering ${movedId} ${mode} ${targetId}`);
-
     // Get work item data for both moved and target
     const dataMap = await this.getBatchWorkItemsDataForReorder([
       movedId,
@@ -1049,9 +978,6 @@ export class GitLabGraphQLProvider {
       );
 
       if (!siblings || siblings.length === 0) {
-        console.log(
-          `[GitLabGraphQL] No siblings found for task ${task.id}, skipping reorder`,
-        );
         return;
       }
 
@@ -1087,13 +1013,6 @@ export class GitLabGraphQLProvider {
       // If task is at position N in all orders, targetIndex should be N
       let targetIndex = taskPositionInAll;
 
-      console.log(
-        `[GitLabGraphQL] Task ${task.id} with order ${task.order} is at position ${taskPositionInAll} among all orders [${allOrders.join(', ')}]`,
-      );
-      console.log(
-        `[GitLabGraphQL] Task ${task.id} should be at index ${targetIndex} among ${sortedSiblings.length} siblings`,
-      );
-
       // Determine if this is an Issue (root level) or Task (child level)
       const isTask = taskData.workItemType === 'Task' && taskData.hasParent;
 
@@ -1101,25 +1020,16 @@ export class GitLabGraphQLProvider {
         if (targetIndex === 0) {
           // Task should be first - move it before the current first task
           if (sortedSiblings.length === 0) {
-            console.log(
-              `[GitLabGraphQL] Task ${task.id} is the only task, no reorder needed`,
-            );
             return;
           }
 
           const firstTask = sortedSiblings[0];
-          console.log(
-            `[GitLabGraphQL] Task ${task.id} should be first, moving before ${firstTask.id}`,
-          );
 
           if (isTask) {
             // Use GraphQL for Tasks (child level) - move BEFORE the first task
             await this.reorderTaskBefore(taskData.globalId, firstTask.globalId);
           } else {
             // Use REST API for Issues (root level) - move BEFORE the first issue
-            console.log(
-              `[GitLabGraphQL] Reordering Issue ${task.id} before ${firstTask.id} using REST API`,
-            );
             await this.reorderIssueBefore(Number(task.id), firstTask.numericId);
           }
         } else {
@@ -1133,21 +1043,11 @@ export class GitLabGraphQLProvider {
             return;
           }
 
-          console.log(
-            `[GitLabGraphQL] Task ${task.id} should come after ${previousTask.id}`,
-          );
-
           if (isTask) {
             // Use GraphQL for Tasks (child level)
-            console.log(
-              `[GitLabGraphQL] Reordering Task ${task.id} after ${previousTask.id} using GraphQL`,
-            );
             await this.reorderTask(taskData.globalId, previousTask.globalId);
           } else {
             // Use REST API for Issues (root level)
-            console.log(
-              `[GitLabGraphQL] Reordering Issue ${task.id} after ${previousTask.id} using REST API`,
-            );
             await this.reorderIssue(Number(task.id), previousTask.numericId);
           }
         }
@@ -1159,7 +1059,6 @@ export class GitLabGraphQLProvider {
         throw error;
       }
 
-      console.log('[GitLabGraphQL] Single task reorder completed');
       return;
     }
 
@@ -1201,16 +1100,10 @@ export class GitLabGraphQLProvider {
             .sort((a, b) => (a.order as number) - (b.order as number));
 
           if (sortedSiblings.length === 0) {
-            console.log(
-              `[GitLabGraphQL] Task ${currentTask.id} is the only task, no reorder needed`,
-            );
             continue;
           }
 
           const currentFirstTask = sortedSiblings[0];
-          console.log(
-            `[GitLabGraphQL] Moving task ${currentTask.id} before current first task ${currentFirstTask.id}`,
-          );
 
           if (isTask) {
             // Use GraphQL for Tasks - move BEFORE the current first task
@@ -1220,9 +1113,6 @@ export class GitLabGraphQLProvider {
             );
           } else {
             // Use REST API for Issues - move BEFORE the current first issue
-            console.log(
-              `[GitLabGraphQL] Reordering Issue ${currentTask.id} before ${currentFirstTask.id} using REST API`,
-            );
             await this.reorderIssueBefore(
               Number(currentTask.id),
               currentFirstTask.numericId,
@@ -1242,15 +1132,9 @@ export class GitLabGraphQLProvider {
 
           if (isTask) {
             // Use GraphQL for Tasks (child level)
-            console.log(
-              `[GitLabGraphQL] Reordering Task ${currentTask.id} after ${previousTask.id} using GraphQL`,
-            );
             await this.reorderTask(currentData.globalId, previousData.globalId);
           } else {
             // Use REST API for Issues (root level)
-            console.log(
-              `[GitLabGraphQL] Reordering Issue ${currentTask.id} after ${previousTask.id} using REST API`,
-            );
             await this.reorderIssue(
               Number(currentTask.id),
               previousData.numericId,
@@ -1265,8 +1149,6 @@ export class GitLabGraphQLProvider {
         // Continue with other tasks even if one fails
       }
     }
-
-    console.log('[GitLabGraphQL] Batch reorder completed');
   }
 
   /**

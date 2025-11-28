@@ -182,13 +182,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       if (savedState) {
         const parsed = JSON.parse(savedState);
         openStateRef.current = new Map(Object.entries(parsed));
-        console.log('[GitLabGantt] Loaded fold state from localStorage:', {
-          key: storageKey,
-          count: openStateRef.current.size,
-          states: Array.from(openStateRef.current.entries()),
-        });
       } else {
-        console.log('[GitLabGantt] No saved fold state found for key:', storageKey);
         openStateRef.current = new Map();
       }
     } catch (error) {
@@ -202,10 +196,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       const storageKey = getStorageKey();
       const stateObj = Object.fromEntries(openStateRef.current);
       localStorage.setItem(storageKey, JSON.stringify(stateObj));
-      console.log('[GitLabGantt] Saved fold state to localStorage:', {
-        key: storageKey,
-        count: openStateRef.current.size,
-      });
     } catch (error) {
       console.error('[GitLabGantt] Failed to save fold state to localStorage:', error);
     }
@@ -234,10 +224,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           });
 
           openStateRef.current = newOpenState;
-          console.log('[GitLabGantt] Saved fold state before sync:', {
-            count: newOpenState.size,
-            states: Array.from(newOpenState.entries()),
-          });
 
           // Persist to localStorage
           saveFoldStateToStorage();
@@ -264,10 +250,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           const state = api.getState();
           const currentTasks = state.tasks || [];
 
-          console.log('[GitLabGantt] Restoring fold state:', {
-            savedStates: openStateRef.current.size,
-            currentTasks: currentTasks.length,
-          });
 
           // Restore open state from saved map
           currentTasks.forEach((task) => {
@@ -285,10 +267,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             }
 
             if (savedOpen !== null && task.open !== savedOpen) {
-              console.log(
-                `[GitLabGantt] Restoring fold state for task ${task.id}:`,
-                savedOpen
-              );
               api.exec('open-task', { id: task.id, mode: savedOpen });
             }
           });
@@ -344,8 +322,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         end = new Date(now.getFullYear() + 1, now.getMonth(), 0);
     }
-
-    console.log('[GitLab] Timeline range for', lengthUnit, ':', start, 'to', end);
 
     return { start, end };
   }, [lengthUnit]); // Recalculate when lengthUnit changes
@@ -430,9 +406,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         ...(dueDateStr && { end: new Date(dueDateStr) }),
       };
 
-      console.log('[GitLabGantt] Creating milestone:', milestone);
       await createMilestone(milestone);
-      console.log('[GitLabGantt] Milestone created successfully');
     } catch (error) {
       console.error('[GitLabGantt] Failed to create milestone:', error);
       alert(`Failed to create milestone: ${error.message}`);
@@ -442,13 +416,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   // Initialize Gantt API
   const init = useCallback(
     (ganttApi) => {
-      console.log('[init] ENTRY POINT - Gantt API initialization started');
-      console.log('[init] ganttApi object:', ganttApi);
-      console.log('[init] ganttApi.getState:', typeof ganttApi.getState);
-
       try {
         setApi(ganttApi);
-        console.log('[init] setApi completed successfully');
       } catch (error) {
         console.error('[init] ERROR in setApi:', error);
         console.error('[init] ERROR stack:', error.stack);
@@ -463,29 +432,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         try {
           const state = ganttApi.getState();
           const allTasks = state.tasks || [];
-          console.log('=== All Tasks in Gantt ===');
-          console.log('Total tasks:', allTasks.length);
-          console.log('State structure:', Object.keys(state));
-
-          allTasks.forEach(t => {
-            console.log(`Task ${t.id}: "${t.text}"`, {
-              start: t.start,
-              end: t.end,
-              base_start: t.base_start,
-              base_end: t.base_end,
-              parent: t.parent,
-              hasBaseline: !!(t.base_start && t.base_end)
-            });
-          });
 
           return allTasks;
         } catch (error) {
           console.error('Error in debugTasks:', error);
-          console.log('Trying alternative method...');
-
           // Try alternative method
           const state = ganttApi.getState();
-          console.log('Full state:', state);
           return state;
         }
       };
@@ -497,11 +449,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           const allTasks = state.tasks || [];
           const task = allTasks.find(t => t.id == id);
 
-          if (task) {
-            console.log(`Found task ${id}:`, task);
-          } else {
-            console.log(`Task ${id} not found. Available IDs:`, allTasks.map(t => t.id));
-          }
 
           return task;
         } catch (error) {
@@ -522,29 +469,19 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           const scales = state._scales || [];
           const start = state.start;
 
-          console.log('[GitLab] Auto-scroll attempt', attempt, {
-            today: today.toISOString(),
-            start: start ? start.toISOString() : 'undefined',
-            cellWidth,
-            hasScales: scales.length > 0
-          });
 
           if (start) {
             // Calculate days from timeline start to today
             const daysDiff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
             const scrollLeft = Math.max(0, daysDiff * cellWidth);
 
-            console.log('[GitLab] Scrolling to:', { daysDiff, scrollLeft });
-
             // Use scroll-chart command to set scroll position
             ganttApi.exec('scroll-chart', { left: scrollLeft });
-            console.log('[GitLab] Scroll command executed successfully');
             return true;
           }
 
           return false;
         } catch (error) {
-          console.warn('[GitLab] Scroll attempt', attempt, 'failed:', error);
           return false;
         }
       };
@@ -559,10 +496,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         // Update openStateRef with the new state
         if (ev.id && ev.mode !== undefined) {
           openStateRef.current.set(ev.id, ev.mode);
-          console.log('[GitLab] Task fold state changed:', {
-            id: ev.id,
-            open: ev.mode,
-          });
           // Save to localStorage using ref
           saveFoldStateRef.current();
         }
@@ -573,7 +506,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         isEditorOpenRef.current = true;
         currentEditingTaskRef.current = ev.id;
         pendingEditorChangesRef.current.clear(); // Clear previous changes
-        console.log('[GitLab] Editor opened for task:', ev.id);
 
         // Disable browser extensions (like Grammarly) on editor inputs
         setTimeout(() => {
@@ -590,7 +522,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       // Handle editor button clicks
       ganttApi.on('action', async (ev) => {
         if (ev.action === 'save') {
-          console.log('[GitLab] Save button clicked');
 
           // Sync pending changes
           const taskId = currentEditingTaskRef.current;
@@ -600,7 +531,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             try {
               await syncTask(taskId, changes);
               pendingEditorChangesRef.current.clear();
-              console.log('[GitLab] Changes saved successfully');
 
               // Refresh from GitLab to update local state
               await syncWithFoldState();
@@ -616,7 +546,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             ganttApi.exec('close-editor');
           }
         } else if (ev.action === 'close') {
-          console.log('[GitLab] Close button clicked');
 
           // Check if there are unsaved changes
           const taskId = currentEditingTaskRef.current;
@@ -645,7 +574,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       ganttApi.on('close-editor', () => {
         isEditorOpenRef.current = false;
         currentEditingTaskRef.current = null;
-        console.log('[GitLab] Editor closed');
       });
 
 
@@ -662,42 +590,25 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         // 1. We're updating the ID (temp -> real)
         // 2. Or skipSync is true (internal update)
         if (isTempId && !isIdUpdate && !ev.skipSync) {
-          console.log('Skipping update for temporary task:', ev.id);
           return;
         }
 
         // If this is an ID update for temp task, allow it but don't sync to GitLab
         if (isTempId && isIdUpdate) {
-          console.log('[GitLab] Replacing temporary task ID:', ev.id, '→', ev.task.id);
           // Don't sync this to GitLab, and don't process parent baseline updates
           return;
         }
 
-        console.log('[GitLab] update-task event (after):', {
-          id: ev.id,
-          task: ev.task,
-          taskText: ev.task.text,
-          taskDetails: ev.task.details,
-          taskStart: ev.task.start,
-          taskEnd: ev.task.end,
-          isEditorOpen: isEditorOpenRef.current,
-        });
 
         // If this task has a parent and dates changed, update parent's baseline
         if (!ev.skipBaselineDrag && (ev.task.start !== undefined || ev.task.end !== undefined)) {
           const currentTask = ganttApi.getTask(ev.id);
-          console.log('[GitLab] Checking if should update parent baseline:', {
-            skipBaselineDrag: ev.skipBaselineDrag,
-            hasParent: currentTask.parent && currentTask.parent !== 0,
-            parent: currentTask.parent,
-          });
 
           if (currentTask.parent && currentTask.parent !== 0) {
             // Get all siblings from ganttApi to ensure we have the latest data
             const allTasks = allTasksRef.current;
             const siblingIds = allTasks.filter(t => t && t.parent === currentTask.parent).map(t => t.id);
 
-            console.log('[GitLab] Found sibling IDs for parent:', currentTask.parent, 'count:', siblingIds.length, 'IDs:', siblingIds);
 
             if (siblingIds.length > 0) {
               // Get fresh data from ganttApi for each sibling
@@ -706,20 +617,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               const childStarts = siblings.map(c => c.start).filter(s => s !== undefined);
               const childEnds = siblings.map(c => c.end).filter(e => e !== undefined);
 
-              console.log('[GitLab] Child dates from ganttApi:', {
-                childStarts: childStarts.map(d => d.toISOString()),
-                childEnds: childEnds.map(d => d.toISOString())
-              });
 
               if (childStarts.length > 0 && childEnds.length > 0) {
                 const spanStart = new Date(Math.min(...childStarts.map(d => d.getTime())));
                 const spanEnd = new Date(Math.max(...childEnds.map(d => d.getTime())));
 
-                console.log('[GitLab] Updating parent baseline:', {
-                  parentId: currentTask.parent,
-                  spanStart: spanStart.toISOString(),
-                  spanEnd: spanEnd.toISOString(),
-                });
 
                 // Update parent's baseline
                 ganttApi.exec('update-task', {
@@ -758,7 +660,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             pendingEditorChangesRef.current.set(ev.id, {});
           }
           Object.assign(pendingEditorChangesRef.current.get(ev.id), ev.task);
-          console.log('[GitLab] Buffering editor changes for task:', ev.id, ev.task);
         } else if (hasDateOrProgressChange || !isEditorOpenRef.current) {
           // Date/progress changes OR changes outside editor
           // Use ev.task directly - it contains the NEW values after drag event completes
@@ -826,7 +727,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           // Check if parent is a milestone
           if (parentTask && parentTask.$isMilestone) {
             // Creating issue under milestone - this is allowed
-            console.log('[GitLab] Creating issue under milestone:', parentTask.id);
 
             // Don't use ev.task.text as default if it's the generic "New Task" from Gantt
             const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : 'New GitLab Issue';
@@ -938,10 +838,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                   savedOpenState.set(task.id, task.open);
                 }
               });
-              console.log('[GitLab] Saved fold state before task creation:', {
-                count: savedOpenState.size,
-                states: Array.from(savedOpenState.entries()),
-              });
             } catch (error) {
               console.error('[GitLab] Failed to save fold state:', error);
             }
@@ -949,7 +845,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
           // Check if this is an issue being created under a milestone
           if (ev.task._assignToMilestone) {
-            console.log('[GitLab] Creating Issue under milestone:', ev.task._assignToMilestone);
 
             // Issues under milestones should not use hierarchy (parent=0)
             // The milestone relationship is managed via GitLab's milestone widget
@@ -962,15 +857,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             };
           }
 
-          console.log('[GitLab] Creating Task...');
           const newTask = await createTask(ev.task);
 
-          console.log('[GitLab] Task created from GitLab:', {
-            tempId: ev.id,
-            newId: newTask.id,
-            newTask,
-            needsSync: newTask._needsSync,
-          });
 
           // Delete the temporary task (with baseline)
           ganttApi.exec('delete-task', {
@@ -980,7 +868,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
           // If this was an issue under a milestone OR a subtask, sync to update the hierarchy
           if (ev.task._assignToMilestone || newTask._needsSync) {
-            console.log('[GitLab] Syncing to update hierarchy with fold state preservation...');
             // Wait a bit for GitLab to process the hierarchy
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -994,7 +881,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             openStateRef.current = originalOpenState;
           }
 
-          console.log('[GitLab] Temporary task deleted, waiting for React state to update Gantt with real task');
         } catch (error) {
           console.error('Failed to create task:', error);
           alert(`Failed to create task: ${error.message}`);
@@ -1109,7 +995,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           const typesIncompatible = targetIsMilestone || (movedType !== finalTargetType);
 
           if (typesIncompatible) {
-            console.log(`[GitLab] Cannot reorder ${movedType} relative to ${finalTargetType}. Finding compatible target...`);
 
             // For milestones, we need special logic since they appear at the top visually
             // but might be at the end of the siblings array due to missing displayOrder
@@ -1246,7 +1131,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const markers = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    console.log('[GitLab] Today marker date:', today, 'Month:', today.getMonth() + 1, 'Date:', today.getDate());
     return [
       {
         start: today,  // IMarker uses 'start' not 'date'
@@ -1620,10 +1504,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           ) : (
             <ContextMenu api={api}>
               {(() => {
-                console.log('[GitLabGantt RENDER] About to render Gantt component');
-                console.log('[GitLabGantt RENDER] filteredTasks:', filteredTasks.length);
-                console.log('[GitLabGantt RENDER] links:', links.length);
-                console.log('[GitLabGantt RENDER] markers:', markers.length);
 
                 // Validate tasks structure before passing to Gantt
                 const invalidTasks = filteredTasks.filter(task => {
@@ -1635,10 +1515,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 }
 
                 // Log all tasks with their parent relationships to find the problematic structure
-                console.log('[GitLabGantt RENDER] Task hierarchy:');
-                filteredTasks.forEach((task, index) => {
-                  console.log(`  [${index}] id=${task.id}, parent=${task.parent}, type=${task.type}, text="${task.text}"`);
-                });
 
                 // Check for orphaned children (parent doesn't exist in the list)
                 const taskIds = new Set(filteredTasks.map(t => t.id));
@@ -1655,11 +1531,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                     <Gantt
                     key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
                     init={(api) => {
-                      console.log('[Gantt init callback] CALLED with api:', api);
                       try {
-                        console.log('[Gantt init] Calling init function...');
                         const result = init(api);
-                        console.log('[Gantt init] init function returned:', result);
                         return result;
                       } catch (error) {
                         console.error('[Gantt init] ERROR in init callback:', error);

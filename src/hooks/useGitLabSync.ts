@@ -79,20 +79,7 @@ export function useGitLabSync(
       try {
         const data = await provider.getData(options);
 
-        console.log('[useGitLabSync] Received data from provider:', {
-          tasks: data.tasks.length,
-          links: data.links.length,
-          milestones: data.milestones?.length || 0,
-          epics: data.epics?.length || 0,
-        });
-        console.log('[useGitLabSync] Tasks:', data.tasks);
-        console.log(
-          '[useGitLabSync] isMountedRef.current:',
-          isMountedRef.current,
-        );
-
         if (isMountedRef.current) {
-          console.log('[useGitLabSync] Setting state...');
           setTasks(data.tasks);
           setLinks(data.links);
           setMilestones(data.milestones || []);
@@ -104,11 +91,7 @@ export function useGitLabSync(
             error: null,
             lastSyncTime: new Date(),
           });
-          console.log('[useGitLabSync] State updated successfully');
         } else {
-          console.warn(
-            '[useGitLabSync] Component unmounted, skipping state update',
-          );
         }
       } catch (error) {
         console.error('GitLab sync error:', error);
@@ -137,23 +120,13 @@ export function useGitLabSync(
         throw new Error('GitLab provider not initialized');
       }
 
-      console.log('[useGitLabSync] syncTask called with:', { id, updates });
-
       try {
         // Sync to GitLab only, don't update React state to avoid re-render
         if (provider instanceof GitLabGraphQLProvider) {
-          console.log('[useGitLabSync] Calling provider.updateWorkItem');
           await provider.updateWorkItem(id, updates);
-          console.log('[useGitLabSync] GraphQL update completed');
         } else {
-          console.log('[useGitLabSync] Calling provider.updateIssue');
           await provider.updateIssue(id, updates);
-          console.log('[useGitLabSync] REST update completed');
         }
-
-        console.log(
-          '[useGitLabSync] Task synced to GitLab (state NOT updated to avoid drag conflicts)',
-        );
       } catch (error) {
         console.error('Failed to sync task update:', error);
 
@@ -179,14 +152,9 @@ export function useGitLabSync(
         // createIssue returns a complete ITask from GitLab
         const createdTask = await provider.createIssue(task);
 
-        console.log('[useGitLabSync] Task created from GitLab:', createdTask);
-
         // If this is a subtask, mark it as needing sync
         // The caller (GitLabGantt) should handle syncing to preserve fold state
         if (task.parent && task.parent !== 0) {
-          console.log(
-            '[useGitLabSync] Subtask created, caller should sync to update hierarchy',
-          );
           // Add a flag to indicate sync is needed
           (createdTask as any)._needsSync = true;
         } else {
@@ -222,8 +190,6 @@ export function useGitLabSync(
         const createdMilestone = await (provider as any).createMilestone(
           milestone,
         );
-
-        console.log('[useGitLabSync] Milestone created:', createdMilestone);
 
         // Add the new milestone to local state
         setTasks((prevTasks) => [...prevTasks, createdMilestone]);
@@ -350,12 +316,8 @@ export function useGitLabSync(
   useEffect(() => {
     // Set mounted to true on mount
     isMountedRef.current = true;
-    console.log('[useGitLabSync] Component mounted, isMountedRef set to true');
 
     return () => {
-      console.log(
-        '[useGitLabSync] Component unmounting, isMountedRef set to false',
-      );
       isMountedRef.current = false;
       if (syncIntervalRef.current) {
         clearInterval(syncIntervalRef.current);
