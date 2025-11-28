@@ -24,6 +24,7 @@ interface WorkItem {
   closedAt: string | null;
   state: string;
   webUrl: string;
+  relativePosition?: number | null;
   workItemType?: {
     name: string;
   };
@@ -78,7 +79,7 @@ interface WorkItemsResponse {
 
 export class GitLabGraphQLProvider {
   private config: GitLabGraphQLProviderConfig;
-  private graphqlClient: GitLabGraphQLClient;
+  public graphqlClient: GitLabGraphQLClient; // Public for testing purposes
   private updateQueue: Map<number | string, Promise<void>> = new Map();
   private isDev: boolean;
 
@@ -214,18 +215,41 @@ export class GitLabGraphQLProvider {
       }
     `;
 
+    // Query for issues to get relativePosition (Issue API supports this field)
+    const issuesQuery = `
+      query getIssues($fullPath: ID!, $state: IssuableState) {
+        ${this.config.type}(fullPath: $fullPath) {
+          issues(state: $state, first: 100) {
+            nodes {
+              iid
+              relativePosition
+            }
+          }
+        }
+      }
+    `;
+
     const variables: any = {
       fullPath: this.getFullPath(),
       state: options.includeClosed ? undefined : 'opened',
     };
 
-    // Execute both queries in parallel
-    const [workItemsResult, milestonesResult] = await Promise.all([
-      this.graphqlClient.query<WorkItemsResponse>(workItemsQuery, variables),
-      this.graphqlClient.query<any>(milestonesQuery, {
-        fullPath: this.getFullPath(),
-      }),
-    ]);
+    // Execute all three queries in parallel
+    const [workItemsResult, milestonesResult, issuesResult] = await Promise.all(
+      [
+        this.graphqlClient.query<WorkItemsResponse>(workItemsQuery, variables),
+        this.graphqlClient.query<any>(milestonesQuery, {
+          fullPath: this.getFullPath(),
+        }),
+        this.graphqlClient.query<any>(issuesQuery, variables).catch((error) => {
+          console.warn(
+            '[GitLabGraphQL] Failed to fetch Issue relativePosition, will fall back to IID sorting:',
+            error,
+          );
+          return null; // Graceful degradation if Issue API fails
+        }),
+      ],
+    );
 
     const workItems =
       this.config.type === 'group'
@@ -237,8 +261,70 @@ export class GitLabGraphQLProvider {
         ? milestonesResult.group?.milestones.nodes || []
         : milestonesResult.project?.milestones.nodes || [];
 
+    // Build relativePosition map from Issue API results
+    const relativePositionMap = new Map<number, number>();
+    if (issuesResult) {
+      const issues =
+        this.config.type === 'group'
+          ? issuesResult.group?.issues.nodes || []
+          : issuesResult.project?.issues.nodes || [];
+
+      issues.forEach((issue: any) => {
+        if (
+          issue.relativePosition !== null &&
+          issue.relativePosition !== undefined
+        ) {
+          relativePositionMap.set(Number(issue.iid), issue.relativePosition);
+        }
+      });
+
+      console.log(
+        `[GitLabGraphQL] Built relativePosition map with ${relativePositionMap.size} entries`,
+      );
+
+      // Debug: Log relativePosition for Test6 (id=8) and Test7 (id=14)
+      const test6Pos = relativePositionMap.get(8);
+      const test7Pos = relativePositionMap.get(14);
+      if (test6Pos !== undefined || test7Pos !== undefined) {
+        console.log(
+          `[GitLabGraphQL] 🔍 DEBUG relativePosition: Test6(#8)=${test6Pos}, Test7(#14)=${test7Pos}`,
+        );
+      }
+    }
+
     console.log(
       `[GitLabGraphQL] Fetched ${workItems.length} work items and ${milestones.length} milestones`,
+    );
+
+    // Build children order map for Tasks
+    // For each parent, store the order of its children based on array index
+    // Use ORDER_GAP spacing to match Gantt's order calculation
+    const ORDER_GAP = 10; // Must match the value in GitLabGantt.jsx
+    const childrenOrderMap = new Map<number, Map<number, number>>(); // parentIid -> (childIid -> order)
+
+    for (const wi of workItems) {
+      const hierarchyWidget = wi.widgets?.find(
+        (w: any) => w.__typename === 'WorkItemWidgetHierarchy',
+      ) as any;
+
+      const children = hierarchyWidget?.children?.nodes || [];
+      if (children.length > 0) {
+        const parentIid = Number(wi.iid);
+        const childOrderMap = new Map<number, number>();
+
+        children.forEach((child: any, index: number) => {
+          const childIid = Number(child.iid);
+          // Use ORDER_GAP spacing (0, 10, 20, 30...) instead of raw index (0, 1, 2, 3...)
+          // This matches how Gantt calculates order values for proper comparison
+          childOrderMap.set(childIid, index * ORDER_GAP);
+        });
+
+        childrenOrderMap.set(parentIid, childOrderMap);
+      }
+    }
+
+    console.log(
+      `[GitLabGraphQL] Built childrenOrderMap for ${childrenOrderMap.size} parents`,
     );
 
     // Convert milestones to tasks
@@ -248,9 +334,9 @@ export class GitLabGraphQLProvider {
 
     console.log('[GitLabGraphQL] Milestone tasks:', milestoneTasks.length);
 
-    // Convert work items to tasks
+    // Convert work items to tasks (with relativePosition map and children order map)
     const workItemTasks: ITask[] = workItems.map((wi) =>
-      this.convertWorkItemToTask(wi),
+      this.convertWorkItemToTask(wi, relativePositionMap, childrenOrderMap),
     );
 
     // Combine all tasks
@@ -286,6 +372,7 @@ export class GitLabGraphQLProvider {
   /**
    * Sort tasks by display order (within same parent)
    * Special handling for root level: Milestones sorted by date, Issues by displayOrder
+   * displayOrder comes from description metadata or relativePosition (from Issue API)
    */
   private sortTasksByOrder(tasks: ITask[]): ITask[] {
     // Group tasks by parent
@@ -325,32 +412,50 @@ export class GitLabGraphQLProvider {
           return (a.text || '').localeCompare(b.text || '');
         });
 
-        // Sort issues by displayOrder > id
+        // Sort issues by displayOrder (ascending, nulls last) > id
         issues.sort((a, b) => {
           const orderA = a.$custom?.displayOrder;
           const orderB = b.$custom?.displayOrder;
 
-          if (orderA !== undefined && orderB !== undefined) {
+          // Both have order: sort by order value
+          if (
+            orderA !== undefined &&
+            orderA !== null &&
+            orderB !== undefined &&
+            orderB !== null
+          ) {
             return orderA - orderB;
           }
-          if (orderA !== undefined) return -1;
-          if (orderB !== undefined) return 1;
+          // Only A has order: A comes first
+          if (orderA !== undefined && orderA !== null) return -1;
+          // Only B has order: B comes first
+          if (orderB !== undefined && orderB !== null) return 1;
+          // Neither has order: sort by id
           return Number(a.id) - Number(b.id);
         });
 
         // Milestones first, then issues
         sortedTasks.push(...milestones, ...issues);
       } else {
-        // Non-root level: sort by displayOrder > id
+        // Non-root level: sort by displayOrder (ascending, nulls last) > id
         parentTasks.sort((a, b) => {
           const orderA = a.$custom?.displayOrder;
           const orderB = b.$custom?.displayOrder;
 
-          if (orderA !== undefined && orderB !== undefined) {
+          // Both have order: sort by order value
+          if (
+            orderA !== undefined &&
+            orderA !== null &&
+            orderB !== undefined &&
+            orderB !== null
+          ) {
             return orderA - orderB;
           }
-          if (orderA !== undefined) return -1;
-          if (orderB !== undefined) return 1;
+          // Only A has order: A comes first
+          if (orderA !== undefined && orderA !== null) return -1;
+          // Only B has order: B comes first
+          if (orderB !== undefined && orderB !== null) return 1;
+          // Neither has order: sort by id
           return Number(a.id) - Number(b.id);
         });
 
@@ -410,43 +515,6 @@ export class GitLabGraphQLProvider {
   }
 
   /**
-   * Extract display order from description metadata
-   * Looks for <!-- gantt:order=123 --> in description
-   */
-  private extractOrderFromDescription(description: string): {
-    description: string;
-    order: number | null;
-  } {
-    const orderRegex = /<!--\s*gantt:order=(\d+)\s*-->/;
-    const match = description.match(orderRegex);
-
-    if (match) {
-      const order = parseInt(match[1], 10);
-      // Remove the metadata comment from description
-      const cleanDescription = description.replace(orderRegex, '').trim();
-      return { description: cleanDescription, order };
-    }
-
-    return { description, order: null };
-  }
-
-  /**
-   * Inject display order into description as metadata
-   * Adds <!-- gantt:order=123 --> at the beginning
-   */
-  private injectOrderIntoDescription(
-    description: string,
-    order: number,
-  ): string {
-    // Remove existing order metadata if present
-    const cleanDescription = description
-      .replace(/<!--\s*gantt:order=\d+\s*-->/, '')
-      .trim();
-    // Add new order metadata at the beginning
-    return `<!-- gantt:order=${order} -->\n${cleanDescription}`;
-  }
-
-  /**
    * Convert GitLab Milestone to Gantt Task
    */
   private convertMilestoneToTask(milestone: any): ITask {
@@ -500,8 +568,15 @@ export class GitLabGraphQLProvider {
 
   /**
    * Convert GraphQL WorkItem to Gantt Task
+   * @param workItem - The WorkItem from GraphQL query
+   * @param relativePositionMap - Map of IID to relativePosition from Issue API
+   * @param childrenOrderMap - Map of parent IID to (child IID to order index)
    */
-  private convertWorkItemToTask(workItem: WorkItem): ITask {
+  private convertWorkItemToTask(
+    workItem: WorkItem,
+    relativePositionMap: Map<number, number> = new Map(),
+    childrenOrderMap: Map<number, Map<number, number>> = new Map(),
+  ): ITask {
     // Extract widgets
     const descriptionWidget = workItem.widgets.find(
       (w) => w.description !== undefined,
@@ -554,21 +629,36 @@ export class GitLabGraphQLProvider {
     const labels =
       labelsWidget?.labels?.nodes.map((l) => l.title).join(', ') || '';
 
-    // Extract description and parse order metadata
-    const rawDescription = descriptionWidget?.description || '';
-    const { description, order } =
-      this.extractOrderFromDescription(rawDescription);
+    // Extract description (no longer parsing metadata)
+    const description = descriptionWidget?.description || '';
 
     // Determine parent: hierarchy > milestone > root
     let parent: number = 0;
+    let parentIid: number | null = null;
     if (hierarchyWidget?.parent) {
       // This is a subtask - parent is another work item
       parent = Number(hierarchyWidget.parent.iid);
+      parentIid = parent;
     } else if (milestoneWidget?.milestone) {
       // This issue belongs to a milestone - parent is milestone ID with offset
       parent = 10000 + Number(milestoneWidget.milestone.iid);
     }
     // else: standalone issue at root level (parent = 0)
+
+    // Determine displayOrder based on whether this is a Task or Issue
+    const iid = Number(workItem.iid);
+    let finalOrder: number | undefined = undefined;
+
+    if (parentIid !== null) {
+      // This is a Task (has parent) - get order from children array index
+      const parentChildrenMap = childrenOrderMap.get(parentIid);
+      if (parentChildrenMap) {
+        finalOrder = parentChildrenMap.get(iid);
+      }
+    } else {
+      // This is a root-level Issue - get order from relativePosition
+      finalOrder = relativePositionMap.get(iid);
+    }
 
     // Always use 'task' type to avoid Gantt's auto-calculation for summary types
     // Use custom flag $isIssue to distinguish GitLab Issue from Task for styling
@@ -590,7 +680,10 @@ export class GitLabGraphQLProvider {
       state: workItem.state,
       web_url: workItem.webUrl,
       $isIssue: isIssue, // Custom flag: true for GitLab Issue, false for GitLab Task
-      $custom: order !== null ? { displayOrder: order } : undefined,
+      $custom:
+        finalOrder !== null && finalOrder !== undefined
+          ? { displayOrder: finalOrder }
+          : undefined,
       _gitlab: {
         id: workItem.id, // Global ID
         iid: Number(workItem.iid),
@@ -644,73 +737,781 @@ export class GitLabGraphQLProvider {
   }
 
   /**
-   * Batch update task order for multiple tasks
-   * This is more efficient than updating one by one
+   * Reorder an Issue using GitLab REST API
+   * This uses the native /issues/:iid/reorder endpoint which updates relativePosition
+   *
+   * ⚠️ CRITICAL: GitLab REST API has INVERTED parameter behavior (confirmed bug)
+   *
+   * **Problem:**
+   * - GitLab's REST API `/issues/:iid/reorder` has parameters that work opposite to their names
+   * - This is inconsistent with the GraphQL API which works correctly
+   *
+   * **Evidence:**
+   * - Tested on GitLab v18.2.6 (2025-01)
+   * - When calling: PUT /issues/113/reorder with move_after_id=112
+   *   - Expected: Issue #113 appears AFTER (below) Issue #112
+   *   - Actual: Issue #113 appears BEFORE (above) Issue #112
+   * - GraphQL API with `relativePosition: AFTER` works as expected
+   *
+   * **Workaround:**
+   * - To place an issue AFTER another issue → use `move_before_id`
+   * - To place an issue BEFORE another issue → use `move_after_id`
+   * - This workaround is implemented below
+   *
+   * **References:**
+   * - Test suite: demos/cases/TestReorderAPI.jsx
+   * - GitLab API docs: https://docs.gitlab.com/ee/api/issues.html#reorder-an-issue
+   *
+   * @param issueIid - The IID (not global ID) of the issue to move
+   * @param afterIssueId - The numeric ID (not global ID) of the issue to place this after
+   */
+  private async reorderIssue(
+    issueIid: number,
+    afterIssueId: number,
+  ): Promise<void> {
+    console.log('[GitLabGraphQL] Reordering issue via REST API:', {
+      issueIid,
+      afterIssueId,
+      note: '⚠️  Using move_before_id due to inverted GitLab API behavior (confirmed bug)',
+    });
+
+    const projectPath = this.getFullPath();
+    const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}/reorder`;
+
+    // WORKAROUND: GitLab REST API has inverted parameters (confirmed via testing)
+    // To move issue AFTER another issue, we must use move_before_id
+    // See detailed explanation in function documentation above
+    await gitlabRestRequest(
+      endpoint,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          move_before_id: afterIssueId, // ⚠️  INVERTED: use move_before_id to achieve "move AFTER" behavior
+        }),
+      },
+    );
+
+    console.log('[GitLabGraphQL] Issue reordered successfully');
+  }
+
+  /**
+   * Reorder an Issue to appear BEFORE another Issue using GitLab REST API
+   * This uses the native /issues/:iid/reorder endpoint which updates relativePosition
+   *
+   * ⚠️ CRITICAL: GitLab REST API has INVERTED parameter behavior (confirmed bug)
+   *
+   * To place an issue BEFORE another issue, we must use `move_after_id` (inverted)
+   * See detailed explanation in reorderIssue() documentation above.
+   *
+   * @param issueIid - The IID (not global ID) of the issue to move
+   * @param beforeIssueId - The numeric ID (not global ID) of the issue to place this before
+   */
+  private async reorderIssueBefore(
+    issueIid: number,
+    beforeIssueId: number,
+  ): Promise<void> {
+    console.log('[GitLabGraphQL] Reordering issue BEFORE via REST API:', {
+      issueIid,
+      beforeIssueId,
+      note: '⚠️  Using move_after_id due to inverted GitLab API behavior (confirmed bug)',
+    });
+
+    const projectPath = this.getFullPath();
+    const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}/reorder`;
+
+    // WORKAROUND: GitLab REST API has inverted parameters (confirmed via testing)
+    // To move issue BEFORE another issue, we must use move_after_id
+    // See detailed explanation in reorderIssue() documentation
+    await gitlabRestRequest(
+      endpoint,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          move_after_id: beforeIssueId, // ⚠️  INVERTED: use move_after_id to achieve "move BEFORE" behavior
+        }),
+      },
+    );
+
+    console.log('[GitLabGraphQL] Issue reordered before successfully');
+  }
+
+  /**
+   * Reorder a Task using GitLab GraphQL API
+   * This uses hierarchyWidget with adjacentWorkItemId for parent-child ordering
+   * @param taskGlobalId - The global ID of the task to move
+   * @param afterTaskGlobalId - The global ID of the task to place this after
+   */
+  private async reorderTask(
+    taskGlobalId: string,
+    afterTaskGlobalId: string,
+  ): Promise<void> {
+    console.log('[GitLabGraphQL] Reordering task via GraphQL:', {
+      taskGlobalId,
+      afterTaskGlobalId,
+    });
+
+    const mutation = `
+      mutation {
+        workItemUpdate(input: {
+          id: "${taskGlobalId}",
+          hierarchyWidget: {
+            adjacentWorkItemId: "${afterTaskGlobalId}",
+            relativePosition: AFTER
+          }
+        }) {
+          workItem {
+            id
+            iid
+          }
+          errors
+        }
+      }
+    `;
+
+    const result = await this.graphqlClient.mutate<{
+      workItemUpdate: {
+        workItem: { id: string; iid: string };
+        errors: string[];
+      };
+    }>(mutation, {});
+
+    if (
+      result.workItemUpdate.errors &&
+      result.workItemUpdate.errors.length > 0
+    ) {
+      console.error(
+        '[GitLabGraphQL] Task reorder errors:',
+        result.workItemUpdate.errors,
+      );
+      throw new Error(
+        `Failed to reorder task: ${result.workItemUpdate.errors.join(', ')}`,
+      );
+    }
+
+    console.log('[GitLabGraphQL] Task reordered successfully');
+  }
+
+  /**
+   * Reorder a Task to be BEFORE another task using GitLab GraphQL API
+   * This uses hierarchyWidget with adjacentWorkItemId and relativePosition: BEFORE
+   * @param taskGlobalId - The global ID of the task to move
+   * @param beforeTaskGlobalId - The global ID of the task to place this before
+   */
+  private async reorderTaskBefore(
+    taskGlobalId: string,
+    beforeTaskGlobalId: string,
+  ): Promise<void> {
+    console.log('[GitLabGraphQL] Reordering task BEFORE via GraphQL:', {
+      taskGlobalId,
+      beforeTaskGlobalId,
+    });
+
+    const mutation = `
+      mutation {
+        workItemUpdate(input: {
+          id: "${taskGlobalId}",
+          hierarchyWidget: {
+            adjacentWorkItemId: "${beforeTaskGlobalId}",
+            relativePosition: BEFORE
+          }
+        }) {
+          workItem {
+            id
+            iid
+          }
+          errors
+        }
+      }
+    `;
+
+    const result = await this.graphqlClient.mutate<{
+      workItemUpdate: {
+        workItem: { id: string; iid: string };
+        errors: string[];
+      };
+    }>(mutation, {});
+
+    if (
+      result.workItemUpdate.errors &&
+      result.workItemUpdate.errors.length > 0
+    ) {
+      console.error(
+        '[GitLabGraphQL] Task reorder before errors:',
+        result.workItemUpdate.errors,
+      );
+      throw new Error(
+        `Failed to reorder task before: ${result.workItemUpdate.errors.join(', ')}`,
+      );
+    }
+
+    console.log('[GitLabGraphQL] Task reordered before successfully');
+  }
+
+  /**
+   * Reorder a single work item relative to a target work item
+   * @param movedId - The IID of the work item to move
+   * @param targetId - The IID of the target work item
+   * @param mode - 'before' or 'after' the target
+   */
+  async reorderWorkItem(
+    movedId: TID,
+    targetId: TID,
+    mode: 'before' | 'after',
+  ): Promise<void> {
+    console.log(`[GitLabGraphQL] Reordering ${movedId} ${mode} ${targetId}`);
+
+    // Get work item data for both moved and target
+    const dataMap = await this.getBatchWorkItemsDataForReorder([
+      movedId,
+      targetId,
+    ]);
+    const movedData = dataMap.get(movedId);
+    const targetData = dataMap.get(targetId);
+
+    if (!movedData || !targetData) {
+      throw new Error(
+        `Failed to get work item data for reorder: moved=${movedId}, target=${targetId}`,
+      );
+    }
+
+    // Determine if this is an Issue (root level) or Task (child level)
+    const isTask = movedData.workItemType === 'Task' && movedData.hasParent;
+
+    if (isTask) {
+      // Use GraphQL for Tasks
+      if (mode === 'before') {
+        await this.reorderTaskBefore(movedData.globalId, targetData.globalId);
+      } else {
+        await this.reorderTask(movedData.globalId, targetData.globalId);
+      }
+    } else {
+      // Use REST API for Issues
+      if (mode === 'before') {
+        // Use reorderIssueBefore which handles the inverted API behavior
+        await this.reorderIssueBefore(Number(movedId), targetData.numericId);
+      } else {
+        await this.reorderIssue(Number(movedId), targetData.numericId);
+      }
+    }
+
+    console.log(
+      `[GitLabGraphQL] Successfully reordered ${movedId} ${mode} ${targetId}`,
+    );
+  }
+
+  /**
+   * Update task order using GitLab native reorder APIs
+   * For Issues (root level): uses REST API /issues/:iid/reorder
+   * For Tasks (child level): uses GraphQL hierarchyWidget.adjacentWorkItemId
+   *
+   * This method accepts tasks with order numbers and determines the correct
+   * "move after" target by querying current sibling tasks from GitLab.
    */
   async updateTasksOrder(
     tasks: Array<{ id: TID; order: number }>,
   ): Promise<void> {
     console.log(
-      `[GitLabGraphQL] Batch updating order for ${tasks.length} tasks`,
+      `[GitLabGraphQL] Batch updating order for ${tasks.length} tasks using native APIs`,
     );
 
-    // 1. Batch fetch all work items data (global ID + description) in one query
-    const iids = tasks.map((t) => t.id);
-    const dataMap = await this.getBatchWorkItemsData(iids);
+    // Sort tasks by order to get the target sequence
+    const sortedTasks = [...tasks].sort((a, b) => a.order - b.order);
 
-    // 2. Update each task (still needs individual mutations unfortunately)
-    for (const { id, order } of tasks) {
-      const data = dataMap.get(id);
-      if (!data) {
-        console.error(`[GitLabGraphQL] No data found for task ${id}`);
+    // Batch fetch work items data (global ID, numeric ID, parent info, workItemType)
+    const iids = tasks.map((t) => t.id);
+    const dataMap = await this.getBatchWorkItemsDataForReorder(iids);
+
+    // For single task updates, we need to find the correct "move after" target
+    // by querying all sibling tasks with their current order
+    if (tasks.length === 1) {
+      const task = tasks[0];
+      const taskData = dataMap.get(task.id);
+
+      if (!taskData) {
+        console.error(`[GitLabGraphQL] No data found for task ${task.id}`);
+        return;
+      }
+
+      // Find all sibling tasks (tasks with same parent)
+      const siblings = await this.getSiblingTasksWithOrder(
+        task.id,
+        taskData.hasParent,
+      );
+
+      if (!siblings || siblings.length === 0) {
+        console.log(
+          `[GitLabGraphQL] No siblings found for task ${task.id}, skipping reorder`,
+        );
+        return;
+      }
+
+      // Find the task that should come before this task based on order
+      // Strategy: Insert the moving task into the sorted siblings list based on order value,
+      // then find what task comes before it in the resulting list.
+
+      // Filter out the current task itself from siblings
+      const otherSiblings = siblings.filter((s) => s.id !== task.id);
+
+      // Sort siblings by order (current GitLab order)
+      const sortedSiblings = otherSiblings
+        .filter((s) => s.order !== null && s.order !== undefined)
+        .sort((a, b) => (a.order as number) - (b.order as number));
+
+      // Find where the moving task should be inserted based on its new order value
+      // The new order might be in a different numeric range than sibling orders,
+      // so we need to find the position by comparing ratios or counts
+
+      // Count how many siblings should come before this task
+      // Strategy: Calculate the ratio of this task's position among all tasks (including itself)
+      // Then apply that ratio to find the target position among siblings
+
+      // Get all order values including the moving task
+      const allOrders = [
+        ...sortedSiblings.map((s) => s.order as number),
+        task.order,
+      ].sort((a, b) => a - b);
+      const taskPositionInAll = allOrders.indexOf(task.order);
+
+      // The targetIndex is how many siblings should come before this task
+      // If task is at position 0 in all orders, targetIndex should be 0 (first position)
+      // If task is at position N in all orders, targetIndex should be N
+      let targetIndex = taskPositionInAll;
+
+      console.log(
+        `[GitLabGraphQL] Task ${task.id} with order ${task.order} is at position ${taskPositionInAll} among all orders [${allOrders.join(', ')}]`,
+      );
+      console.log(
+        `[GitLabGraphQL] Task ${task.id} should be at index ${targetIndex} among ${sortedSiblings.length} siblings`,
+      );
+
+      // Determine if this is an Issue (root level) or Task (child level)
+      const isTask = taskData.workItemType === 'Task' && taskData.hasParent;
+
+      try {
+        if (targetIndex === 0) {
+          // Task should be first - move it before the current first task
+          if (sortedSiblings.length === 0) {
+            console.log(
+              `[GitLabGraphQL] Task ${task.id} is the only task, no reorder needed`,
+            );
+            return;
+          }
+
+          const firstTask = sortedSiblings[0];
+          console.log(
+            `[GitLabGraphQL] Task ${task.id} should be first, moving before ${firstTask.id}`,
+          );
+
+          if (isTask) {
+            // Use GraphQL for Tasks (child level) - move BEFORE the first task
+            await this.reorderTaskBefore(taskData.globalId, firstTask.globalId);
+          } else {
+            // Use REST API for Issues (root level) - move BEFORE the first issue
+            console.log(
+              `[GitLabGraphQL] Reordering Issue ${task.id} before ${firstTask.id} using REST API`,
+            );
+            await this.reorderIssueBefore(Number(task.id), firstTask.numericId);
+          }
+        } else {
+          // Task should come after another task
+          const previousTask = sortedSiblings[targetIndex - 1];
+
+          if (!previousTask) {
+            console.error(
+              `[GitLabGraphQL] Failed to find previous task at index ${targetIndex - 1}`,
+            );
+            return;
+          }
+
+          console.log(
+            `[GitLabGraphQL] Task ${task.id} should come after ${previousTask.id}`,
+          );
+
+          if (isTask) {
+            // Use GraphQL for Tasks (child level)
+            console.log(
+              `[GitLabGraphQL] Reordering Task ${task.id} after ${previousTask.id} using GraphQL`,
+            );
+            await this.reorderTask(taskData.globalId, previousTask.globalId);
+          } else {
+            // Use REST API for Issues (root level)
+            console.log(
+              `[GitLabGraphQL] Reordering Issue ${task.id} after ${previousTask.id} using REST API`,
+            );
+            await this.reorderIssue(Number(task.id), previousTask.numericId);
+          }
+        }
+      } catch (error) {
+        console.error(
+          `[GitLabGraphQL] Failed to reorder task ${task.id}:`,
+          error,
+        );
+        throw error;
+      }
+
+      console.log('[GitLabGraphQL] Single task reorder completed');
+      return;
+    }
+
+    // For batch updates (multiple tasks), process each task in sequence
+    for (let i = 0; i < sortedTasks.length; i++) {
+      const currentTask = sortedTasks[i];
+      const currentData = dataMap.get(currentTask.id);
+
+      if (!currentData) {
+        console.error(
+          `[GitLabGraphQL] No data found for task ${currentTask.id}`,
+        );
         continue;
       }
 
-      // Inject order into description
-      const newDescription = this.injectOrderIntoDescription(
-        data.description,
-        order,
-      );
+      // Determine if this is an Issue (root level) or Task (child level)
+      const isTask =
+        currentData.workItemType === 'Task' && currentData.hasParent;
 
-      // Perform mutation
-      const mutation = `
-        mutation updateWorkItem($input: WorkItemUpdateInput!) {
-          workItemUpdate(input: $input) {
-            workItem {
+      try {
+        if (i === 0) {
+          // First task in the new order - need to move it to first position
+          console.log(
+            `[GitLabGraphQL] Task ${currentTask.id} should be first in new order`,
+          );
+
+          // Get current GitLab sibling order to find the current first task
+          const siblings = await this.getSiblingTasksWithOrder(
+            currentTask.id,
+            currentData.hasParent,
+          );
+          const sortedSiblings = siblings
+            .filter(
+              (s) =>
+                s.id !== currentTask.id &&
+                s.order !== null &&
+                s.order !== undefined,
+            )
+            .sort((a, b) => (a.order as number) - (b.order as number));
+
+          if (sortedSiblings.length === 0) {
+            console.log(
+              `[GitLabGraphQL] Task ${currentTask.id} is the only task, no reorder needed`,
+            );
+            continue;
+          }
+
+          const currentFirstTask = sortedSiblings[0];
+          console.log(
+            `[GitLabGraphQL] Moving task ${currentTask.id} before current first task ${currentFirstTask.id}`,
+          );
+
+          if (isTask) {
+            // Use GraphQL for Tasks - move BEFORE the current first task
+            await this.reorderTaskBefore(
+              currentData.globalId,
+              currentFirstTask.globalId,
+            );
+          } else {
+            // Use REST API for Issues - move BEFORE the current first issue
+            console.log(
+              `[GitLabGraphQL] Reordering Issue ${currentTask.id} before ${currentFirstTask.id} using REST API`,
+            );
+            await this.reorderIssueBefore(
+              Number(currentTask.id),
+              currentFirstTask.numericId,
+            );
+          }
+        } else {
+          // Not first task - move after the previous task in the sorted order
+          const previousTask = sortedTasks[i - 1];
+          const previousData = dataMap.get(previousTask.id);
+
+          if (!previousData) {
+            console.error(
+              `[GitLabGraphQL] No data found for previous task ${previousTask.id}`,
+            );
+            continue;
+          }
+
+          if (isTask) {
+            // Use GraphQL for Tasks (child level)
+            console.log(
+              `[GitLabGraphQL] Reordering Task ${currentTask.id} after ${previousTask.id} using GraphQL`,
+            );
+            await this.reorderTask(currentData.globalId, previousData.globalId);
+          } else {
+            // Use REST API for Issues (root level)
+            console.log(
+              `[GitLabGraphQL] Reordering Issue ${currentTask.id} after ${previousTask.id} using REST API`,
+            );
+            await this.reorderIssue(
+              Number(currentTask.id),
+              previousData.numericId,
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          `[GitLabGraphQL] Failed to reorder task ${currentTask.id}:`,
+          error,
+        );
+        // Continue with other tasks even if one fails
+      }
+    }
+
+    console.log('[GitLabGraphQL] Batch reorder completed');
+  }
+
+  /**
+   * Get sibling tasks with their order values
+   * For a given task, return all tasks with the same parent
+   *
+   * For Issues (root level): order comes from relativePosition
+   * For Tasks (child level): order comes from parent's children array index
+   */
+  private async getSiblingTasksWithOrder(
+    taskId: TID,
+    hasParent: boolean,
+  ): Promise<
+    Array<{
+      id: TID;
+      globalId: string;
+      numericId: number;
+      order: number | null;
+    }>
+  > {
+    // First, get the full info for this task including parent ID
+    const taskQuery = `
+      query getTaskWithParent($fullPath: ID!, $iid: String!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          workItems(iids: [$iid]) {
+            nodes {
               id
               iid
+              widgets {
+                __typename
+                ... on WorkItemWidgetHierarchy {
+                  parent {
+                    id
+                    iid
+                  }
+                }
+              }
             }
-            errors
+          }
+        }
+      }
+    `;
+
+    const taskResult = await this.graphqlClient.query<WorkItemsResponse>(
+      taskQuery,
+      { fullPath: this.getFullPath(), iid: String(taskId) },
+    );
+
+    const taskWorkItems =
+      this.config.type === 'group'
+        ? taskResult.group?.workItems.nodes || []
+        : taskResult.project?.workItems.nodes || [];
+
+    if (taskWorkItems.length === 0) {
+      return [];
+    }
+
+    const taskWorkItem = taskWorkItems[0];
+    const taskHierarchyWidget = taskWorkItem.widgets?.find(
+      (w: any) => w.__typename === 'WorkItemWidgetHierarchy',
+    ) as any;
+    const taskParentId = taskHierarchyWidget?.parent?.id || null;
+    const taskParentIid = taskHierarchyWidget?.parent?.iid || null;
+
+    // For child tasks, get the parent's children order
+    if (hasParent && taskParentIid) {
+      // Query the parent to get children order
+      const parentQuery = `
+        query getParentChildren($fullPath: ID!, $iid: String!) {
+          ${this.config.type}(fullPath: $fullPath) {
+            workItems(iids: [$iid]) {
+              nodes {
+                id
+                iid
+                widgets {
+                  __typename
+                  ... on WorkItemWidgetHierarchy {
+                    children {
+                      nodes {
+                        id
+                        iid
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       `;
 
-      const input = {
-        id: data.globalId,
-        descriptionWidget: {
-          description: newDescription,
-        },
-      };
+      const parentResult = await this.graphqlClient.query<WorkItemsResponse>(
+        parentQuery,
+        { fullPath: this.getFullPath(), iid: String(taskParentIid) },
+      );
 
-      const result = await this.graphqlClient.mutate<{
-        workItemUpdate: {
-          workItem: { id: string; iid: string };
-          errors: string[];
-        };
-      }>(mutation, { input });
+      const parentWorkItems =
+        this.config.type === 'group'
+          ? parentResult.group?.workItems.nodes || []
+          : parentResult.project?.workItems.nodes || [];
 
-      if (
-        result.workItemUpdate.errors &&
-        result.workItemUpdate.errors.length > 0
-      ) {
-        console.error(
-          `[GitLabGraphQL] Failed to update order for task ${id}:`,
-          result.workItemUpdate.errors,
+      if (parentWorkItems.length > 0) {
+        const parentWorkItem = parentWorkItems[0];
+        const parentHierarchyWidget = parentWorkItem.widgets?.find(
+          (w: any) => w.__typename === 'WorkItemWidgetHierarchy',
+        ) as any;
+        const children = parentHierarchyWidget?.children?.nodes || [];
+
+        // Build siblings list with order based on index in children array
+        // Use ORDER_GAP spacing to match Gantt's order calculation
+        const ORDER_GAP = 10; // Must match the value in GitLabGantt.jsx
+        const siblings: Array<{
+          id: TID;
+          globalId: string;
+          numericId: number;
+          order: number | null;
+        }> = [];
+
+        for (let i = 0; i < children.length; i++) {
+          const child = children[i];
+          const numericIdMatch = child.id.match(/\/(\d+)$/);
+          const numericId = numericIdMatch
+            ? parseInt(numericIdMatch[1], 10)
+            : Number(child.iid);
+
+          siblings.push({
+            id: Number(child.iid),
+            globalId: child.id,
+            numericId,
+            order: i * ORDER_GAP, // Use ORDER_GAP spacing (0, 10, 20...) instead of raw index
+          });
+        }
+
+        console.log(
+          `[GitLabGraphQL] Found ${siblings.length} siblings for task ${taskId} from parent ${taskParentIid} children array`,
         );
+        return siblings;
       }
     }
 
-    console.log('[GitLabGraphQL] Batch update completed');
+    // For root level Issues, use relativePosition
+    const issuesQuery = `
+      query getIssuesPosition($fullPath: ID!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          issues(first: 100) {
+            nodes {
+              iid
+              relativePosition
+            }
+          }
+        }
+      }
+    `;
+
+    const issuesResult = await this.graphqlClient
+      .query<any>(issuesQuery, {
+        fullPath: this.getFullPath(),
+      })
+      .catch(() => ({ [this.config.type]: { issues: { nodes: [] } } }));
+
+    const relativePositionMap = new Map<number, number>();
+    const issues =
+      this.config.type === 'group'
+        ? issuesResult.group?.issues.nodes || []
+        : issuesResult.project?.issues.nodes || [];
+
+    issues.forEach((issue: any) => {
+      if (
+        issue.relativePosition !== null &&
+        issue.relativePosition !== undefined
+      ) {
+        relativePositionMap.set(Number(issue.iid), issue.relativePosition);
+      }
+    });
+
+    // Query all work items to find root-level siblings
+    const query = `
+      query getSiblingTasks($fullPath: ID!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          workItems(types: [ISSUE, TASK], first: 100) {
+            nodes {
+              id
+              iid
+              workItemType {
+                name
+              }
+              widgets {
+                __typename
+                ... on WorkItemWidgetHierarchy {
+                  parent {
+                    id
+                    iid
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const result = await this.graphqlClient.query<WorkItemsResponse>(query, {
+      fullPath: this.getFullPath(),
+    });
+
+    const workItems =
+      this.config.type === 'group'
+        ? result.group?.workItems.nodes || []
+        : result.project?.workItems.nodes || [];
+
+    // Filter for root-level siblings (no parent)
+    const siblings: Array<{
+      id: TID;
+      globalId: string;
+      numericId: number;
+      order: number | null;
+    }> = [];
+
+    for (const wi of workItems) {
+      const hierarchyWidget = wi.widgets?.find(
+        (w: any) => w.__typename === 'WorkItemWidgetHierarchy',
+      ) as any;
+      const wiParentId = hierarchyWidget?.parent?.id || null;
+
+      // Check if this work item has no parent (root level)
+      if (wiParentId === null) {
+        const numericIdMatch = wi.id.match(/\/(\d+)$/);
+        const numericId = numericIdMatch
+          ? parseInt(numericIdMatch[1], 10)
+          : Number(wi.iid);
+        const order = relativePositionMap.get(Number(wi.iid)) || null;
+
+        siblings.push({
+          id: Number(wi.iid),
+          globalId: wi.id,
+          numericId,
+          order,
+        });
+      }
+    }
+
+    console.log(
+      `[GitLabGraphQL] Found ${siblings.length} root-level siblings for task ${taskId}`,
+    );
+    return siblings;
   }
 
   /**
@@ -746,33 +1547,10 @@ export class GitLabGraphQLProvider {
       input.title = task.text;
     }
 
-    // Description (with order metadata if provided)
-    if (
-      task.details !== undefined ||
-      task.$custom?.displayOrder !== undefined
-    ) {
-      let description: string;
-
-      // If details is not provided, we need to fetch current description from GitLab
-      if (
-        task.details === undefined &&
-        task.$custom?.displayOrder !== undefined
-      ) {
-        description = await this.getWorkItemDescription(id);
-      } else {
-        description = task.details !== undefined ? task.details : '';
-      }
-
-      // Inject order metadata if provided
-      if (task.$custom?.displayOrder !== undefined) {
-        description = this.injectOrderIntoDescription(
-          description,
-          task.$custom.displayOrder,
-        );
-      }
-
+    // Description
+    if (task.details !== undefined) {
       input.descriptionWidget = {
-        description,
+        description: task.details,
       };
     }
 
@@ -839,72 +1617,36 @@ export class GitLabGraphQLProvider {
   }
 
   /**
-   * Get work item global ID from IID
+   * Batch fetch work items data for reorder operations
+   * Returns global ID, numeric ID, parent info, and workItemType
    */
-  /**
-   * Get work item description by IID
-   */
-  private async getWorkItemDescription(iid: TID): Promise<string> {
-    const query = `
-      query getWorkItemDescription($fullPath: ID!, $iid: String!) {
-        ${this.config.type}(fullPath: $fullPath) {
-          workItems(iids: [$iid]) {
-            nodes {
-              widgets {
-                __typename
-                ... on WorkItemWidgetDescription {
-                  description
-                }
-              }
-            }
-          }
-        }
+  private async getBatchWorkItemsDataForReorder(iids: TID[]): Promise<
+    Map<
+      TID,
+      {
+        globalId: string;
+        numericId: number;
+        workItemType: string;
+        hasParent: boolean;
       }
-    `;
-
-    const variables = {
-      fullPath: this.getFullPath(),
-      iid: String(iid),
-    };
-
-    const result = await this.graphqlClient.query<WorkItemsResponse>(
-      query,
-      variables,
-    );
-
-    const workItems =
-      this.config.type === 'group'
-        ? result.group?.workItems.nodes || []
-        : result.project?.workItems.nodes || [];
-
-    if (!workItems || workItems.length === 0) {
-      throw new Error(`Work item with IID ${iid} not found`);
-    }
-
-    const descriptionWidget = workItems[0].widgets?.find(
-      (w: any) => w.__typename === 'WorkItemWidgetDescription',
-    ) as any;
-
-    return descriptionWidget?.description || '';
-  }
-
-  /**
-   * Batch fetch work items data (global ID and description) for multiple IIDs
-   */
-  private async getBatchWorkItemsData(
-    iids: TID[],
-  ): Promise<Map<TID, { globalId: string; description: string }>> {
+    >
+  > {
     const query = `
-      query getBatchWorkItems($fullPath: ID!, $iids: [String!]!) {
+      query getBatchWorkItemsForReorder($fullPath: ID!, $iids: [String!]!) {
         ${this.config.type}(fullPath: $fullPath) {
           workItems(iids: $iids) {
             nodes {
               id
               iid
+              workItemType {
+                name
+              }
               widgets {
                 __typename
-                ... on WorkItemWidgetDescription {
-                  description
+                ... on WorkItemWidgetHierarchy {
+                  parent {
+                    id
+                  }
                 }
               }
             }
@@ -928,16 +1670,34 @@ export class GitLabGraphQLProvider {
         ? result.group?.workItems.nodes || []
         : result.project?.workItems.nodes || [];
 
-    const dataMap = new Map<TID, { globalId: string; description: string }>();
+    const dataMap = new Map<
+      TID,
+      {
+        globalId: string;
+        numericId: number;
+        workItemType: string;
+        hasParent: boolean;
+      }
+    >();
 
     for (const wi of workItems) {
-      const descriptionWidget = wi.widgets?.find(
-        (w: any) => w.__typename === 'WorkItemWidgetDescription',
+      // Extract numeric ID from global ID (e.g., "gid://gitlab/Issue/123" -> 123)
+      const numericIdMatch = wi.id.match(/\/(\d+)$/);
+      const numericId = numericIdMatch
+        ? parseInt(numericIdMatch[1], 10)
+        : Number(wi.iid);
+
+      // Check if has parent
+      const hierarchyWidget = wi.widgets?.find(
+        (w: any) => w.__typename === 'WorkItemWidgetHierarchy',
       ) as any;
+      const hasParent = !!hierarchyWidget?.parent;
 
       dataMap.set(Number(wi.iid), {
         globalId: wi.id,
-        description: descriptionWidget?.description || '',
+        numericId,
+        workItemType: wi.workItemType?.name || 'Issue',
+        hasParent,
       });
     }
 

@@ -1046,14 +1046,19 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           return;
         }
 
+        // Get the moved task and target task
         const movedTask = ganttApi.getTask(ev.id);
-        const parentId = movedTask.parent || 0;
+        const targetTask = ganttApi.getTask(ev.target);
 
-        // Get all tasks with the same parent, sorted by current display order
+        // Extract type information once
+        const movedType = movedTask._gitlab?.workItemType || movedTask._gitlab?.type || 'unknown';
+        const targetType = targetTask._gitlab?.workItemType || targetTask._gitlab?.type || 'unknown';
+
+        const parentId = movedTask.parent || 0;
         const allTasks = allTasksRef.current;
         let siblings = allTasks.filter(t => t && (t.parent || 0) === parentId);
 
-        // Sort by existing order (if available), otherwise by ID
+        // Sort siblings by current displayOrder
         siblings.sort((a, b) => {
           const orderA = a.$custom?.displayOrder;
           const orderB = b.$custom?.displayOrder;
@@ -1063,91 +1068,149 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           return a.id - b.id;
         });
 
-        // Find target position
-        const targetTask = siblings.find(t => t.id === ev.target);
-        if (!targetTask) {
-          console.error('[GitLab] Target task not found:', ev.target);
-          return;
-        }
+        // Special case: When dragging to first position, Gantt sets ev.id === ev.target
+        if (ev.id === ev.target) {
+          // Find the current first task (excluding the moved task)
+          const currentFirstTask = siblings.find(s => s.id !== ev.id);
 
-        const targetOrder = targetTask.$custom?.displayOrder;
-        const targetIndex = siblings.findIndex(t => t.id === ev.target);
-
-        // Calculate new order for moved task
-        let newOrder;
-        let needsReindex = false;
-        const ORDER_GAP = 10; // Default gap between orders
-
-        if (ev.mode === 'before') {
-          // Insert before target
-          const prevTask = targetIndex > 0 ? siblings[targetIndex - 1] : null;
-          const prevOrder = prevTask?.$custom?.displayOrder;
-
-          if (prevOrder !== undefined && targetOrder !== undefined) {
-            // Try to insert between prevOrder and targetOrder
-            if (targetOrder - prevOrder > 1) {
-              newOrder = Math.floor((prevOrder + targetOrder) / 2);
-            } else {
-              // Not enough space, need to reindex
-              needsReindex = true;
-            }
-          } else if (targetOrder !== undefined) {
-            // No previous task, insert before target
-            newOrder = Math.max(0, targetOrder - ORDER_GAP);
+          if (currentFirstTask) {
+            // Move before the current first task to become the new first
+            ev.target = currentFirstTask.id;
+            ev.mode = 'before';
           } else {
-            // No order info, need to reindex
-            needsReindex = true;
-          }
-        } else if (ev.mode === 'after') {
-          // Insert after target
-          const nextTask = targetIndex < siblings.length - 1 ? siblings[targetIndex + 1] : null;
-          const nextOrder = nextTask?.$custom?.displayOrder;
-
-          if (targetOrder !== undefined && nextOrder !== undefined) {
-            // Try to insert between targetOrder and nextOrder
-            if (nextOrder - targetOrder > 1) {
-              newOrder = Math.floor((targetOrder + nextOrder) / 2);
-            } else {
-              // Not enough space, need to reindex
-              needsReindex = true;
-            }
-          } else if (targetOrder !== undefined) {
-            // No next task, insert after target
-            newOrder = targetOrder + ORDER_GAP;
-          } else {
-            // No order info, need to reindex
-            needsReindex = true;
+            // This is the only task, no reorder needed
+            return;
           }
         }
 
         try {
-          if (needsReindex) {
-            // Reindex all siblings with ORDER_GAP spacing
-            console.log('[GitLab] Need to reindex all siblings');
+          // Re-get target task if it was changed (for move to first position)
+          const finalTargetTask = ev.target !== targetTask.id ? ganttApi.getTask(ev.target) : targetTask;
 
-            // Remove moved task and insert at new position
-            siblings = siblings.filter(t => t.id !== ev.id);
-            if (ev.mode === 'before') {
-              siblings.splice(targetIndex, 0, movedTask);
-            } else {
-              siblings.splice(targetIndex + 1, 0, movedTask);
+          // Get GitLab IIDs from the task objects
+          const movedIid = movedTask._gitlab?.iid;
+          const targetIid = finalTargetTask._gitlab?.iid;
+
+          // Check if both tasks have valid GitLab IIDs
+          if (!movedIid) {
+            console.error(`[GitLab] Cannot reorder: moved task ${ev.id} has no GitLab IID`);
+            return;
+          }
+
+          // Use the type information we already extracted at the beginning
+          const finalTargetType = finalTargetTask._gitlab?.workItemType || finalTargetTask._gitlab?.type || 'unknown';
+
+          // Milestones are special - they can't be used for reordering at all
+          const targetIsMilestone = finalTargetTask.$isMilestone || finalTargetType === 'milestone';
+
+          // Check if types are compatible for reordering
+          // Issues can only reorder relative to other Issues
+          // Tasks can only reorder relative to other Tasks (within same parent)
+          const typesIncompatible = targetIsMilestone || (movedType !== finalTargetType);
+
+          if (typesIncompatible) {
+            console.log(`[GitLab] Cannot reorder ${movedType} relative to ${finalTargetType}. Finding compatible target...`);
+
+            // For milestones, we need special logic since they appear at the top visually
+            // but might be at the end of the siblings array due to missing displayOrder
+            const isMilestoneTarget = finalTargetTask.$isMilestone || finalTargetType === 'milestone';
+
+            if (isMilestoneTarget) {
+              // When dragging to a milestone, move before the first compatible Issue
+              const firstCompatibleIssue = siblings.find(s => {
+                if (s.id === ev.id) return false; // Skip self
+                const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+                if (s.$isMilestone || siblingType === 'milestone') return false;
+                return movedType === siblingType && s._gitlab?.iid;
+              });
+
+              if (firstCompatibleIssue) {
+                await provider.reorderWorkItem(movedIid, firstCompatibleIssue._gitlab.iid, 'before');
+              } else {
+                console.error(`[GitLab] No compatible ${movedType} found to reorder relative to`);
+              }
+              return;
             }
 
-            const tasksToUpdate = siblings.map((sibling, i) => ({
-              id: sibling.id,
-              order: i * ORDER_GAP
-            }));
+            // Get the target's position in siblings array
+            const targetIndex = siblings.findIndex(s => s.id === ev.target);
 
-            await provider.updateTasksOrder(tasksToUpdate);
-            console.log('[GitLab] Reindexed all tasks:', Object.fromEntries(tasksToUpdate.map(t => [t.id, t.order])));
-          } else {
-            // Only update the moved task
-            console.log(`[GitLab] Inserting task ${ev.id} with order ${newOrder}`);
-            await provider.updateTasksOrder([{ id: ev.id, order: newOrder }]);
-            console.log('[GitLab] Order saved:', { [ev.id]: newOrder });
+            // Find compatible siblings before and after the target
+            let compatibleBefore = null;
+            let compatibleAfter = null;
+
+            // Search backwards from target for compatible sibling
+            for (let i = targetIndex - 1; i >= 0; i--) {
+              const s = siblings[i];
+              if (s.id === ev.id) continue; // Skip self
+              const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+              if (s.$isMilestone || siblingType === 'milestone') continue; // Skip milestones
+              if (movedType === siblingType && s._gitlab?.iid) {
+                compatibleBefore = s;
+                break;
+              }
+            }
+
+            // Search forwards from target for compatible sibling
+            for (let i = targetIndex + 1; i < siblings.length; i++) {
+              const s = siblings[i];
+              if (s.id === ev.id) continue; // Skip self
+              const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+              if (s.$isMilestone || siblingType === 'milestone') continue; // Skip milestones
+              if (movedType === siblingType && s._gitlab?.iid) {
+                compatibleAfter = s;
+                break;
+              }
+            }
+
+            // Determine the best compatible target and mode
+            let useTarget = null;
+            let useMode = ev.mode;
+
+            if (targetIndex === 0 || !compatibleBefore) {
+              // Target is first or no compatible before - use after with 'before' mode
+              if (compatibleAfter) {
+                useTarget = compatibleAfter;
+                useMode = 'before';
+              }
+            } else if (targetIndex === siblings.length - 1 || !compatibleAfter) {
+              // Target is last or no compatible after - use before with 'after' mode
+              if (compatibleBefore) {
+                useTarget = compatibleBefore;
+                useMode = 'after';
+              }
+            } else {
+              // Target is in middle - use the one in the direction we're moving
+              if (ev.mode === 'after') {
+                useTarget = compatibleAfter;
+                useMode = 'before';
+              } else {
+                useTarget = compatibleBefore;
+                useMode = 'after';
+              }
+            }
+
+            if (useTarget) {
+              await provider.reorderWorkItem(movedIid, useTarget._gitlab.iid, useMode);
+            } else {
+              console.error(`[GitLab] No compatible ${movedType} found to reorder relative to`);
+            }
+            return;
           }
+
+          if (!targetIid) {
+            console.error(`[GitLab] Cannot reorder: target task ${ev.target} has no GitLab IID`);
+            return;
+          }
+
+          // Use GitLab native reorder API with actual GitLab IIDs
+          await provider.reorderWorkItem(movedIid, targetIid, ev.mode);
+
+          // Note: Automatic sync removed to prevent screen flickering
+          // The Gantt chart maintains correct visual state after drag operation
+          // Order has been saved to GitLab via reorderWorkItem() API
         } catch (error) {
-          console.error('Failed to update task order:', error);
+          console.error(`[GitLab] Failed to reorder ${movedTask.text}: ${error.message}`);
         }
       });
 

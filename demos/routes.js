@@ -51,6 +51,7 @@ import GridInlineEditors from './cases/GridInlineEditors.jsx';
 import GanttEditorReadonly from './cases/GanttEditorReadonly.jsx';
 import GanttEditorValidation from './cases/GanttEditorValidation.jsx';
 import GitLabIntegration from './cases/GitLabIntegration.jsx';
+import TestReorderAPI from './cases/TestReorderAPI.jsx';
 
 export const links = [
   [
@@ -59,6 +60,7 @@ export const links = [
     GitLabIntegration,
     'GitLabIntegration',
   ],
+  ['/test-reorder/:skin', 'Test Reorder API', TestReorderAPI, 'TestReorderAPI'],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 

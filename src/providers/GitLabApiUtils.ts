@@ -82,5 +82,16 @@ export async function gitlabRestRequest<T = any>(
     throw new Error(`GitLab API error: ${errorMessage}`);
   }
 
-  return response.json();
+  // Handle empty responses (e.g., DELETE requests)
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text || text.trim() === '') {
+    return {} as T;
+  }
+
+  return JSON.parse(text) as T;
 }
