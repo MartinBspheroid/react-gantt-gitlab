@@ -185,10 +185,13 @@ export function WorkloadChart({
   highlightTime,
   onTaskClick,
   onTaskDrag,
+  onGroupChange,
   showOthers = false,
 }) {
   const containerRef = useRef(null);
+  const chartScrollRef = useRef(null);
   const [dragState, setDragState] = useState(null);
+  const [dropTargetGroup, setDropTargetGroup] = useState(null);
 
   // Optimistic updates - store local date overrides until server confirms
   const [localUpdates, setLocalUpdates] = useState({});
@@ -241,6 +244,35 @@ export function WorkloadChart({
   // Spacing between groups
   const groupSpacing = 8;
 
+  // Calculate group boundaries for drop target detection
+  const groupBoundaries = useMemo(() => {
+    const boundaries = [];
+    let currentY = 0;
+
+    for (const group of groups) {
+      const rowCount = Math.max(1, group.rows.length);
+      const groupHeight = rowCount * cellHeight;
+      boundaries.push({
+        group,
+        startY: currentY,
+        endY: currentY + groupHeight,
+      });
+      currentY += groupHeight + groupSpacing;
+    }
+
+    return boundaries;
+  }, [groups, cellHeight, groupSpacing]);
+
+  // Find group at Y position (relative to chart content)
+  const findGroupAtY = useCallback((y) => {
+    for (const boundary of groupBoundaries) {
+      if (y >= boundary.startY && y < boundary.endY) {
+        return boundary.group;
+      }
+    }
+    return null;
+  }, [groupBoundaries]);
+
   // Calculate chart dimensions
   const chartDimensions = useMemo(() => {
     const msPerDay = 24 * 60 * 60 * 1000;
@@ -287,11 +319,18 @@ export function WorkloadChart({
       mode = 'end';
     }
 
+    // Get chart scroll container for Y position calculations
+    const chartRect = chartScrollRef.current?.getBoundingClientRect();
+    const scrollTop = chartScrollRef.current?.scrollTop || 0;
+
     setDragState({
       task,
       group,
       mode,
       startX: e.clientX,
+      startY: e.clientY,
+      chartTop: chartRect?.top || 0,
+      scrollTop,
       originalStart: task.start instanceof Date ? task.start : new Date(task.start),
       originalEnd: task.end instanceof Date ? task.end : new Date(task.end || task.start),
     });
@@ -325,6 +364,24 @@ export function WorkloadChart({
       if (dragState.mode === 'move') {
         newStart = new Date(dragState.originalStart.getTime() + msDelta);
         newEnd = new Date(dragState.originalEnd.getTime() + msDelta);
+
+        // For move mode, also check for group change (vertical drag)
+        const scrollTop = chartScrollRef.current?.scrollTop || 0;
+        const relativeY = e.clientY - dragState.chartTop + scrollTop;
+        const targetGroup = findGroupAtY(relativeY);
+
+        // Update drop target if hovering over a different group
+        if (targetGroup && targetGroup.id !== dragState.group.id) {
+          // Allow dropping on "Others" group - this removes assignee/label from task
+          // But only if dragging FROM an assignee or label group (not from Others itself)
+          if (targetGroup.type === 'others' && dragState.group.type === 'others') {
+            setDropTargetGroup(null);
+          } else {
+            setDropTargetGroup(targetGroup);
+          }
+        } else {
+          setDropTargetGroup(null);
+        }
       } else if (dragState.mode === 'start') {
         newStart = new Date(dragState.originalStart.getTime() + msDelta);
         if (newStart >= newEnd) {
@@ -349,11 +406,14 @@ export function WorkloadChart({
       const finalStart = dragState.currentStart || dragState.originalStart;
       const finalEnd = dragState.currentEnd || dragState.originalEnd;
 
-      // Only trigger if dates actually changed
-      if (
+      const dateChanged =
         finalStart.getTime() !== dragState.originalStart.getTime() ||
-        finalEnd.getTime() !== dragState.originalEnd.getTime()
-      ) {
+        finalEnd.getTime() !== dragState.originalEnd.getTime();
+
+      // Check if group changed (cross-group drag)
+      const groupChanged = dropTargetGroup && dropTargetGroup.id !== dragState.group.id;
+
+      if (dateChanged) {
         // Apply optimistic update immediately so UI doesn't snap back
         setLocalUpdates(prev => ({
           ...prev,
@@ -368,7 +428,17 @@ export function WorkloadChart({
           });
         }
       }
+
+      // Handle group change
+      if (groupChanged && onGroupChange) {
+        onGroupChange(dragState.task, {
+          fromGroup: dragState.group,
+          toGroup: dropTargetGroup,
+        });
+      }
+
       setDragState(null);
+      setDropTargetGroup(null);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -378,7 +448,7 @@ export function WorkloadChart({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragState, cellWidth, lengthUnit, onTaskDrag]);
+  }, [dragState, cellWidth, lengthUnit, onTaskDrag, onGroupChange, findGroupAtY, dropTargetGroup]);
 
   // Render a single task bar
   const renderTaskBar = (task, group, rowIndex) => {
@@ -497,7 +567,7 @@ export function WorkloadChart({
   const timeScaleMonthRef = useRef(null);
   const timeScaleDayRef = useRef(null);
   const sidebarRef = useRef(null);
-  const chartScrollRef = useRef(null);
+  // Note: chartScrollRef is declared earlier in the component
 
   // Handle chart scroll - sync with time scale and sidebar
   const handleChartScroll = useCallback((e) => {
@@ -603,10 +673,11 @@ export function WorkloadChart({
             const isLastGroup = groupIdx === groups.length - 1;
             // Add spacing after each group except the last one
             const groupHeight = rowCount * cellHeight + (isLastGroup ? 0 : groupSpacing);
+            const isDropTarget = dropTargetGroup && dropTargetGroup.id === group.id;
             return (
               <div
                 key={group.id}
-                className="sidebar-group"
+                className={`sidebar-group ${isDropTarget ? 'drop-target' : ''}`}
                 style={{ height: `${groupHeight}px` }}
               >
                 {Array.from({ length: rowCount }).map((_, rowIdx) => (
@@ -629,15 +700,7 @@ export function WorkloadChart({
                         <span className="group-name">{group.name}</span>
                         <span className="group-task-count">({group.taskCount})</span>
                       </>
-                    ) : (
-                      <>
-                        <span className="row-indent"></span>
-                        <span className="row-number">Row {rowIdx + 1}</span>
-                        <span className="row-task-count">
-                          ({(group.rows[rowIdx] || []).length})
-                        </span>
-                      </>
-                    )}
+                    ) : null}
                   </div>
                 ))}
               </div>

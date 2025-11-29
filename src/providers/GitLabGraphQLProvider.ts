@@ -2442,6 +2442,178 @@ export class GitLabGraphQLProvider {
   }
 
   /**
+   * Update issue assignees using REST API
+   * @param issueIid - Issue IID (not global ID)
+   * @param assigneeNames - Array of assignee names to set
+   */
+  async updateIssueAssignees(
+    issueIid: TID,
+    assigneeNames: string[],
+  ): Promise<void> {
+    // First, get user IDs from usernames
+    const userIds: number[] = [];
+
+    for (const name of assigneeNames) {
+      try {
+        // Search for user by name
+        const users = await gitlabRestRequest<{ id: number; name: string }[]>(
+          `/users?search=${encodeURIComponent(name)}`,
+          {
+            gitlabUrl: this.config.gitlabUrl,
+            token: this.config.token,
+            isDev: this.isDev,
+          },
+        );
+
+        // Find exact match
+        const user = users.find((u) => u.name === name);
+        if (user) {
+          userIds.push(user.id);
+        } else {
+          console.warn(
+            `[GitLabGraphQL] Could not find user ID for name: ${name}`,
+          );
+        }
+      } catch (error) {
+        console.warn(
+          `[GitLabGraphQL] Error searching for user ${name}:`,
+          error,
+        );
+      }
+    }
+
+    // Update issue with new assignee IDs
+    const projectPath = this.getFullPath();
+    const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}`;
+
+    await gitlabRestRequest(
+      endpoint,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          assignee_ids: userIds,
+        }),
+      },
+    );
+
+    console.log(
+      `[GitLabGraphQL] Updated issue #${issueIid} assignees to:`,
+      assigneeNames,
+    );
+  }
+
+  /**
+   * Add an assignee to an issue (keeps existing assignees)
+   * @param issueIid - Issue IID (not global ID)
+   * @param assigneeName - Name of assignee to add
+   * @param currentAssignees - Current assignee names
+   */
+  async addIssueAssignee(
+    issueIid: TID,
+    assigneeName: string,
+    currentAssignees: string[],
+  ): Promise<void> {
+    // Don't add if already assigned
+    if (currentAssignees.includes(assigneeName)) {
+      console.log(
+        `[GitLabGraphQL] ${assigneeName} is already assigned to issue #${issueIid}`,
+      );
+      return;
+    }
+
+    const newAssignees = [...currentAssignees, assigneeName];
+    await this.updateIssueAssignees(issueIid, newAssignees);
+  }
+
+  /**
+   * Remove an assignee from an issue
+   * @param issueIid - Issue IID (not global ID)
+   * @param assigneeName - Name of assignee to remove
+   * @param currentAssignees - Current assignee names
+   */
+  async removeIssueAssignee(
+    issueIid: TID,
+    assigneeName: string,
+    currentAssignees: string[],
+  ): Promise<void> {
+    const newAssignees = currentAssignees.filter((a) => a !== assigneeName);
+    await this.updateIssueAssignees(issueIid, newAssignees);
+  }
+
+  /**
+   * Update issue labels using REST API
+   * @param issueIid - Issue IID (not global ID)
+   * @param labels - Array of label titles to set
+   */
+  async updateIssueLabels(issueIid: TID, labels: string[]): Promise<void> {
+    const projectPath = this.getFullPath();
+    const endpoint = `/projects/${encodeURIComponent(projectPath)}/issues/${issueIid}`;
+
+    await gitlabRestRequest(
+      endpoint,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          labels: labels.join(','),
+        }),
+      },
+    );
+
+    console.log(
+      `[GitLabGraphQL] Updated issue #${issueIid} labels to:`,
+      labels,
+    );
+  }
+
+  /**
+   * Add a label to an issue (keeps existing labels)
+   * @param issueIid - Issue IID (not global ID)
+   * @param labelName - Name of label to add
+   * @param currentLabels - Current label names
+   */
+  async addIssueLabel(
+    issueIid: TID,
+    labelName: string,
+    currentLabels: string[],
+  ): Promise<void> {
+    // Don't add if already has label
+    if (currentLabels.includes(labelName)) {
+      console.log(
+        `[GitLabGraphQL] Issue #${issueIid} already has label: ${labelName}`,
+      );
+      return;
+    }
+
+    const newLabels = [...currentLabels, labelName];
+    await this.updateIssueLabels(issueIid, newLabels);
+  }
+
+  /**
+   * Remove a label from an issue
+   * @param issueIid - Issue IID (not global ID)
+   * @param labelName - Name of label to remove
+   * @param currentLabels - Current label names
+   */
+  async removeIssueLabel(
+    issueIid: TID,
+    labelName: string,
+    currentLabels: string[],
+  ): Promise<void> {
+    const newLabels = currentLabels.filter((l) => l !== labelName);
+    await this.updateIssueLabels(issueIid, newLabels);
+  }
+
+  /**
    * Fetch project labels (for Workload View)
    * Returns list of label titles available in the project
    */

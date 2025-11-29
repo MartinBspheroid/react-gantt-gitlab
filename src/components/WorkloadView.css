@@ -31,25 +31,26 @@
 .workload-view-header .project-select-compact {
   padding: 6px 12px;
   border-radius: 4px;
-  border: 1px solid var(--wx-border-color, #d1d5da);
-  background: var(--wx-background, #fff);
+  border: 1px solid var(--wx-gitlab-button-border, #d1d5da);
+  background: var(--wx-gitlab-button-background, #fff);
   font-size: 14px;
   min-width: 200px;
+  color: var(--wx-gitlab-button-text, #586069);
 }
 
 .workload-view-header .btn-settings {
   padding: 6px 10px;
   border-radius: 4px;
-  border: 1px solid var(--wx-border-color, #d1d5da);
-  background: var(--wx-background, #fff);
+  border: 1px solid var(--wx-gitlab-button-border, #d1d5da);
+  background: var(--wx-gitlab-button-background, #fff);
   cursor: pointer;
-  color: #586069;
+  color: var(--wx-gitlab-button-text, #586069);
   transition: all 0.2s ease;
 }
 
 .workload-view-header .btn-settings:hover {
-  background: var(--wx-background-alt, #f6f8fa);
-  color: #24292e;
+  background: var(--wx-gitlab-button-hover-background, #f6f8fa);
+  color: var(--wx-gitlab-button-hover-text, #24292e);
 }
 
 .workload-view-header .btn-view-options {
@@ -58,17 +59,17 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 4px;
-  border: 1px solid var(--wx-border-color, #d1d5da);
-  background: var(--wx-background, #fff);
+  border: 1px solid var(--wx-gitlab-button-border, #d1d5da);
+  background: var(--wx-gitlab-button-background, #fff);
   cursor: pointer;
-  color: #586069;
+  color: var(--wx-gitlab-button-text, #586069);
   font-size: 13px;
   transition: all 0.2s ease;
 }
 
 .workload-view-header .btn-view-options:hover {
-  background: var(--wx-background-alt, #f6f8fa);
-  color: #24292e;
+  background: var(--wx-gitlab-button-hover-background, #f6f8fa);
+  color: var(--wx-gitlab-button-hover-text, #24292e);
 }
 
 .workload-view-header .btn-view-options .chevron-icon {
@@ -203,32 +204,7 @@
   color: var(--wx-color-secondary, #586069);
 }
 
-/* Dark theme for modal */
-.wx-dark-theme .settings-modal-content {
-  background: var(--wx-background, #1e1e1e);
-}
-
-.wx-dark-theme .settings-modal-header {
-  border-color: var(--wx-border-color, #3c3c3c);
-}
-
-.wx-dark-theme .settings-modal-header h3 {
-  color: var(--wx-color-primary, #d4d4d4);
-}
-
-.wx-dark-theme .btn-close-modal {
-  color: var(--wx-color-secondary, #a0a0a0);
-}
-
-.wx-dark-theme .btn-close-modal:hover {
-  color: var(--wx-color-primary, #d4d4d4);
-}
-
-.wx-dark-theme .workload-view-header .date-input {
-  background: var(--wx-background-alt, #2d2d2d);
-  border-color: var(--wx-border-color, #3c3c3c);
-  color: var(--wx-color-primary, #d4d4d4);
-}
+/* Dark theme for modal - moved to main dark theme section below */
 
 /* Content area */
 .workload-view-content {
@@ -241,7 +217,7 @@
 .workload-sidebar {
   width: 280px;
   min-width: 280px;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: 1px solid var(--wx-gantt-border-color, #e1e4e8);
   background: var(--wx-background-alt, #f6f8fa);
   padding: 16px;
   overflow-y: auto;
@@ -254,7 +230,11 @@
   background: var(--wx-background, #fff);
   border-radius: 8px;
   padding: 12px;
-  border: 1px solid var(--wx-border-color, #e1e4e8);
+  border: 1px solid var(--wx-gantt-border-color, #e1e4e8);
+}
+
+.sidebar-section h3 {
+  color: var(--wx-color-font, #24292e);
 }
 
 .sidebar-section .section-header {
@@ -263,21 +243,21 @@
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--wx-border-color, #e1e4e8);
+  border-bottom: 1px solid var(--wx-gantt-border-color, #e1e4e8);
 }
 
 .sidebar-section h3 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--wx-color-primary, #24292e);
+  color: var(--wx-color-font, #24292e);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .sidebar-section h3 i {
-  color: var(--wx-color-secondary, #6b4fbb);
+  color: var(--wx-color-font, #6b4fbb);
 }
 
 .section-actions {
@@ -289,18 +269,18 @@
   padding: 4px 10px;
   font-size: 12px;
   min-width: 40px;
-  border: 1px solid var(--wx-border-color, #d1d5da);
+  border: 1px solid var(--wx-gantt-border-color, #d1d5da);
   background: var(--wx-background, #fff);
   border-radius: 4px;
   cursor: pointer;
-  color: #333;
+  color: var(--wx-color-font, #333);
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .action-btn:hover {
   background: var(--wx-background-alt, #f6f8fa);
-  border-color: var(--wx-color-primary, #24292e);
+  border-color: var(--wx-color-font, #24292e);
 }
 
 .checkbox-list {
@@ -333,7 +313,7 @@
 
 .checkbox-label {
   font-size: 13px;
-  color: var(--wx-color-primary, #24292e);
+  color: var(--wx-color-font, #24292e);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -347,11 +327,12 @@
 }
 
 .empty-message {
-  color: var(--wx-color-secondary, #6a737d);
+  color: var(--wx-color-font, #6a737d);
   font-size: 13px;
   font-style: italic;
   padding: 8px;
   text-align: center;
+  opacity: 0.7;
 }
 
 /* Selection summary */
@@ -369,12 +350,13 @@
 }
 
 .summary-label {
-  color: #555;
+  color: var(--wx-color-font, #555);
+  opacity: 0.8;
 }
 
 .summary-value {
   font-weight: 600;
-  color: #333;
+  color: var(--wx-color-font, #333);
 }
 
 /* Gantt wrapper */
@@ -493,44 +475,160 @@
   background: #a31d27;
 }
 
-/* Dark theme support */
+/* =============================================
+   Dark theme support - requires full border definitions
+   ============================================= */
+
+/* Container and header */
 .wx-dark-theme .workload-view-container {
-  background: var(--wx-background, #1e1e1e);
+  background: var(--wx-background);
 }
 
 .wx-dark-theme .workload-view-header {
-  background: var(--wx-gitlab-header-background, #252526);
-  border-color: var(--wx-gitlab-header-border, #3c3c3c);
+  background: var(--wx-background-alt);
+  border-bottom: 1px solid var(--wx-gantt-border-color);
 }
 
+/* Sidebar */
 .wx-dark-theme .workload-sidebar {
-  background: var(--wx-background-alt, #252526);
-  border-color: var(--wx-border-color, #3c3c3c);
+  background: var(--wx-background);
+  border-right: 1px solid var(--wx-gantt-border-color);
 }
 
 .wx-dark-theme .sidebar-section {
-  background: var(--wx-background, #1e1e1e);
-  border-color: var(--wx-border-color, #3c3c3c);
+  background: var(--wx-background-alt);
+  border: 1px solid var(--wx-gantt-border-color);
 }
 
-.wx-dark-theme .checkbox-item:hover {
-  background: var(--wx-background-alt, #2d2d2d);
+.wx-dark-theme .sidebar-section h3 {
+  color: var(--wx-color-font);
 }
 
-.wx-dark-theme .checkbox-label {
-  color: var(--wx-color-primary, #d4d4d4);
+.wx-dark-theme .sidebar-section h3 i {
+  color: var(--wx-color-font);
+  opacity: 0.7;
 }
 
-.wx-dark-theme .workload-group-header .group-name {
-  color: var(--wx-color-primary, #d4d4d4);
+.wx-dark-theme .sidebar-section .section-header {
+  border-bottom: 1px solid var(--wx-gantt-border-color);
 }
 
+/* Buttons */
 .wx-dark-theme .action-btn {
-  background: var(--wx-background-alt, #2d2d2d);
-  border-color: var(--wx-border-color, #3c3c3c);
-  color: var(--wx-color-secondary, #a0a0a0);
+  background: var(--wx-background);
+  border: 1px solid var(--wx-gantt-border-color);
+  color: var(--wx-color-font);
 }
 
 .wx-dark-theme .action-btn:hover {
-  background: var(--wx-background, #1e1e1e);
+  background: var(--wx-background-alt);
+  border: 1px solid var(--wx-color-font);
+}
+
+/* Checkbox items */
+.wx-dark-theme .checkbox-item:hover {
+  background: var(--wx-background);
+}
+
+.wx-dark-theme .checkbox-label {
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .checkbox-label.label-tag {
+  background: var(--wx-background);
+  color: var(--wx-color-font);
+}
+
+/* Summary section */
+.wx-dark-theme .selection-summary {
+  background: var(--wx-background);
+  border: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .summary-label {
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .summary-value {
+  color: var(--wx-color-font);
+}
+
+/* Header controls - use gitlab button variables which are defined in theme */
+/* No dark theme override needed - the base styles use --wx-gitlab-button-* variables */
+
+.wx-dark-theme .workload-view-header .view-controls {
+  background: var(--wx-gitlab-control-background);
+  border: 1px solid var(--wx-gitlab-control-border);
+}
+
+.wx-dark-theme .workload-view-header .control-label {
+  color: var(--wx-gitlab-control-text);
+}
+
+.wx-dark-theme .workload-view-header .control-value {
+  color: var(--wx-gitlab-control-value);
+}
+
+.wx-dark-theme .workload-view-header .unit-select {
+  background: var(--wx-gitlab-button-background);
+  border: 1px solid var(--wx-gitlab-button-border);
+  color: var(--wx-gitlab-button-text);
+}
+
+.wx-dark-theme .workload-view-header .date-input {
+  background: var(--wx-gitlab-filter-input-background);
+  border: 1px solid var(--wx-gitlab-filter-input-border);
+  color: var(--wx-gitlab-filter-text);
+}
+
+/* Modal dark theme */
+.wx-dark-theme .settings-modal-content {
+  background: var(--wx-background);
+}
+
+.wx-dark-theme .settings-modal-header {
+  border-bottom: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .settings-modal-header h3 {
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .btn-close-modal {
+  color: var(--wx-color-font);
+  opacity: 0.7;
+}
+
+.wx-dark-theme .btn-close-modal:hover {
+  color: var(--wx-color-font);
+  opacity: 1;
+}
+
+.wx-dark-theme .settings-section h4 {
+  color: var(--wx-color-font);
+  opacity: 0.8;
+}
+
+/* Empty states */
+.wx-dark-theme .no-selection-message {
+  color: var(--wx-color-font);
+  opacity: 0.7;
+}
+
+.wx-dark-theme .no-selection-message h3 {
+  color: var(--wx-color-font);
+  opacity: 1;
+}
+
+.wx-dark-theme .empty-message {
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .workload-group-header .group-name {
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .workload-group-header .group-count {
+  color: var(--wx-color-font);
+  opacity: 0.7;
 }

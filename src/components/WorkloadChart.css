@@ -14,7 +14,7 @@
 .workload-time-scale {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid var(--wx-border-color, #e1e4e8);
+  border-bottom: var(--wx-gantt-border, 1px solid #e1e4e8);
   background: var(--wx-background-alt, #f6f8fa);
   flex-shrink: 0;
 }
@@ -26,12 +26,12 @@
 .time-scale-spacer {
   width: 200px;
   min-width: 200px;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: var(--wx-gantt-border, 1px solid #e1e4e8);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: #555;
+  color: var(--wx-timescale-font-color, #555);
   font-weight: 500;
 }
 
@@ -50,17 +50,17 @@
 .time-scale-months {
   display: flex;
   height: 24px;
-  border-bottom: 1px solid var(--wx-border-color, #e1e4e8);
+  border-bottom: var(--wx-gantt-border, 1px solid #e1e4e8);
 }
 
 .time-scale-month {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: var(--wx-timescale-border, 1px solid #e1e4e8);
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: var(--wx-timescale-font-color, #333);
   background: var(--wx-background-alt, #f6f8fa);
   flex-shrink: 0;
 }
@@ -69,15 +69,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: var(--wx-timescale-border, 1px solid #e1e4e8);
   font-size: 11px;
-  color: #444;
+  color: var(--wx-timescale-font-color, #444);
   flex-shrink: 0;
 }
 
 .time-scale-cell.weekend {
-  background: rgba(255, 0, 0, 0.08);
-  color: #dc3545;
+  background: var(--wx-gantt-holiday-background, #f0f6fa);
+  color: var(--wx-gantt-holiday-color, #9fa1ae);
 }
 
 /* Chart body */
@@ -91,7 +91,7 @@
 .workload-sidebar-column {
   width: 200px;
   min-width: 200px;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: var(--wx-gantt-border, 1px solid #e1e4e8);
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--wx-background, #fff);
@@ -106,6 +106,16 @@
 
 .sidebar-group {
   /* Height controlled by JS for sync with chart */
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-group.drop-target {
+  background: rgba(107, 79, 187, 0.15);
+  box-shadow: inset 0 0 0 2px rgba(107, 79, 187, 0.5);
+}
+
+.sidebar-group.drop-target .sidebar-row.first-row {
+  background: rgba(107, 79, 187, 0.25);
 }
 
 .sidebar-row {
@@ -114,7 +124,7 @@
   gap: 8px;
   padding: 0 12px;
   font-size: 12px;
-  color: var(--wx-color-secondary, #586069);
+  color: var(--wx-color-font, #586069);
   box-sizing: border-box;
 }
 
@@ -122,7 +132,7 @@
   background: var(--wx-background-alt, #f6f8fa);
   font-weight: 600;
   font-size: 13px;
-  color: #333;
+  color: var(--wx-color-font, #333);
 }
 
 .sidebar-row .group-icon {
@@ -186,11 +196,11 @@
 .grid-column {
   position: absolute;
   top: 0;
-  border-right: 1px solid var(--wx-border-color, #e1e4e8);
+  border-right: var(--wx-gantt-border, 1px solid #e1e4e8);
 }
 
 .grid-column.weekend {
-  background: rgba(255, 0, 0, 0.03);
+  background: var(--wx-gantt-holiday-background, #f0f6fa);
 }
 
 /* Chart rows */
@@ -204,7 +214,7 @@
   right: 0;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--wx-border-color, #e1e4e8);
+  border-bottom: var(--wx-grid-body-row-border, 1px solid #e1e4e8);
 }
 
 /* Task bars */
@@ -370,28 +380,93 @@
   margin-left: auto;
 }
 
-/* Dark theme */
+/* Dark theme - uses CSS variables from theme, requires full border definitions */
 .wx-dark-theme .workload-chart-container {
-  background: var(--wx-background, #1e1e1e);
+  background: var(--wx-background);
 }
 
 .wx-dark-theme .workload-time-scale {
-  background: var(--wx-background-alt, #252526);
+  background: var(--wx-background-alt);
+  border-bottom: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .time-scale-spacer {
+  border-right: 1px solid var(--wx-gantt-border-color);
+  color: var(--wx-timescale-font-color);
+}
+
+.wx-dark-theme .time-scale-months {
+  border-bottom: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .time-scale-month {
+  border-right: 1px solid var(--wx-gantt-border-color);
+  background: var(--wx-background-alt);
+  color: var(--wx-timescale-font-color);
 }
 
 .wx-dark-theme .time-scale-cell {
-  color: var(--wx-color-secondary, #a0a0a0);
+  border-right: 1px solid var(--wx-gantt-border-color);
+  color: var(--wx-timescale-font-color);
+}
+
+/* Weekend uses same variable as Gantt - no override needed */
+
+.wx-dark-theme .workload-sidebar-column {
+  background: var(--wx-background);
+  border-right: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .sidebar-row {
+  color: var(--wx-color-font);
 }
 
 .wx-dark-theme .sidebar-row.first-row {
-  background: var(--wx-background-alt, #252526);
-  color: var(--wx-color-primary, #d4d4d4);
+  background: var(--wx-background-alt);
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .sidebar-row .group-task-count {
+  color: var(--wx-color-font);
+  opacity: 0.7;
+}
+
+.wx-dark-theme .grid-column {
+  border-right: 1px solid var(--wx-gantt-border-color);
+}
+
+/* Weekend grid uses same variable as Gantt - no override needed */
+
+.wx-dark-theme .chart-row {
+  border-bottom: 1px solid var(--wx-gantt-border-color);
 }
 
 .wx-dark-theme .workload-task-bar {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.wx-dark-theme .grid-column.weekend {
-  background: rgba(255, 0, 0, 0.05);
+/* Old group row styles - dark theme */
+.wx-dark-theme .workload-group-row,
+.wx-dark-theme .workload-task-row {
+  border-bottom: 1px solid var(--wx-gantt-border-color);
+}
+
+.wx-dark-theme .workload-group-header-cell {
+  background: var(--wx-background-alt);
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .workload-row-label {
+  color: var(--wx-color-font);
+  opacity: 0.8;
+}
+
+.wx-dark-theme .group-count {
+  color: var(--wx-color-font);
+  opacity: 0.7;
+}
+
+.wx-dark-theme .workload-chart-empty {
+  color: var(--wx-color-font);
+  opacity: 0.7;
 }

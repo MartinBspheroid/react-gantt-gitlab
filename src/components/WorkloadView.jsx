@@ -360,6 +360,81 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     [syncTask]
   );
 
+  // Handle group change (cross-group drag)
+  const handleGroupChange = useCallback(
+    async (task, { fromGroup, toGroup }) => {
+      if (!provider) {
+        console.warn('[WorkloadView] No provider available for group change');
+        return;
+      }
+
+      // Find original task
+      const originalTask = findOriginalTask(task.id, allTasksRef.current);
+      if (!originalTask) {
+        console.warn('[WorkloadView] Could not find original task for:', task.id);
+        return;
+      }
+
+      const taskId = originalTask.id;
+      console.log('[WorkloadView] Group change:', {
+        taskId,
+        from: fromGroup,
+        to: toGroup,
+      });
+
+      try {
+        if (toGroup.type === 'others') {
+          // Moving to "Others" group - remove the assignee/label from the source group
+          if (fromGroup.type === 'assignee') {
+            const currentAssignees = originalTask.assigned
+              ? originalTask.assigned.split(',').map((a) => a.trim())
+              : [];
+            await provider.removeIssueAssignee(taskId, fromGroup.name, currentAssignees);
+          } else if (fromGroup.type === 'label') {
+            const currentLabels = originalTask.labels
+              ? (Array.isArray(originalTask.labels)
+                  ? originalTask.labels
+                  : originalTask.labels.split(',').map((l) => l.trim()))
+              : [];
+            await provider.removeIssueLabel(taskId, fromGroup.name, currentLabels);
+          }
+        } else if (toGroup.type === 'assignee') {
+          // Moving to assignee group - add this assignee to the task
+          const currentAssignees = originalTask.assigned
+            ? originalTask.assigned.split(',').map((a) => a.trim())
+            : [];
+          await provider.addIssueAssignee(taskId, toGroup.name, currentAssignees);
+
+          // If moving from another assignee group, optionally remove old assignee
+          if (fromGroup.type === 'assignee') {
+            const updatedAssignees = [...currentAssignees, toGroup.name];
+            await provider.removeIssueAssignee(taskId, fromGroup.name, updatedAssignees);
+          }
+        } else if (toGroup.type === 'label') {
+          // Moving to label group - add this label to the task
+          const currentLabels = originalTask.labels
+            ? (Array.isArray(originalTask.labels)
+                ? originalTask.labels
+                : originalTask.labels.split(',').map((l) => l.trim()))
+            : [];
+          await provider.addIssueLabel(taskId, toGroup.name, currentLabels);
+
+          // If moving from another label group, optionally remove old label
+          if (fromGroup.type === 'label') {
+            const updatedLabels = [...currentLabels, toGroup.name];
+            await provider.removeIssueLabel(taskId, fromGroup.name, updatedLabels);
+          }
+        }
+
+        // Refresh data to show updated assignments
+        await sync();
+      } catch (error) {
+        console.error('[WorkloadView] Failed to update group:', error.message);
+      }
+    },
+    [provider, sync]
+  );
+
   // Use shared highlight time hook for weekend/holiday logic
   const { highlightTime } = useHighlightTime({ holidays, workdays });
 
@@ -565,6 +640,7 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
               lengthUnit={lengthUnit}
               highlightTime={highlightTime}
               onTaskDrag={handleTaskDrag}
+              onGroupChange={handleGroupChange}
               showOthers={showOthers}
             />
           )}
