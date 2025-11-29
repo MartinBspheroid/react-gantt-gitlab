@@ -564,9 +564,12 @@ export default function Grid(props) {
             rowHeight: cellHeightVal,
             headerHeight: (headerHeight ?? 0) - 1,
           }}
-          rowStyle={(row) =>
-            row.$reorder ? 'wx-rHj6070p wx-reorder-task' : 'wx-rHj6070p'
-          }
+          rowStyle={(row) => {
+            let className = 'wx-rHj6070p';
+            if (row.$reorder) className += ' wx-reorder-task';
+            if (row.$isMilestone || row._gitlab?.type === 'milestone') className += ' wx-milestone-row';
+            return className;
+          }}
           columnStyle={(col) =>
             `wx-rHj6070p wx-text-${col.align}${col.id === 'add-task' ? ' wx-action' : ''}`
           }

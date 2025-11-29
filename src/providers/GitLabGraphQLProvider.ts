@@ -2342,4 +2342,60 @@ export class GitLabGraphQLProvider {
 
     console.log('[GitLabGraphQL] Link deleted successfully');
   }
+
+  /**
+   * Check if current user has edit permissions (Maintainer+) for the project
+   * Uses userPermissions.pushCode as proxy for Maintainer access
+   */
+  async checkCanEdit(): Promise<boolean> {
+    const query = `
+      query checkProjectPermissions($fullPath: ID!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          userPermissions {
+            pushCode
+            createSnippet
+          }
+        }
+      }
+    `;
+
+    try {
+      const result = await this.graphqlClient.query<{
+        project?: {
+          userPermissions: {
+            pushCode: boolean;
+            createSnippet: boolean;
+          };
+        };
+        group?: {
+          userPermissions: {
+            pushCode: boolean;
+            createSnippet: boolean;
+          };
+        };
+      }>(query, { fullPath: this.getFullPath() });
+
+      const permissions =
+        this.config.type === 'group'
+          ? result.group?.userPermissions
+          : result.project?.userPermissions;
+
+      // User can edit if they can create snippets (Maintainer+ permission)
+      return permissions?.createSnippet ?? false;
+    } catch (error) {
+      console.error('[GitLabGraphQL] Failed to check permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get proxy config for REST API calls
+   */
+  getProxyConfig() {
+    return {
+      gitlabUrl: this.config.gitlabUrl,
+      token: this.config.token,
+      isDev: this.isDev,
+    };
+  }
 }

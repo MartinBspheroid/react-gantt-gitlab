@@ -13,6 +13,7 @@ import SmartTaskContent from './SmartTaskContent.jsx';
 import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
 import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
 import { useGitLabSync } from '../hooks/useGitLabSync.ts';
+import { useGitLabHolidays } from '../hooks/useGitLabHolidays.ts';
 import { GitLabFilters } from '../utils/GitLabFilters.ts';
 import { ProjectSelector } from './ProjectSelector.jsx';
 import { SyncButton } from './SyncButton.jsx';
@@ -34,21 +35,42 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     const saved = localStorage.getItem('gantt-cell-width');
     return saved ? Number(saved) : 40;
   });
+  // Display value for slider (updates immediately for smooth UX)
+  const [cellWidthDisplay, setCellWidthDisplay] = useState(cellWidth);
+  const cellWidthTimerRef = useRef(null);
 
   const [cellHeight, setCellHeight] = useState(() => {
     const saved = localStorage.getItem('gantt-cell-height');
     return saved ? Number(saved) : 38;
   });
+  // Display value for slider (updates immediately for smooth UX)
+  const [cellHeightDisplay, setCellHeightDisplay] = useState(cellHeight);
+  const cellHeightTimerRef = useRef(null);
 
-  const [holidays, setHolidays] = useState(() => {
-    const saved = localStorage.getItem('gantt-holidays');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Debounced cell width update to reduce re-renders
+  const handleCellWidthChange = useCallback((value) => {
+    setCellWidthDisplay(value);
+    if (cellWidthTimerRef.current) {
+      clearTimeout(cellWidthTimerRef.current);
+    }
+    cellWidthTimerRef.current = setTimeout(() => {
+      setCellWidth(value);
+    }, 100);
+  }, []);
 
-  const [workdays, setWorkdays] = useState(() => {
-    const saved = localStorage.getItem('gantt-workdays');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Debounced cell height update to reduce re-renders
+  const handleCellHeightChange = useCallback((value) => {
+    setCellHeightDisplay(value);
+    if (cellHeightTimerRef.current) {
+      clearTimeout(cellHeightTimerRef.current);
+    }
+    cellHeightTimerRef.current = setTimeout(() => {
+      setCellHeight(value);
+    }, 100);
+  }, []);
+
+  // canEditHolidays: whether user has permission to edit holidays (Maintainer+)
+  const [canEditHolidays, setCanEditHolidays] = useState(false);
 
   const [lengthUnit, setLengthUnit] = useState(() => {
     const saved = localStorage.getItem('gantt-length-unit');
@@ -85,16 +107,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   useEffect(() => {
     localStorage.setItem('gantt-cell-height', cellHeight.toString());
   }, [cellHeight]);
-
-  // Save holidays to localStorage
-  useEffect(() => {
-    localStorage.setItem('gantt-holidays', JSON.stringify(holidays));
-  }, [holidays]);
-
-  // Save workdays to localStorage
-  useEffect(() => {
-    localStorage.setItem('gantt-workdays', JSON.stringify(workdays));
-  }, [workdays]);
 
   // Save length unit to localStorage
   useEffect(() => {
@@ -157,6 +169,53 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     createLink,
     deleteLink,
   } = useGitLabSync(provider, autoSync);
+
+  // Get project path for holidays hook
+  const projectPath = useMemo(() => {
+    if (!currentConfig) return null;
+    if (currentConfig.type === 'project' && currentConfig.projectId) {
+      return String(currentConfig.projectId);
+    } else if (currentConfig.type === 'group' && currentConfig.groupId) {
+      return String(currentConfig.groupId);
+    }
+    return null;
+  }, [currentConfig]);
+
+  // Get proxy config for REST API calls (for holidays)
+  // Memoize based on actual config values to prevent unnecessary re-renders
+  const proxyConfig = useMemo(() => {
+    if (!currentConfig) return null;
+    return {
+      gitlabUrl: currentConfig.gitlabUrl,
+      token: currentConfig.token,
+      isDev: import.meta.env.DEV,
+    };
+  }, [currentConfig?.gitlabUrl, currentConfig?.token]);
+
+  // Check permissions when provider changes
+  useEffect(() => {
+    if (!provider) {
+      setCanEditHolidays(false);
+      return;
+    }
+
+    provider.checkCanEdit().then(canEdit => {
+      setCanEditHolidays(canEdit);
+    });
+  }, [provider]);
+
+  // Use GitLab holidays hook
+  const {
+    holidays,
+    workdays,
+    holidaysText,
+    workdaysText,
+    loading: holidaysLoading,
+    saving: holidaysSaving,
+    error: holidaysError,
+    setHolidaysText,
+    setWorkdaysText,
+  } = useGitLabHolidays(projectPath, proxyConfig, canEditHolidays);
 
   // Ref to store fold state before data updates
   const openStateRef = useRef(new Map());
@@ -936,6 +995,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         const movedTask = ganttApi.getTask(ev.id);
         const targetTask = ganttApi.getTask(ev.target);
 
+        // Skip milestones - they can't be reordered (no way to save order)
+        if (movedTask._gitlab?.type === 'milestone') {
+          return;
+        }
+
         // Extract type information once
         const movedType = movedTask._gitlab?.workItemType || movedTask._gitlab?.type || 'unknown';
         const targetType = targetTask._gitlab?.workItemType || targetTask._gitlab?.type || 'unknown';
@@ -1165,24 +1229,48 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     return `${year}-${month}-${day}`;
   }, []);
 
+  // Pre-compute normalized date sets for efficient lookup
+  // Use JSON.stringify to create stable dependency (avoid re-computation when array reference changes but content is same)
+  const holidaysKey = useMemo(() => JSON.stringify(holidays.map(h => typeof h === 'string' ? h : h.date)), [holidays]);
+  const workdaysKey = useMemo(() => JSON.stringify(workdays.map(w => typeof w === 'string' ? w : w.date)), [workdays]);
+
+  const holidaySet = useMemo(() => {
+    const set = new Set();
+    for (const holiday of holidays) {
+      const dateStr = typeof holiday === 'string' ? holiday : holiday.date;
+      set.add(normalizeDateString(dateStr));
+    }
+    return set;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holidaysKey, normalizeDateString]);
+
+  const workdaySet = useMemo(() => {
+    const set = new Set();
+    for (const wd of workdays) {
+      const dateStr = typeof wd === 'string' ? wd : wd.date;
+      set.add(normalizeDateString(dateStr));
+    }
+    return set;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workdaysKey, normalizeDateString]);
+
   // Working days and holidays calculation
   const isWeekend = useCallback((date) => {
     const day = date.getDay();
     const dateStr = formatLocalDate(date);
 
     // Check if this weekend day is marked as a workday
-    const isMarkedWorkday = workdays.some(wd => normalizeDateString(wd) === dateStr);
-    if (isMarkedWorkday) {
+    if (workdaySet.has(dateStr)) {
       return false; // It's a workday despite being weekend
     }
 
     return day === 0 || day === 6; // Sunday or Saturday
-  }, [workdays, normalizeDateString, formatLocalDate]);
+  }, [workdaySet, formatLocalDate]);
 
   const isHoliday = useCallback((date) => {
     const dateStr = formatLocalDate(date);
-    return holidays.some(holiday => normalizeDateString(holiday) === dateStr);
-  }, [holidays, normalizeDateString, formatLocalDate]);
+    return holidaySet.has(dateStr);
+  }, [holidaySet, formatLocalDate]);
 
   const highlightTime = useCallback((date, unit) => {
     if (unit === 'day' && (isWeekend(date) || isHoliday(date))) {
@@ -1324,12 +1412,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               type="range"
               min="20"
               max="100"
-              value={cellWidth}
-              onChange={(e) => setCellWidth(Number(e.target.value))}
+              value={cellWidthDisplay}
+              onChange={(e) => handleCellWidthChange(Number(e.target.value))}
               className="slider"
               disabled={lengthUnit !== 'day'}
             />
-            <span className="control-value">{lengthUnit === 'day' ? cellWidth : effectiveCellWidth}</span>
+            <span className="control-value">{lengthUnit === 'day' ? cellWidthDisplay : effectiveCellWidth}</span>
           </label>
           <label className="control-label">
             Height:
@@ -1337,11 +1425,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               type="range"
               min="20"
               max="60"
-              value={cellHeight}
-              onChange={(e) => setCellHeight(Number(e.target.value))}
+              value={cellHeightDisplay}
+              onChange={(e) => handleCellHeightChange(Number(e.target.value))}
               className="slider"
             />
-            <span className="control-value">{cellHeight}</span>
+            <span className="control-value">{cellHeightDisplay}</span>
           </label>
           <label className="control-label">
             Unit:
@@ -1420,59 +1508,75 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             </div>
 
             <div className="settings-section">
-              <h4>Holidays</h4>
-              <p className="settings-hint">Add holiday dates (one per line, formats: YYYY-MM-DD or YYYY/M/D)</p>
+              <h4 className="settings-section-header">
+                Holidays
+                {!canEditHolidays && (
+                  <span className="permission-warning">
+                    <i className="fas fa-lock"></i> Maintainer permission required
+                  </span>
+                )}
+                {holidaysSaving && (
+                  <span className="saving-indicator">
+                    <i className="fas fa-spinner fa-spin"></i> Saving...
+                  </span>
+                )}
+              </h4>
+              <p className="settings-hint">Add holiday dates (one per line, formats: YYYY-MM-DD or YYYY/M/D, optional name after space)</p>
+              {holidaysError && (
+                <div className="holidays-error">
+                  <i className="fas fa-exclamation-triangle"></i> {holidaysError}
+                </div>
+              )}
               <textarea
-                value={holidays.join('\n')}
-                onChange={(e) => {
-                  const lines = e.target.value.split('\n');
-                  setHolidays(lines);
-                }}
-                onBlur={(e) => {
-                  // Clean up empty lines when user finishes editing
-                  const lines = e.target.value.split('\n').filter(line => line.trim());
-                  setHolidays(lines);
-                }}
-                placeholder="2025-01-01&#10;2025/2/28&#10;2025-12-25"
-                className="holidays-textarea"
+                value={holidaysText}
+                onChange={(e) => setHolidaysText(e.target.value)}
+                placeholder="2025-01-01 New Year&#10;2025/2/28&#10;2025-12-25 Christmas"
+                className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
                 rows={6}
+                disabled={!canEditHolidays || holidaysLoading}
               />
-              <div className="holiday-presets">
-                <button
-                  onClick={() => setHolidays([])}
-                  className="preset-btn preset-btn-clear"
-                >
-                  Clear All
-                </button>
-              </div>
+              {canEditHolidays && (
+                <div className="holiday-presets">
+                  <button
+                    onClick={() => setHolidaysText('')}
+                    className="preset-btn preset-btn-clear"
+                    disabled={holidaysLoading}
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="settings-section">
-              <h4>Extra Working Days</h4>
+              <h4 className="settings-section-header">
+                Extra Working Days
+                {!canEditHolidays && (
+                  <span className="permission-warning">
+                    <i className="fas fa-lock"></i> Maintainer permission required
+                  </span>
+                )}
+              </h4>
               <p className="settings-hint">Add extra working days on weekends (one per line, formats: YYYY-MM-DD or YYYY/M/D)</p>
               <textarea
-                value={workdays.join('\n')}
-                onChange={(e) => {
-                  const lines = e.target.value.split('\n');
-                  setWorkdays(lines);
-                }}
-                onBlur={(e) => {
-                  // Clean up empty lines when user finishes editing
-                  const lines = e.target.value.split('\n').filter(line => line.trim());
-                  setWorkdays(lines);
-                }}
+                value={workdaysText}
+                onChange={(e) => setWorkdaysText(e.target.value)}
                 placeholder="2025/1/25&#10;2025-02-08"
-                className="holidays-textarea"
+                className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
                 rows={6}
+                disabled={!canEditHolidays || holidaysLoading}
               />
-              <div className="holiday-presets">
-                <button
-                  onClick={() => setWorkdays([])}
-                  className="preset-btn preset-btn-clear"
-                >
-                  Clear All
-                </button>
-              </div>
+              {canEditHolidays && (
+                <div className="holiday-presets">
+                  <button
+                    onClick={() => setWorkdaysText('')}
+                    className="preset-btn preset-btn-clear"
+                    disabled={holidaysLoading}
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1760,6 +1864,55 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         .holidays-textarea:focus {
           outline: none;
           border-color: #1f75cb;
+        }
+
+        .holidays-textarea.disabled {
+          background: var(--wx-gitlab-disabled-background, #f5f5f5);
+          color: var(--wx-gitlab-disabled-text, #999);
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+
+        .settings-section-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .permission-warning {
+          font-size: 12px;
+          font-weight: normal;
+          color: #e67700;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .permission-warning i {
+          font-size: 11px;
+        }
+
+        .saving-indicator {
+          font-size: 12px;
+          font-weight: normal;
+          color: #1f75cb;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .holidays-error {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 8px 12px;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .holiday-presets {

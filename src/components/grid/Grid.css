@@ -110,3 +110,10 @@
   border-top: transparent;
   border-bottom: transparent;
 }
+/* Disable drag reordering for milestone rows */
+.wx-table .wx-grid .wx-milestone-row {
+  pointer-events: none;
+}
+.wx-table .wx-grid .wx-milestone-row > * {
+  pointer-events: auto;
+}
