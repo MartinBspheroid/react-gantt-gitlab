@@ -1576,11 +1576,33 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 });
 
                 if (orphanedTasks.length > 0) {
-                  console.error('[GitLabGantt RENDER] Found orphaned tasks (parent does not exist):', {
-                    count: orphanedTasks.length,
-                    orphanedTaskIds: orphanedTasks.map(t => ({id: t.id, parent: t.parent, text: t.text})),
-                    message: 'This should not happen after filter integrity fix'
-                  });
+                  // Get unique parent IDs that are missing
+                  const missingParentIds = new Set(orphanedTasks.map(t => t.parent));
+
+                  // Check if these are Epic IDs (small numbers, not milestone IDs which are > 10000)
+                  const epicParentIds = Array.from(missingParentIds).filter(id => typeof id === 'number' && id < 10000 && id !== 0);
+
+                  if (epicParentIds.length > 0) {
+                    // These are Epic children - Epics are not supported yet
+                    console.info('[GitLabGantt] Some issues belong to Epics (not supported):', {
+                      epicIds: epicParentIds,
+                      affectedIssues: orphanedTasks.filter(t => epicParentIds.includes(t.parent)).length,
+                      note: 'Epic support is not implemented. These issues will appear at root level.'
+                    });
+                  } else {
+                    // This is an actual error - tasks with missing parents
+                    console.error('[GitLabGantt RENDER] Found orphaned tasks (parent does not exist):', {
+                      count: orphanedTasks.length,
+                      orphanedTaskIds: orphanedTasks.map(t => ({
+                        id: t.id,
+                        parent: t.parent,
+                        text: t.text,
+                        type: t.type,
+                        _gitlab: t._gitlab?.type
+                      })),
+                      missingParentIds: Array.from(missingParentIds)
+                    });
+                  }
                 }
 
                 try {

@@ -175,39 +175,51 @@ export class GitLabFilters {
     allTasks: ITask[],
   ): ITask[] {
     const taskMap = new Map<number | string, ITask>();
-    const requiredParents = new Set<number | string>();
 
-    // First, add all filtered tasks to the map
+    // Process each task
     filteredTasks.forEach((task) => {
-      taskMap.set(task.id, task);
-    });
-
-    // Find all required parent IDs
-    filteredTasks.forEach((task) => {
+      // Check if this task has a parent that doesn't exist in allTasks
       if (task.parent && task.parent !== 0) {
-        let currentParentId: number | string | undefined = task.parent;
+        const parentExists = allTasks.some((t) => t.id === task.parent);
 
-        // Walk up the parent chain to find all ancestors
-        while (currentParentId && currentParentId !== 0) {
-          if (!taskMap.has(currentParentId)) {
-            requiredParents.add(currentParentId);
+        if (!parentExists) {
+          // Parent doesn't exist - likely an Epic (not supported)
+          // Move task to root level
+          const modifiedTask = { ...task, parent: 0 };
 
-            // Find the parent task in allTasks
-            const parentTask = allTasks.find((t) => t.id === currentParentId);
-            if (parentTask) {
-              taskMap.set(currentParentId, parentTask);
-              currentParentId = parentTask.parent;
+          // If parent ID is < 10000, it's likely an Epic ID
+          if (typeof task.parent === 'number' && task.parent < 10000) {
+            // Add a note to the task text to indicate it belongs to an Epic
+            modifiedTask.text = `${task.text} [Epic #${task.parent}]`;
+          }
+
+          taskMap.set(task.id, modifiedTask);
+        } else {
+          // Parent exists, add task as-is
+          taskMap.set(task.id, task);
+
+          // Also ensure the parent is included in the result
+          let currentParentId: number | string | undefined = task.parent;
+          while (currentParentId && currentParentId !== 0) {
+            if (!taskMap.has(currentParentId)) {
+              const parentTask = allTasks.find((t) => t.id === currentParentId);
+              if (parentTask) {
+                taskMap.set(currentParentId, parentTask);
+                currentParentId = parentTask.parent;
+              } else {
+                break;
+              }
             } else {
               break;
             }
-          } else {
-            break;
           }
         }
+      } else {
+        // No parent or root level, add as-is
+        taskMap.set(task.id, task);
       }
     });
 
-    // Return all tasks including required parents
     return Array.from(taskMap.values());
   }
 

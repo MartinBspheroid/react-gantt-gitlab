@@ -67,11 +67,19 @@ interface WorkItem {
 interface WorkItemsResponse {
   project?: {
     workItems: {
+      pageInfo?: {
+        hasNextPage: boolean;
+        endCursor: string | null;
+      };
       nodes: WorkItem[];
     };
   };
   group?: {
     workItems: {
+      pageInfo?: {
+        hasNextPage: boolean;
+        endCursor: string | null;
+      };
       nodes: WorkItem[];
     };
   };
@@ -105,14 +113,20 @@ export class GitLabGraphQLProvider {
   /**
    * Fetch all work items (issues) using GraphQL
    */
-  async getData(options: GitLabSyncOptions = {}): Promise<GitLabDataResponse> {
+  async getData(
+    options: GitLabSyncOptions & { enablePagination?: boolean } = {},
+  ): Promise<GitLabDataResponse> {
     // Fetching work items and milestones
 
-    // Query for work items
+    // Query for work items with pagination
     const workItemsQuery = `
-      query getWorkItems($fullPath: ID!, $state: IssuableState) {
+      query getWorkItems($fullPath: ID!, $state: IssuableState, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          workItems(types: [ISSUE, TASK], state: $state, first: 100) {
+          workItems(types: [ISSUE, TASK], state: $state, first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               id
               iid
@@ -193,11 +207,15 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    // Query for milestones
+    // Query for milestones with pagination
     const milestonesQuery = `
-      query getMilestones($fullPath: ID!) {
+      query getMilestones($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          milestones(state: active, first: 100) {
+          milestones(state: active, first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               id
               iid
@@ -215,11 +233,15 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    // Query for issues to get relativePosition (Issue API supports this field)
+    // Query for issues to get relativePosition (Issue API supports this field) with pagination
     const issuesQuery = `
-      query getIssues($fullPath: ID!, $state: IssuableState) {
+      query getIssues($fullPath: ID!, $state: IssuableState, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          issues(state: $state, first: 100) {
+          issues(state: $state, first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               iid
               relativePosition
@@ -234,50 +256,132 @@ export class GitLabGraphQLProvider {
       state: options.includeClosed ? undefined : 'opened',
     };
 
-    // Execute all three queries in parallel
-    const [workItemsResult, milestonesResult, issuesResult] = await Promise.all(
-      [
-        this.graphqlClient.query<WorkItemsResponse>(workItemsQuery, variables),
-        this.graphqlClient.query<any>(milestonesQuery, {
-          fullPath: this.getFullPath(),
-        }),
-        this.graphqlClient.query<any>(issuesQuery, variables).catch((error) => {
-          console.warn(
-            '[GitLabGraphQL] Failed to fetch Issue relativePosition, will fall back to IID sorting:',
-            error,
-          );
-          return null; // Graceful degradation if Issue API fails
-        }),
-      ],
+    // Fetch work items with optional pagination
+    const enablePagination = options.enablePagination !== false; // Default to true
+    const MAX_PAGES = enablePagination ? 3 : 1; // If pagination enabled, limit to 3 pages (300 items)
+    const allWorkItems: WorkItem[] = [];
+    let hasNextPage = true;
+    let endCursor: string | null = null;
+    let pageCount = 0;
+
+    while (hasNextPage && pageCount < MAX_PAGES) {
+      const paginatedVariables = { ...variables, after: endCursor };
+      const workItemsResult = await this.graphqlClient.query<WorkItemsResponse>(
+        workItemsQuery,
+        paginatedVariables,
+      );
+
+      const workItemsData =
+        this.config.type === 'group'
+          ? workItemsResult.group?.workItems
+          : workItemsResult.project?.workItems;
+
+      if (workItemsData) {
+        allWorkItems.push(...workItemsData.nodes);
+        hasNextPage = workItemsData.pageInfo?.hasNextPage || false;
+        endCursor = workItemsData.pageInfo?.endCursor || null;
+        pageCount++;
+      } else {
+        hasNextPage = false;
+      }
+    }
+
+    if (pageCount === MAX_PAGES && hasNextPage) {
+      console.warn(
+        `[GitLabGraphQL] Reached page limit (${MAX_PAGES}). ${enablePagination ? 'Some work items may not be loaded. Consider increasing MAX_PAGES.' : 'Enable pagination to load more items.'}`,
+      );
+    }
+
+    console.log(
+      `[GitLabGraphQL] Fetched ${allWorkItems.length} work items in ${pageCount} page(s)`,
     );
 
-    const workItems =
-      this.config.type === 'group'
-        ? workItemsResult.group?.workItems.nodes || []
-        : workItemsResult.project?.workItems.nodes || [];
+    // Fetch milestones (usually fewer, so use smaller limit)
+    const allMilestones: GitLabMilestone[] = [];
+    hasNextPage = true;
+    endCursor = null;
+    pageCount = 0;
+    const MAX_MILESTONE_PAGES = enablePagination ? 2 : 1; // Maximum 200 milestones if pagination enabled
 
-    const milestones =
-      this.config.type === 'group'
-        ? milestonesResult.group?.milestones.nodes || []
-        : milestonesResult.project?.milestones.nodes || [];
+    while (hasNextPage && pageCount < MAX_MILESTONE_PAGES) {
+      const milestonesResult = await this.graphqlClient.query<any>(
+        milestonesQuery,
+        {
+          fullPath: this.getFullPath(),
+          after: endCursor,
+        },
+      );
+
+      const milestonesData =
+        this.config.type === 'group'
+          ? milestonesResult.group?.milestones
+          : milestonesResult.project?.milestones;
+
+      if (milestonesData) {
+        allMilestones.push(...milestonesData.nodes);
+        hasNextPage = milestonesData.pageInfo?.hasNextPage || false;
+        endCursor = milestonesData.pageInfo?.endCursor || null;
+        pageCount++;
+      } else {
+        hasNextPage = false;
+      }
+    }
+
+    console.log(`[GitLabGraphQL] Fetched ${allMilestones.length} milestones`);
+
+    // Fetch issues for relativePosition (same limit as work items)
+    const allIssuesWithPosition: { iid: string; relativePosition: number }[] =
+      [];
+    hasNextPage = true;
+    endCursor = null;
+    pageCount = 0;
+
+    try {
+      const MAX_ISSUE_PAGES = enablePagination ? 3 : 1; // Same as work items
+      while (hasNextPage && pageCount < MAX_ISSUE_PAGES) {
+        const issuesResult = await this.graphqlClient.query<any>(issuesQuery, {
+          ...variables,
+          after: endCursor,
+        });
+
+        const issuesData =
+          this.config.type === 'group'
+            ? issuesResult.group?.issues
+            : issuesResult.project?.issues;
+
+        if (issuesData) {
+          allIssuesWithPosition.push(...issuesData.nodes);
+          hasNextPage = issuesData.pageInfo?.hasNextPage || false;
+          endCursor = issuesData.pageInfo?.endCursor || null;
+          pageCount++;
+        } else {
+          hasNextPage = false;
+        }
+      }
+    } catch (error) {
+      console.warn(
+        '[GitLabGraphQL] Failed to fetch Issue relativePosition, will fall back to IID sorting:',
+        error,
+      );
+    }
+
+    console.log(
+      `[GitLabGraphQL] Fetched ${allIssuesWithPosition.length} issues with relativePosition`,
+    );
+
+    const workItems = allWorkItems;
+    const milestones = allMilestones;
 
     // Build relativePosition map from Issue API results
     const relativePositionMap = new Map<number, number>();
-    if (issuesResult) {
-      const issues =
-        this.config.type === 'group'
-          ? issuesResult.group?.issues.nodes || []
-          : issuesResult.project?.issues.nodes || [];
-
-      issues.forEach((issue: any) => {
-        if (
-          issue.relativePosition !== null &&
-          issue.relativePosition !== undefined
-        ) {
-          relativePositionMap.set(Number(issue.iid), issue.relativePosition);
-        }
-      });
-    }
+    allIssuesWithPosition.forEach((issue: any) => {
+      if (
+        issue.relativePosition !== null &&
+        issue.relativePosition !== undefined
+      ) {
+        relativePositionMap.set(Number(issue.iid), issue.relativePosition);
+      }
+    });
 
     // Build children order map for Tasks
     // For each parent, store the order of its children based on array index
@@ -1769,10 +1873,7 @@ export class GitLabGraphQLProvider {
     childGlobalId: string,
     parentIid: number,
   ): Promise<void> {
-    console.log('[GitLabGraphQL] Linking work item as child:', {
-      childGlobalId,
-      parentIid,
-    });
+    // Linking work item as child
 
     // First, get the parent's Global ID
     const query = `
@@ -1835,7 +1936,7 @@ export class GitLabGraphQLProvider {
       );
     }
 
-    console.log('[GitLabGraphQL] Successfully linked work items');
+    // Successfully linked work items
   }
 
   /**
@@ -2088,11 +2189,6 @@ export class GitLabGraphQLProvider {
         (w: any) => w.__typename === 'WorkItemWidgetLinkedItems',
       ) as any;
 
-      console.log(
-        `[GitLabGraphQL] WorkItem ${workItem.iid} linkedItemsWidget:`,
-        linkedItemsWidget,
-      );
-
       if (!linkedItemsWidget?.linkedItems?.nodes) {
         continue;
       }
@@ -2118,15 +2214,8 @@ export class GitLabGraphQLProvider {
             ? parseInt(targetIidStr, 10)
             : targetIidStr;
 
-        console.log(
-          `[GitLabGraphQL] Checking link from ${sourceIid} to ${targetIid} (type: ${linkType})`,
-        );
-
         if (!iidMap.has(targetIid)) {
           // Skip if target is not in our task list
-          console.log(
-            `[GitLabGraphQL] Skipping link to ${targetIid} (not in task list)`,
-          );
           continue;
         }
 
@@ -2184,18 +2273,14 @@ export class GitLabGraphQLProvider {
           processedLinks.has(linkIdentifier) ||
           processedLinks.has(reverseIdentifier)
         ) {
-          console.log(
-            `[GitLabGraphQL] Skipping duplicate link: ${sourceIid} -> ${targetIid} (${linkType})`,
-          );
+          // Skipping duplicate link
           continue;
         }
 
         // Mark this link as processed
         processedLinks.add(linkIdentifier);
 
-        console.log(
-          `[GitLabGraphQL] Adding link: ${linkSource} -> ${linkTarget} (${linkType} => ${ganttLinkType})`,
-        );
+        // Adding link to collection
 
         links.push({
           id: linkIdCounter++,
@@ -2217,7 +2302,7 @@ export class GitLabGraphQLProvider {
       throw new Error('Source and target are required for issue links');
     }
 
-    console.log('[GitLabGraphQL] createIssueLink called with:', link);
+    // Creating issue link
 
     // Get global IDs for both work items
     const sourceGlobalId = await this.getWorkItemGlobalId(link.source);
@@ -2240,11 +2325,7 @@ export class GitLabGraphQLProvider {
         break;
     }
 
-    console.log('[GitLabGraphQL] Creating link:', {
-      sourceGlobalId,
-      targetGlobalId,
-      linkType,
-    });
+    // Creating link with specified type
 
     const mutation = `
       mutation workItemAddLinkedItems($input: WorkItemAddLinkedItemsInput!) {
@@ -2286,17 +2367,14 @@ export class GitLabGraphQLProvider {
       );
     }
 
-    console.log('[GitLabGraphQL] Link created successfully');
+    // Link created successfully
   }
 
   /**
    * Delete issue link using GraphQL Work Items API
    */
   async deleteIssueLink(linkId: TID, sourceIid: TID): Promise<void> {
-    console.log('[GitLabGraphQL] deleteIssueLink called with:', {
-      linkId,
-      sourceIid,
-    });
+    // Deleting issue link
 
     // Get global ID for source work item
     const sourceGlobalId = await this.getWorkItemGlobalId(sourceIid);
@@ -2340,7 +2418,7 @@ export class GitLabGraphQLProvider {
       );
     }
 
-    console.log('[GitLabGraphQL] Link deleted successfully');
+    // Link deleted successfully
   }
 
   /**
