@@ -895,8 +895,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             };
           }
 
-          const newTask = await createTask(ev.task);
-
+          await createTask(ev.task);
 
           // Delete the temporary task (with baseline)
           ganttApi.exec('delete-task', {
@@ -904,19 +903,25 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             skipHandler: true, // Don't trigger delete handler
           });
 
-          // If this was an issue under a milestone OR a subtask, sync to update the hierarchy
-          if (ev.task._assignToMilestone || newTask._needsSync) {
-            // Wait a bit for GitLab to process the hierarchy
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            // Temporarily override openStateRef to use our saved state
-            const originalOpenState = openStateRef.current;
-            openStateRef.current = savedOpenState;
-
-            await syncWithFoldState();
-
-            // Restore original openStateRef
-            openStateRef.current = originalOpenState;
+          // Restore fold state for parent tasks after adding new child
+          // This ensures the parent is expanded to show the new child
+          if (savedOpenState.size > 0) {
+            // Small delay to ensure Gantt has processed the new task
+            setTimeout(() => {
+              savedOpenState.forEach((isOpen, taskId) => {
+                if (isOpen) {
+                  try {
+                    const parentTask = ganttApi.getTask(taskId);
+                    // Only open if the task has children now
+                    if (parentTask?.data && parentTask.data.length > 0) {
+                      ganttApi.exec('open-task', { id: taskId, mode: true });
+                    }
+                  } catch (e) {
+                    // Ignore errors for tasks that may not exist
+                  }
+                }
+              });
+            }, 50);
           }
 
         } catch (error) {

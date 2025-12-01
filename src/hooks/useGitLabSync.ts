@@ -56,6 +56,12 @@ export function useGitLabSync(
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  const tasksRef = useRef<ITask[]>(tasks);
+
+  // Keep tasksRef in sync with tasks state
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   /**
    * Main sync function to fetch data from GitLab
@@ -152,16 +158,39 @@ export function useGitLabSync(
         // createIssue returns a complete ITask from GitLab
         const createdTask = await provider.createIssue(task);
 
-        // If this is a subtask, mark it as needing sync
-        // The caller (GitLabGantt) should handle syncing to preserve fold state
-        if (task.parent && task.parent !== 0) {
-          // Add a flag to indicate sync is needed
-          (createdTask as any)._needsSync = true;
-        } else {
-          // Add the new task to local state
-          // This will cause Gantt to update via the tasks prop
-          setTasks((prevTasks) => [...prevTasks, createdTask]);
+        // For issues under milestones, set the milestone as parent for display
+        // Check this FIRST before general parent check, as milestone issues have parent=0 for GitLab
+        const milestoneGlobalId = task._gitlab?.milestoneGlobalId;
+
+        if (milestoneGlobalId) {
+          // Use tasksRef.current to get the latest tasks (avoid stale closure)
+          const currentTasks = tasksRef.current;
+          // Find the milestone task ID from the globalId
+          const milestoneTask = currentTasks.find(
+            (t) => t._gitlab?.globalId === milestoneGlobalId,
+          );
+          console.log('[useGitLabSync] Looking for milestone:', {
+            milestoneGlobalId,
+            found: !!milestoneTask,
+            milestoneTaskId: milestoneTask?.id,
+            allMilestones: currentTasks
+              .filter((t) => t._gitlab?.type === 'milestone')
+              .map((t) => ({ id: t.id, globalId: t._gitlab?.globalId })),
+          });
+          if (milestoneTask) {
+            createdTask.parent = milestoneTask.id;
+            // Also mark this as an Issue for proper styling
+            createdTask.$isIssue = true;
+          }
+        } else if (task.parent && task.parent !== 0) {
+          // Preserve parent relationship from input task
+          // For subtasks (Issue->Task), the parent is the Issue's IID
+          createdTask.parent = task.parent;
         }
+
+        // Always add the new task to local state immediately
+        // This provides instant feedback without waiting for sync
+        setTasks((prevTasks) => [...prevTasks, createdTask]);
 
         return createdTask;
       } catch (error) {
@@ -169,7 +198,7 @@ export function useGitLabSync(
         throw error;
       }
     },
-    [provider, tasks],
+    [provider],
   );
 
   /**
