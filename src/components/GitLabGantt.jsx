@@ -1576,24 +1576,34 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 });
 
                 if (orphanedTasks.length > 0) {
-                  // Get unique parent IDs that are missing
-                  const missingParentIds = new Set(orphanedTasks.map(t => t.parent));
+                  // Separate Issues with Epic parents from other orphaned tasks
+                  const issuesWithEpicParent = orphanedTasks.filter(task => {
+                    // Check if this Issue has Epic parent stored in metadata
+                    return task._gitlab?.epicParentId;
+                  });
 
-                  // Check if these are Epic IDs (small numbers, not milestone IDs which are > 10000)
-                  const epicParentIds = Array.from(missingParentIds).filter(id => typeof id === 'number' && id < 10000 && id !== 0);
+                  const tasksWithMissingParent = orphanedTasks.filter(task => {
+                    // Everything else: Tasks with missing parents, or Issues with missing milestones
+                    return !task._gitlab?.epicParentId;
+                  });
 
-                  if (epicParentIds.length > 0) {
-                    // These are Epic children - Epics are not supported yet
+                  if (issuesWithEpicParent.length > 0) {
+                    // Get unique Epic IDs
+                    const epicIds = new Set(issuesWithEpicParent.map(t => t._gitlab?.epicParentId));
+
+                    // These are Issues with Epic parents - Epics are not supported yet
                     console.info('[GitLabGantt] Some issues belong to Epics (not supported):', {
-                      epicIds: epicParentIds,
-                      affectedIssues: orphanedTasks.filter(t => epicParentIds.includes(t.parent)).length,
+                      epicIds: Array.from(epicIds),
+                      affectedIssues: issuesWithEpicParent.length,
                       note: 'Epic support is not implemented. These issues will appear at root level.'
                     });
-                  } else {
-                    // This is an actual error - tasks with missing parents
+                  }
+
+                  if (tasksWithMissingParent.length > 0) {
+                    // This is an actual error - Tasks with missing parents
                     console.error('[GitLabGantt RENDER] Found orphaned tasks (parent does not exist):', {
-                      count: orphanedTasks.length,
-                      orphanedTaskIds: orphanedTasks.map(t => ({
+                      count: tasksWithMissingParent.length,
+                      orphanedTaskIds: tasksWithMissingParent.map(t => ({
                         id: t.id,
                         parent: t.parent,
                         text: t.text,

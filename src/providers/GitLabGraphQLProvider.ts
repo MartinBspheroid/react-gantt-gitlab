@@ -710,16 +710,59 @@ export class GitLabGraphQLProvider {
     // Extract description (no longer parsing metadata)
     const description = descriptionWidget?.description || '';
 
-    // Determine parent: hierarchy > milestone > root
+    // Determine parent field for Gantt display
+    // IMPORTANT: The 'parent' field in our Gantt has different meanings:
+    //
+    // For GitLab Issues:
+    //   - In GitLab API: Issues can have a parent Epic (through Epic relationship)
+    //   - In GitLab API: Issues can belong to a Milestone (through milestone field)
+    //   - In our Gantt: We use 'parent' field to show Issues under Milestones (parent = 10000 + milestone.iid)
+    //   - In our Gantt: Epic parents are NOT supported, Issues with Epic parents appear at root with [Epic #] notation
+    //
+    // For GitLab Tasks:
+    //   - In GitLab API: Tasks have hierarchical parent (another Issue or Task)
+    //   - In our Gantt: We use 'parent' field to maintain this hierarchy (parent = parent.iid)
+    //
+    // Parent ID ranges:
+    //   - 0: Root level (no parent)
+    //   - 1-9999: Regular work item IDs (Issues/Tasks) or Epic IDs (not displayed)
+    //   - 10000+: Milestone IDs (offset by 10000 to avoid conflicts)
+
     let parent: number = 0;
     let parentIid: number | null = null;
-    if (hierarchyWidget?.parent) {
-      // This is a subtask - parent is another work item
+    let epicParentId: number | null = null;
+
+    // Determine work item type
+    const isIssue = workItem.workItemType?.name !== 'Task';
+
+    // Priority for parent assignment:
+    // 1. For Tasks: Use hierarchyWidget.parent (Task hierarchy)
+    // 2. For Issues: Use Milestone first (for display), even if Epic parent exists
+    // 3. For Issues without Milestone but with Epic: Store Epic ID for notation
+
+    if (!isIssue && hierarchyWidget?.parent) {
+      // This is a Task with parent - use hierarchy
       parent = Number(hierarchyWidget.parent.iid);
       parentIid = parent;
     } else if (milestoneWidget?.milestone) {
-      // This issue belongs to a milestone - parent is milestone ID with offset
+      // Issue or Task belongs to a milestone - display under milestone
       parent = 10000 + Number(milestoneWidget.milestone.iid);
+    } else if (isIssue && hierarchyWidget?.parent) {
+      // Issue with Epic parent but no Milestone
+      // Check if parent is an Epic (type would be different from Task/Issue)
+      const parentType = hierarchyWidget.parent.workItemType?.name;
+      if (
+        parentType === 'Epic' ||
+        (!parentType && hierarchyWidget.parent.iid)
+      ) {
+        // This is an Epic parent - store for later notation but don't set as parent
+        epicParentId = Number(hierarchyWidget.parent.iid);
+        parent = 0; // Will be at root level with [Epic #] notation
+      } else {
+        // Unlikely case: Issue has another Issue/Task as parent
+        parent = Number(hierarchyWidget.parent.iid);
+        parentIid = parent;
+      }
     }
     // else: standalone issue at root level (parent = 0)
 
@@ -740,7 +783,7 @@ export class GitLabGraphQLProvider {
 
     // Always use 'task' type to avoid Gantt's auto-calculation for summary types
     // Use custom flag $isIssue to distinguish GitLab Issue from Task for styling
-    const isIssue = workItem.workItemType?.name !== 'Task';
+    // Note: isIssue already defined above at line 736
 
     const task: ITask = {
       id: Number(workItem.iid),
@@ -769,8 +812,11 @@ export class GitLabGraphQLProvider {
         workItemType: workItem.workItemType?.name,
         startDate: dateWidget?.startDate, // Track if task has explicit start date
         dueDate: dateWidget?.dueDate, // Track if task has explicit due date
+        epicParentId, // Store Epic parent ID if exists (for Issues without Milestone)
       },
     };
+
+    // No need to add Epic notation - Epic and Milestone won't be mixed in GitLab
 
     return task;
   }

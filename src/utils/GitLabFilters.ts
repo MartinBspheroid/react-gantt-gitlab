@@ -18,6 +18,10 @@ export interface FilterOptions {
 export class GitLabFilters {
   /**
    * Filter tasks by milestone
+   *
+   * Note: We use the parent field to display Issues under Milestones
+   * When an Issue belongs to a Milestone in GitLab, we set parent = 10000 + milestone.iid
+   * This is purely for display hierarchy in Gantt - not a real parent relationship in GitLab
    */
   static filterByMilestone(tasks: ITask[], milestoneIds: number[]): ITask[] {
     if (milestoneIds.length === 0) {
@@ -30,13 +34,17 @@ export class GitLabFilters {
         return milestoneIds.includes(task.id as number);
       }
 
-      // Filter issue tasks by parent (milestone)
+      // Filter issues by their milestone parent (parent field used for display hierarchy)
+      // Note: parent >= 10000 indicates a milestone relationship for display
       return milestoneIds.includes(task.parent as number);
     });
   }
 
   /**
    * Filter tasks by epic
+   *
+   * Note: GitLab Issues can have Epic parents (actual parent relationship in GitLab)
+   * Epic parent ID is stored in _gitlab.epicParentId when Issue has Epic parent
    */
   static filterByEpic(tasks: ITask[], epicIds: number[]): ITask[] {
     if (epicIds.length === 0) {
@@ -44,8 +52,9 @@ export class GitLabFilters {
     }
 
     return tasks.filter((task) => {
-      const epic = task._gitlab?.epic;
-      return epic && epicIds.includes(epic.id);
+      // Check if task has Epic parent ID stored
+      const epicParentId = task._gitlab?.epicParentId;
+      return epicParentId ? epicIds.includes(epicParentId) : false;
     });
   }
 
@@ -169,6 +178,15 @@ export class GitLabFilters {
   /**
    * Ensure all filtered tasks have their parent tasks included
    * This prevents orphaned tasks in the Gantt chart
+   *
+   * IMPORTANT: Parent field has different meanings:
+   *
+   * For GitLab Issues:
+   *   - parent >= 10000: Milestone (we use parent field to display Issues under Milestones in Gantt)
+   *   - parent < 10000: Epic ID from GitLab (Issues can have Epic parents, but we don't support Epic display)
+   *
+   * For GitLab Tasks:
+   *   - parent = another work item's IID (hierarchical relationship)
    */
   static ensureParentChildIntegrity(
     filteredTasks: ITask[],
@@ -178,39 +196,70 @@ export class GitLabFilters {
 
     // Process each task
     filteredTasks.forEach((task) => {
-      // Check if this task has a parent that doesn't exist in allTasks
+      // Check if this task has a parent
       if (task.parent && task.parent !== 0) {
-        const parentExists = allTasks.some((t) => t.id === task.parent);
+        // Check if this is an Issue
+        const isIssue =
+          task.$isIssue ||
+          task._gitlab?.workItemType === 'Issue' ||
+          (task._gitlab?.workItemType !== 'Task' && !task._gitlab?.type);
 
-        if (!parentExists) {
-          // Parent doesn't exist - likely an Epic (not supported)
-          // Move task to root level
-          const modifiedTask = { ...task, parent: 0 };
+        if (isIssue) {
+          // For Issues, check if parent exists (should be a Milestone)
+          const parentExists = allTasks.some((t) => t.id === task.parent);
 
-          // If parent ID is < 10000, it's likely an Epic ID
-          if (typeof task.parent === 'number' && task.parent < 10000) {
-            // Add a note to the task text to indicate it belongs to an Epic
-            modifiedTask.text = `${task.text} [Epic #${task.parent}]`;
-          }
+          if (parentExists) {
+            // Parent (Milestone) exists, keep the relationship
+            taskMap.set(task.id, task);
 
-          taskMap.set(task.id, modifiedTask);
-        } else {
-          // Parent exists, add task as-is
-          taskMap.set(task.id, task);
-
-          // Also ensure the parent is included in the result
-          let currentParentId: number | string | undefined = task.parent;
-          while (currentParentId && currentParentId !== 0) {
-            if (!taskMap.has(currentParentId)) {
-              const parentTask = allTasks.find((t) => t.id === currentParentId);
+            // Ensure the milestone is included
+            if (!taskMap.has(task.parent)) {
+              const parentTask = allTasks.find((t) => t.id === task.parent);
               if (parentTask) {
-                taskMap.set(currentParentId, parentTask);
-                currentParentId = parentTask.parent;
+                taskMap.set(task.parent, parentTask);
+              }
+            }
+          } else {
+            // Parent doesn't exist (could be filtered Milestone or Epic)
+            // Move to root level
+            const modifiedTask = { ...task, parent: 0 };
+            taskMap.set(task.id, modifiedTask);
+          }
+        } else {
+          // For Tasks, check if parent exists in allTasks
+          const parentExists = allTasks.some((t) => t.id === task.parent);
+
+          if (!parentExists) {
+            // Parent doesn't exist - could be filtered out or Epic
+            // Move task to root level
+            const modifiedTask = { ...task, parent: 0 };
+
+            // If parent ID is < 10000, it's likely an Epic ID
+            if (typeof task.parent === 'number' && task.parent < 10000) {
+              modifiedTask.text = `${task.text} [Epic #${task.parent}]`;
+            }
+
+            taskMap.set(task.id, modifiedTask);
+          } else {
+            // Parent exists, add task as-is
+            taskMap.set(task.id, task);
+
+            // Also ensure the parent is included in the result
+            let currentParentId: number | string | undefined = task.parent;
+            while (currentParentId && currentParentId !== 0) {
+              if (!taskMap.has(currentParentId)) {
+                const parentTask = allTasks.find(
+                  (t) => t.id === currentParentId,
+                );
+                if (parentTask) {
+                  taskMap.set(currentParentId, parentTask);
+                  currentParentId = parentTask.parent;
+                } else {
+                  break;
+                }
               } else {
                 break;
               }
-            } else {
-              break;
             }
           }
         }
