@@ -872,8 +872,10 @@ export class GitLabDataProvider {
 
   /**
    * Delete issue in GitLab
+   * @param id - The issue ID
+   * @param task - Optional task data (for type detection in GraphQL provider)
    */
-  async deleteIssue(id: TID): Promise<void> {
+  async deleteIssue(id: TID, task?: Partial<ITask>): Promise<void> {
     const endpoint = `/projects/${this.getEncodedProjectId()}/issues/${id}`;
     await this.request<void>(endpoint, {
       method: 'DELETE',

@@ -207,16 +207,19 @@ export function useGitLabSync(
    * Delete a task
    */
   const deleteTask = useCallback(
-    async (id: number | string) => {
+    async (id: number | string, taskData?: ITask) => {
       if (!provider) {
         throw new Error('GitLab provider not initialized');
       }
 
+      // Find task data if not provided
+      const task = taskData || tasks.find((t) => t.id === id);
+
       // Optimistic update
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== id));
 
       try {
-        await provider.deleteIssue(id);
+        await provider.deleteIssue(id, task);
       } catch (error) {
         console.error('Failed to delete task:', error);
 
@@ -226,7 +229,7 @@ export function useGitLabSync(
         throw error;
       }
     },
-    [provider, sync],
+    [provider, sync, tasks],
   );
 
   /**

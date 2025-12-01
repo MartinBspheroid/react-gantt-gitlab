@@ -34,7 +34,14 @@ export default function Toolbar({
     const baseItems = items.map((b) => {
       let item = { ...b, disabled: false };
       item.handler = isHandledAction(defaultToolbarButtons, item.id)
-        ? (it) => handleAction(api, it.id, null, _)
+        ? (it) => {
+            // Guard against null api to prevent "Cannot read properties of null (reading 'getState')" error
+            if (!api) {
+              console.warn('[Toolbar] Cannot execute action: Gantt API not initialized');
+              return;
+            }
+            handleAction(api, it.id, null, _);
+          }
         : item.handler;
       if (item.text) item.text = _(item.text);
       if (item.menuText) item.menuText = _(item.menuText);

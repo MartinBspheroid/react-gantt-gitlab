@@ -326,6 +326,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
           // Restore open state from saved map
           currentTasks.forEach((task) => {
+            // Skip tasks that don't have children (data property)
+            // Opening a task without children causes Gantt store error
+            if (!task.data || task.data.length === 0) {
+              return;
+            }
+
             // Check both string and number versions of the ID
             const taskIdStr = String(task.id);
             const taskIdNum = Number(task.id);
@@ -421,8 +427,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
   // Handler for adding a new milestone
   const handleAddMilestone = useCallback(async () => {
-    if (!api) return;
-
     const title = prompt('Enter Milestone title:', 'New Milestone');
     if (!title) return;
 
@@ -445,7 +449,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       console.error('[GitLabGantt] Failed to create milestone:', error);
       alert(`Failed to create milestone: ${error.message}`);
     }
-  }, [api, createMilestone]);
+  }, [createMilestone]);
 
   // Initialize Gantt API
   const init = useCallback(
@@ -932,11 +936,19 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
         // Get task info for confirmation message
         const task = ganttApi.getTask(ev.id);
-        const taskTitle = task ? task.text : `Task ${ev.id}`;
+        const taskTitle = task ? task.text : `Item ${ev.id}`;
+
+        // Determine the type of item for proper messaging
+        let itemType = 'issue';
+        if (task?.$isMilestone || task?._gitlab?.type === 'milestone') {
+          itemType = 'milestone';
+        } else if (task?._gitlab?.workItemType === 'Task') {
+          itemType = 'task';
+        }
 
         // Ask for confirmation
         const confirmed = confirm(
-          `Are you sure you want to delete "${taskTitle}"?\n\nThis will permanently delete the task from GitLab.`
+          `Are you sure you want to delete "${taskTitle}"?\n\nThis will permanently delete the ${itemType} from GitLab.`
         );
 
         return confirmed;
@@ -950,7 +962,20 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         try {
-          await deleteTask(ev.id);
+          // Get task data to pass to deleteTask for proper type detection
+          // Try ganttApi first, then fall back to allTasksRef
+          let task = ganttApi.getTask(ev.id);
+
+          // If task from ganttApi doesn't have _gitlab info, try to find it in allTasksRef
+          if (!task?._gitlab) {
+            const taskFromRef = allTasksRef.current.find(t => t.id === ev.id);
+            if (taskFromRef?._gitlab) {
+              task = taskFromRef;
+            }
+          }
+
+          console.log('[GitLabGantt] Deleting task:', { id: ev.id, task, _gitlab: task?._gitlab });
+          await deleteTask(ev.id, task);
         } catch (error) {
           console.error('Failed to delete task:', error);
           alert(`Failed to delete task: ${error.message}`);
@@ -1550,7 +1575,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       <div className="gantt-wrapper">
         <Toolbar api={api} onAddMilestone={handleAddMilestone} />
         <div className="gantt-chart-container">
-          {syncState.isLoading || allTasks.length === 0 ? (
+          {syncState.isLoading ? (
             <div className="loading-message">
               <p>Loading GitLab data...</p>
             </div>

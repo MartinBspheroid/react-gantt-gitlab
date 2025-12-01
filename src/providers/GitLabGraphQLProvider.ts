@@ -599,32 +599,45 @@ export class GitLabGraphQLProvider {
    * Convert GitLab Milestone to Gantt Task
    */
   private convertMilestoneToTask(milestone: any): ITask {
-    // Construct full web URL from webPath
+    // Construct full web URL from webPath (GraphQL) or web_url (REST API)
     const webUrl = milestone.webPath
       ? `${this.config.gitlabUrl}${milestone.webPath}`
-      : undefined;
+      : milestone.web_url || undefined;
 
     // Use numeric ID with offset to avoid conflicts with work item IIDs
     // Offset: 10000 (e.g., milestone iid=1 becomes 10001)
     const milestoneTaskId = 10000 + Number(milestone.iid);
 
     // Ensure milestones have valid dates with proper timezone handling
+    // Handle both GraphQL (startDate/dueDate) and REST API (start_date/due_date) field names
     // If no start date, use creation date or today
-    const startDate = milestone.startDate
-      ? new Date(milestone.startDate + 'T00:00:00')
-      : milestone.createdAt
-        ? new Date(milestone.createdAt)
+    const startDateStr = milestone.startDate || milestone.start_date;
+    const dueDateStr = milestone.dueDate || milestone.due_date;
+    const createdAtStr = milestone.createdAt || milestone.created_at;
+
+    const startDate = startDateStr
+      ? new Date(startDateStr + 'T00:00:00')
+      : createdAtStr
+        ? new Date(createdAtStr)
         : new Date();
 
     // If no due date, use start date with end of day time to ensure visibility even for same-day milestones
-    const endDate = milestone.dueDate
-      ? new Date(milestone.dueDate + 'T23:59:59')
+    const endDate = dueDateStr
+      ? new Date(dueDateStr + 'T23:59:59')
       : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     // Calculate duration in days (same logic as work items)
     const diffTime = endDate.getTime() - startDate.getTime();
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const duration = Math.max(1, days);
+
+    // Determine globalId:
+    // - GraphQL returns id as "gid://gitlab/Milestone/1141"
+    // - REST API returns id as numeric 1141, need to construct global ID
+    const globalId =
+      typeof milestone.id === 'string' && milestone.id.startsWith('gid://')
+        ? milestone.id
+        : `gid://gitlab/Milestone/${milestone.id}`;
 
     return {
       id: milestoneTaskId,
@@ -641,7 +654,7 @@ export class GitLabGraphQLProvider {
       _gitlab: {
         type: 'milestone',
         id: milestone.iid,
-        globalId: milestone.id, // Store global ID for mutations
+        globalId, // Store global ID for mutations (constructed if from REST API)
         web_url: webUrl,
       },
     };
@@ -816,6 +829,7 @@ export class GitLabGraphQLProvider {
         startDate: dateWidget?.startDate, // Track if task has explicit start date
         dueDate: dateWidget?.dueDate, // Track if task has explicit due date
         epicParentId, // Store Epic parent ID if exists (for Issues without Milestone)
+        web_url: workItem.webUrl, // GitLab web URL for opening in browser
       },
     };
 
@@ -1827,6 +1841,10 @@ export class GitLabGraphQLProvider {
             title
             state
             createdAt
+            webUrl
+            workItemType {
+              name
+            }
             widgets {
               __typename
               ... on WorkItemWidgetDescription {
@@ -2071,9 +2089,57 @@ export class GitLabGraphQLProvider {
 
   /**
    * Alias for deleteWorkItem (for compatibility with useGitLabSync)
+   * Also handles milestone deletion based on _gitlab.type
    */
-  async deleteIssue(id: TID): Promise<void> {
+  async deleteIssue(id: TID, task?: Partial<ITask>): Promise<void> {
+    // Check if this is a milestone based on _gitlab.type
+    if (task?._gitlab?.type === 'milestone') {
+      return this.deleteMilestone(id, task);
+    }
     return this.deleteWorkItem(id);
+  }
+
+  /**
+   * Delete a milestone using REST API
+   * Note: GitLab REST API requires the internal milestone ID (not iid)
+   * The internal ID can be extracted from globalId: "gid://gitlab/Milestone/1137" -> 1137
+   */
+  async deleteMilestone(id: TID, task?: Partial<ITask>): Promise<void> {
+    console.log('[GitLabGraphQL] Deleting milestone:', id, task);
+
+    // Extract internal milestone ID from globalId
+    // globalId format: "gid://gitlab/Milestone/1137" -> internal ID is 1137
+    const globalId = task?._gitlab?.globalId;
+    if (!globalId) {
+      throw new Error('Cannot delete milestone: missing globalId');
+    }
+
+    const match = globalId.match(/\/Milestone\/(\d+)$/);
+    if (!match) {
+      throw new Error(
+        `Cannot delete milestone: invalid globalId format: ${globalId}`,
+      );
+    }
+    const milestoneInternalId = match[1];
+
+    // Get project ID and encode it for URL
+    const projectId = this.getFullPath();
+    const encodedProjectId = encodeURIComponent(projectId);
+
+    // Use shared REST API utility to delete the milestone
+    await gitlabRestRequest(
+      `/projects/${encodedProjectId}/milestones/${milestoneInternalId}`,
+      {
+        gitlabUrl: this.config.gitlabUrl,
+        token: this.config.token,
+        isDev: this.isDev,
+      },
+      {
+        method: 'DELETE',
+      },
+    );
+
+    console.log('[GitLabGraphQL] Milestone deleted:', milestoneInternalId);
   }
 
   /**
