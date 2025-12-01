@@ -34,9 +34,11 @@ https://react-gantt-gitlab-8d7d33.pages.rayark.io/
 
 ![Workload View Screenshot](./assets/workload-view.png)
 
+- 從側邊欄開啟
 - 可以用 Assignee 和 Labels 來篩選，觀察工作負荷量
 - 可以調整時間
 - 可以上下拖曳將工作指派到不同人或是移動到不同的 Labels
+- 在設定裡面可以開啟 Other，看到還沒有指派的工作
 
 ## Acknowledgements
 
