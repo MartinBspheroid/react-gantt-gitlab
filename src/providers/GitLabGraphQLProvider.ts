@@ -767,6 +767,8 @@ export class GitLabGraphQLProvider {
         iid: Number(workItem.iid),
         state: workItem.state,
         workItemType: workItem.workItemType?.name,
+        startDate: dateWidget?.startDate, // Track if task has explicit start date
+        dueDate: dateWidget?.dueDate, // Track if task has explicit due date
       },
     };
 

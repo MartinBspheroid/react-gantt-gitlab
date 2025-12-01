@@ -12,7 +12,23 @@ import './WorkloadChart.css';
  */
 function calculateTaskPosition(task, startDate, cellWidth, lengthUnit) {
   const taskStart = task.start instanceof Date ? task.start : new Date(task.start);
-  const taskEnd = task.end instanceof Date ? task.end : new Date(task.end || task.start);
+
+  // Determine task end date with proper fallback for tasks without end dates
+  let taskEnd;
+  if (task.end) {
+    taskEnd = task.end instanceof Date ? task.end : new Date(task.end);
+  } else {
+    // If no end date, check if this is using created date as start
+    // (tasks without startDate use createdAt, and should have a default 7-day duration)
+    const isUsingCreatedDate = !task._gitlab?.startDate;
+    if (isUsingCreatedDate) {
+      // Default to 7 days for tasks using created date
+      taskEnd = new Date(taskStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else {
+      // For tasks with explicit start but no end, use 1 day duration
+      taskEnd = new Date(taskStart.getTime() + 24 * 60 * 60 * 1000);
+    }
+  }
 
   // Calculate days from chart start
   const msPerDay = 24 * 60 * 60 * 1000;
@@ -62,7 +78,24 @@ function assignTasksToRows(tasks) {
 
   for (const task of sorted) {
     const taskStart = task.start instanceof Date ? task.start : new Date(task.start);
-    const taskEnd = task.end instanceof Date ? task.end : new Date(task.end || task.start);
+
+    // Determine task end date with proper fallback for tasks without end dates
+    let taskEnd;
+    if (task.end) {
+      taskEnd = task.end instanceof Date ? task.end : new Date(task.end);
+    } else {
+      // If no end date, check if this is using created date as start
+      // (tasks without startDate use createdAt, and should have a default 7-day duration)
+      const isUsingCreatedDate = !task._gitlab?.startDate;
+      if (isUsingCreatedDate) {
+        // Default to 7 days for tasks using created date
+        taskEnd = new Date(taskStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      } else {
+        // For tasks with explicit start but no end, use 1 day duration
+        taskEnd = new Date(taskStart.getTime() + 24 * 60 * 60 * 1000);
+      }
+    }
+
     const effectiveEnd = taskEnd >= taskStart ? taskEnd : new Date(taskStart.getTime() + 86400000);
 
     // Find first row where this task doesn't overlap
@@ -467,6 +500,47 @@ export function WorkloadChart({
     const isTask = task._gitlab?.workItemType === 'Task';
     const barColor = isTask ? '#00ba94' : '#428fdc';
 
+    // Generate tooltip text with proper date handling
+    const startDateStr = displayStart?.toLocaleDateString?.() || 'No start date';
+    let endDateStr;
+    let dateRangeNote = '';
+
+    if (displayEnd) {
+      endDateStr = displayEnd.toLocaleDateString();
+    } else {
+      // Handle tasks without end dates
+      const isUsingCreatedDate = !task._gitlab?.startDate;
+      if (isUsingCreatedDate) {
+        endDateStr = '(estimated +7 days)';
+        dateRangeNote = '\n[Using created date as start]';
+      } else {
+        endDateStr = '(estimated +1 day)';
+        dateRangeNote = '\n[No due date set]';
+      }
+    }
+
+    // Build comprehensive tooltip
+    const tooltipParts = [
+      task.text,
+      `${startDateStr} - ${endDateStr}${dateRangeNote}`
+    ];
+
+    // Add assignee info if present
+    if (task.assigned) {
+      tooltipParts.push(`Assignee: ${task.assigned}`);
+    }
+
+    // Add labels if present
+    if (task.labels) {
+      const labelStr = Array.isArray(task.labels) ? task.labels.join(', ') : task.labels;
+      tooltipParts.push(`Labels: ${labelStr}`);
+    }
+
+    // Add type info
+    tooltipParts.push(`Type: ${task._gitlab?.workItemType || 'Issue'}`);
+
+    const tooltipText = tooltipParts.join('\n');
+
     return (
       <div
         key={task.id}
@@ -478,7 +552,7 @@ export function WorkloadChart({
         }}
         onMouseDown={(e) => handleTaskMouseDown(e, task, group)}
         onClick={() => onTaskClick && onTaskClick(task)}
-        title={`${task.text}\n${task.start?.toLocaleDateString?.()} - ${task.end?.toLocaleDateString?.()}`}
+        title={tooltipText}
       >
         <span className="task-bar-text">{task.text}</span>
         <div className="resize-handle resize-handle-left" />
