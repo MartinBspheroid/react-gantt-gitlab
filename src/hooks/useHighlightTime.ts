@@ -18,9 +18,12 @@ interface UseHighlightTimeOptions {
 interface UseHighlightTimeReturn {
   isWeekend: (date: Date) => boolean;
   isHoliday: (date: Date) => boolean;
+  isNonWorkday: (date: Date) => boolean;
   highlightTime: (date: Date, unit: string) => string;
   formatLocalDate: (date: Date) => string;
   normalizeDateString: (dateStr: string) => string;
+  countWorkdays: (startDate: Date, endDate: Date) => number;
+  calculateEndDateByWorkdays: (startDate: Date, workdays: number) => Date;
 }
 
 /**
@@ -115,22 +118,121 @@ export function useHighlightTime({
     [holidaySet],
   );
 
+  // Check if a date is a non-workday (weekend or holiday)
+  const isNonWorkday = useCallback(
+    (date: Date): boolean => {
+      return isWeekend(date) || isHoliday(date);
+    },
+    [isWeekend, isHoliday],
+  );
+
   // Highlight time function for Gantt/Chart components
   const highlightTime = useCallback(
     (date: Date, unit: string): string => {
-      if (unit === 'day' && (isWeekend(date) || isHoliday(date))) {
+      if (unit === 'day' && isNonWorkday(date)) {
         return 'wx-weekend';
       }
       return '';
     },
-    [isWeekend, isHoliday],
+    [isNonWorkday],
+  );
+
+  // Count workdays between two dates (inclusive of both start and end)
+  const countWorkdays = useCallback(
+    (startDate: Date, endDate: Date): number => {
+      if (!startDate || !endDate) return 0;
+
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(0, 0, 0, 0);
+
+      if (start > end) return 0;
+
+      let count = 0;
+      const current = new Date(start);
+
+      while (current <= end) {
+        if (!isNonWorkday(current)) {
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+
+      return count;
+    },
+    [isNonWorkday],
+  );
+
+  /**
+   * Calculate end date given start date and workdays count.
+   *
+   * @param startDate - The first day of the task (will be counted as workday 1 if it's a workday)
+   * @param workdays - Number of workdays the task spans (inclusive, minimum 1)
+   * @returns The date of the last workday
+   *
+   * Examples (assuming Mon-Fri are workdays):
+   * - startDate=Mon, workdays=1 → returns Mon (same day)
+   * - startDate=Mon, workdays=3 → returns Wed
+   * - startDate=Fri, workdays=3 → returns Tue (skips Sat/Sun)
+   * - startDate=Sat, workdays=1 → returns Mon (skips to next workday)
+   *
+   * Note: Uses noon (12:00) for time to avoid timezone edge cases where
+   * midnight dates might shift to adjacent days during conversion.
+   */
+  const calculateEndDateByWorkdays = useCallback(
+    (startDate: Date, workdays: number): Date => {
+      if (!startDate || workdays <= 0) {
+        return new Date(startDate);
+      }
+
+      const current = new Date(startDate);
+      current.setHours(12, 0, 0, 0); // Use noon to avoid timezone issues
+      let remainingWorkdays = workdays;
+
+      // Iterate through days, counting only workdays
+      // Stop when we've counted the required number of workdays
+      while (remainingWorkdays > 0) {
+        if (!isNonWorkday(current)) {
+          remainingWorkdays--;
+          if (remainingWorkdays === 0) {
+            // Found the last workday - return a new Date to avoid reference issues
+            return new Date(
+              current.getFullYear(),
+              current.getMonth(),
+              current.getDate(),
+              12,
+              0,
+              0,
+              0,
+            );
+          }
+        }
+        current.setDate(current.getDate() + 1);
+      }
+
+      // Fallback (shouldn't reach here with valid inputs)
+      return new Date(
+        current.getFullYear(),
+        current.getMonth(),
+        current.getDate(),
+        12,
+        0,
+        0,
+        0,
+      );
+    },
+    [isNonWorkday],
   );
 
   return {
     isWeekend,
     isHoliday,
+    isNonWorkday,
     highlightTime,
     formatLocalDate,
     normalizeDateString,
+    countWorkdays,
+    calculateEndDateByWorkdays,
   };
 }

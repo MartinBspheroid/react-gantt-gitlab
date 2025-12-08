@@ -10,6 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import Links from './editor/Links.jsx';
 import DateTimePicker from './editor/DateTimePicker.jsx';
+import WorkdaysInput from './editor/WorkdaysInput.jsx';
 import { useStore, useWritableProp } from '@svar-ui/lib-react';
 
 // helpers
@@ -23,6 +24,7 @@ registerEditorItem('twostate', TwoState);
 registerEditorItem('slider', Slider);
 registerEditorItem('counter', Counter);
 registerEditorItem('links', Links);
+registerEditorItem('workdays', WorkdaysInput);
 
 function Editor({
   api,
@@ -35,6 +37,7 @@ function Editor({
   topBar = true,
   autoSave = true,
   focus = false,
+  workdaysHelpers = null, // { countWorkdays, calculateEndDateByWorkdays }
 }) {
   const lFromCtx = useContext(context.i18n);
   const l = useMemo(() => lFromCtx || locale({ ...en, ...coreEn }), [lFromCtx]);
@@ -123,7 +126,18 @@ function Editor({
     setLinksActionsMap({});
   }, [taskId]);
 
-  const milestone = useMemo(() => taskType === 'milestone', [taskType]);
+  // Check if this is a GitLab milestone (has start AND end dates)
+  // vs traditional Gantt milestone (single point in time, type === 'milestone')
+  const isGitLabMilestone = useMemo(
+    () => activeTask?.$isMilestone || activeTask?._gitlab?.type === 'milestone',
+    [activeTask]
+  );
+
+  // Traditional Gantt milestone type OR GitLab milestone
+  const milestone = useMemo(
+    () => taskType === 'milestone' || isGitLabMilestone,
+    [taskType, isGitLabMilestone]
+  );
   const summary = useMemo(() => taskType === 'summary', [taskType]);
 
   function prepareEditorItems(localItems, isUnscheduled) {
@@ -165,8 +179,12 @@ function Editor({
     return localItems.filter(({ comp, key, options }) => {
       switch (comp) {
         case 'date': {
-          // Allow date fields for summary tasks (for independent parent dates)
-          // Only hide end date for milestone
+          // GitLab milestones have both start and end dates - show all date fields
+          // Traditional Gantt milestones (single point) - hide end date
+          if (isGitLabMilestone) {
+            return true; // Show all date fields for GitLab milestones
+          }
+          // For traditional milestone type, hide end date
           return !milestone || (key !== 'end' && key !== 'base_end');
         }
         case 'select': {
@@ -176,12 +194,17 @@ function Editor({
           return unscheduledTasks && !summary;
         }
         case 'counter': {
-          // Allow duration for summary tasks
-          return !milestone;
+          // Hide duration counter (GitLab uses workdays display in grid instead)
+          return false;
         }
         case 'slider': {
           // Hide progress slider (not supported for GitLab)
           return false;
+        }
+        case 'workdays': {
+          // Show workdays for GitLab milestones (they have start and end dates)
+          // Hide for traditional Gantt milestones (single point in time)
+          return !milestone || isGitLabMilestone;
         }
         default:
           return true;
@@ -196,6 +219,7 @@ function Editor({
     items,
     taskUnscheduled,
     milestone,
+    isGitLabMilestone,
     summary,
     unscheduledTasks,
     taskTypes,
@@ -219,8 +243,18 @@ function Editor({
       });
       return values;
     }
-    return activeTask ? { ...activeTask } : null;
-  }, [readonly, activeTask, editorItems, dateFormat]);
+    if (!activeTask) return null;
+
+    // Calculate workdays if helpers are available
+    const taskWithWorkdays = { ...activeTask };
+    if (workdaysHelpers?.countWorkdays && activeTask.start && activeTask.end) {
+      taskWithWorkdays.workdays = workdaysHelpers.countWorkdays(
+        activeTask.start,
+        activeTask.end
+      );
+    }
+    return taskWithWorkdays;
+  }, [readonly, activeTask, editorItems, dateFormat, workdaysHelpers]);
 
   function handleLinksChange({ id, action, data }) {
     setLinksActionsMap((prev) => ({
@@ -273,12 +307,23 @@ function Editor({
 
   const handleChange = useCallback((ev) => {
     let { update, key, value } = ev;
+
+    // Handle workdays change - calculate new end date
+    if (key === 'workdays' && workdaysHelpers?.calculateEndDateByWorkdays && update.start) {
+      const newEndDate = workdaysHelpers.calculateEndDateByWorkdays(update.start, value);
+      // Set end date time to 23:59:59 to match Gantt convention
+      newEndDate.setHours(23, 59, 59, 0);
+      update.end = newEndDate;
+      ev.update = normalizeTask({ ...update }, 'end');
+      return;
+    }
+
     ev.update = normalizeTask({ ...update }, key);
-    
+
     if (!autoSave) {
       if (key === 'type') setTaskType(value);
     }
-  }, [api, autoSave]);
+  }, [autoSave, workdaysHelpers, normalizeTask]);
 
   const handleSave = useCallback((ev) => {
     let { values } = ev;

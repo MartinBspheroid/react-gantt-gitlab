@@ -451,6 +451,25 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     }
   }, [createMilestone]);
 
+  // Use shared highlight time hook for workdays calculation and highlighting
+  // Extract all needed functions here since init callback needs them
+  const {
+    highlightTime: highlightTimeFn,
+    countWorkdays,
+    calculateEndDateByWorkdays,
+  } = useHighlightTime({ holidays, workdays });
+
+  // Use refs to store latest workdays functions for use in intercept closure
+  // This prevents stale closure issues when holidays/workdays change
+  const countWorkdaysRef = useRef(countWorkdays);
+  const calculateEndDateByWorkdaysRef = useRef(calculateEndDateByWorkdays);
+
+  // Keep refs updated with latest functions
+  useEffect(() => {
+    countWorkdaysRef.current = countWorkdays;
+    calculateEndDateByWorkdaysRef.current = calculateEndDateByWorkdays;
+  }, [countWorkdays, calculateEndDateByWorkdays]);
+
   // Initialize Gantt API
   const init = useCallback(
     (ganttApi) => {
@@ -615,9 +634,119 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       });
 
 
-      // Listen to update-task AFTER the update completes
-      // Using 'on' instead of 'intercept' to get final values after drag
+      /**
+       * Workdays Preservation on Drag
+       *
+       * When a task bar is dragged (move mode), we want to preserve the original
+       * number of workdays. For example, if a 5-workday task is dragged to a new
+       * position that includes a weekend, the end date should automatically extend
+       * to maintain 5 workdays.
+       *
+       * Event flow:
+       * 1. intercept('update-task') - Captures original workdays BEFORE Gantt updates
+       * 2. First on('update-task') - Calculates and applies end date correction
+       * 3. Second on('update-task') - Handles GitLab sync, skips stale events
+       *
+       * State tracking:
+       * - workdaysState.originalWorkdays: Captured before drag completes
+       * - workdaysState.correctionSynced: True after correction update is sent to GitLab
+       *
+       * Why two handlers?
+       * - The intercept runs before Gantt's internal update
+       * - The on handlers run after, giving us access to the new start date
+       * - We need to skip syncing the intermediate (wrong) end date to GitLab
+       */
+      const workdaysState = new Map(); // taskId -> { originalWorkdays, correctionSynced }
+
+      // Phase 1: Capture original workdays before Gantt updates the task
+      ganttApi.intercept('update-task', (ev) => {
+        // Skip our own correction updates (prevents infinite loop)
+        if (ev.skipWorkdaysAdjust) {
+          return true;
+        }
+
+        // Only process move mode drags (not resize)
+        // GitLab milestones have start and end dates, so they also need workdays adjustment
+        if (ev.mode === 'move' && ev.diff) {
+          const task = ganttApi.getTask(ev.id);
+
+          // ganttApi.getTask() returns the CURRENT state (before this update)
+          const originalStart = task.start;
+          const originalEnd = task.end;
+
+          if (originalStart && originalEnd) {
+            const originalWorkdays = countWorkdaysRef.current(originalStart, originalEnd);
+
+            if (originalWorkdays > 0) {
+              // Store for Phase 2
+              workdaysState.set(ev.id, {
+                originalWorkdays,
+                correctionSynced: false,
+              });
+            }
+          }
+        }
+
+        return true; // Allow the event to proceed
+      });
+
+      // Phase 2: After Gantt updates, calculate and apply end date correction
       ganttApi.on('update-task', (ev) => {
+        // Skip correction updates - they already have the correct end date
+        if (ev.skipWorkdaysAdjust) {
+          return;
+        }
+
+        const state = workdaysState.get(ev.id);
+
+        // Only process if we captured workdays in Phase 1 and haven't corrected yet
+        if (state && state.originalWorkdays && !state.correctionSynced) {
+          // Get the task with its NEW start date (after Gantt's update)
+          const task = ganttApi.getTask(ev.id);
+          if (!task || !task.start) return;
+
+          // Calculate what end date should be to preserve workdays
+          const adjustedEnd = calculateEndDateByWorkdaysRef.current(
+            task.start,
+            state.originalWorkdays
+          );
+
+          // Only correct if needed (end date changed due to weekends/holidays)
+          if (task.end.getTime() !== adjustedEnd.getTime()) {
+            // Issue correction update with skipWorkdaysAdjust flag
+            // This triggers another update-task event, but Phase 1 will skip it
+            ganttApi.exec('update-task', {
+              id: ev.id,
+              task: { end: adjustedEnd },
+              skipWorkdaysAdjust: true,
+            });
+          } else {
+            // No correction needed - clear state so sync proceeds
+            workdaysState.delete(ev.id);
+          }
+        }
+      });
+
+      // Phase 3: GitLab sync handler - skip stale events, only sync correction
+      ganttApi.on('update-task', (ev) => {
+        const state = workdaysState.get(ev.id);
+
+        if (state) {
+          if (ev.skipWorkdaysAdjust) {
+            // This is the correction update - mark synced and allow GitLab sync
+            state.correctionSynced = true;
+            // Clean up state after sync completes (use setTimeout to ensure sync runs first)
+            setTimeout(() => workdaysState.delete(ev.id), 0);
+          } else if (!state.correctionSynced) {
+            // This is the original drag event with wrong end date - skip sync
+            // The correction update (with correct end date) will sync instead
+            return;
+          } else {
+            // Correction already synced - this is a late/duplicate event, skip
+            return;
+          }
+        }
+
         // Handle temporary IDs
         const isTempId = typeof ev.id === 'string' && ev.id.startsWith('temp');
 
@@ -1203,8 +1332,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     ];
   }, []);
 
-  // Use shared highlight time hook for weekend/holiday logic
-  const { highlightTime } = useHighlightTime({ holidays, workdays });
+  // highlightTime alias for Gantt component (extracted earlier as highlightTimeFn)
+  const highlightTime = highlightTimeFn;
 
   // Date cell component for custom formatting
   const DateCell = useCallback(({ row, column }) => {
@@ -1217,6 +1346,24 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yy}/${mm}/${dd}`;
   }, []);
+
+  // Workdays cell component - calculates workdays between start and end
+  // GitLab milestones have start and end dates, so they also show workdays
+  const WorkdaysCell = useCallback(
+    ({ row }) => {
+      const start = row.start;
+      const end = row.end;
+
+      if (!start || !end) return '';
+
+      const startDate = start instanceof Date ? start : new Date(start);
+      const endDate = end instanceof Date ? end : new Date(end);
+
+      const days = countWorkdays(startDate, endDate);
+      return `${days}d`;
+    },
+    [countWorkdays],
+  );
 
   // Custom cell component for Task Title with icons
   const TaskTitleCell = useCallback(({ row }) => {
@@ -1269,12 +1416,29 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         cell: DateCell,
       },
       {
+        id: 'workdays',
+        header: 'Workdays',
+        width: 70,
+        cell: WorkdaysCell,
+      },
+      {
         id: 'add-task',
         header: '',
         width: 50,
       },
     ];
-  }, [DateCell, TaskTitleCell]);
+  }, [DateCell, TaskTitleCell, WorkdaysCell]);
+
+  // Editor items configuration - customized for GitLab
+  const editorItems = useMemo(() => {
+    return [
+      { key: 'text', comp: 'text', label: 'Title' },
+      { key: 'details', comp: 'textarea', label: 'Description' },
+      { key: 'start', comp: 'date', label: 'Start Date' },
+      { key: 'end', comp: 'date', label: 'Due Date' },
+      { key: 'workdays', comp: 'workdays', label: 'Workdays' },
+    ];
+  }, []);
 
   // Show loading state
   if (syncState.isLoading && !currentConfig) {
@@ -1679,7 +1843,15 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             </ContextMenu>
           )}
         </div>
-        {api && <Editor api={api} bottomBar={false} autoSave={false} />}
+        {api && (
+          <Editor
+            api={api}
+            bottomBar={false}
+            autoSave={false}
+            items={editorItems}
+            workdaysHelpers={{ countWorkdays, calculateEndDateByWorkdays }}
+          />
+        )}
       </div>
 
       <style>{`

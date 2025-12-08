@@ -1,0 +1,99 @@
+.workdays-input-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.workdays-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--wx-border-color, #e1e4e8);
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+  background: var(--wx-background, #fff);
+  color: var(--wx-color-font, #333);
+}
+
+.workdays-input:focus {
+  outline: none;
+  border-color: var(--wx-color-primary, #1976d2);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.workdays-input:disabled {
+  background: var(--wx-background-alt, #f6f8fa);
+  color: var(--wx-color-font-disabled, #999);
+  cursor: not-allowed;
+}
+
+/* Hide spin buttons for number input */
+.workdays-input::-webkit-outer-spin-button,
+.workdays-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.workdays-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.workdays-suffix {
+  font-size: 14px;
+  color: var(--wx-color-font-secondary, #666);
+  margin-left: -2px;
+}
+
+.workdays-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--wx-border-color, #e1e4e8);
+  border-radius: 4px;
+  background: var(--wx-background, #fff);
+  color: var(--wx-color-font, #333);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.workdays-btn:hover:not(:disabled) {
+  background: var(--wx-background-alt, #f6f8fa);
+  border-color: var(--wx-color-primary, #1976d2);
+}
+
+.workdays-btn:active:not(:disabled) {
+  background: var(--wx-color-primary-light, #e3f2fd);
+}
+
+.workdays-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.workdays-btn i {
+  font-size: 10px;
+}
+
+/* Dark theme */
+.wx-dark-theme .workdays-input {
+  background: var(--wx-background);
+  border-color: var(--wx-border-color);
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .workdays-input:disabled {
+  background: var(--wx-background-alt);
+}
+
+.wx-dark-theme .workdays-btn {
+  background: var(--wx-background);
+  border-color: var(--wx-border-color);
+  color: var(--wx-color-font);
+}
+
+.wx-dark-theme .workdays-btn:hover:not(:disabled) {
+  background: var(--wx-background-alt);
+}

@@ -195,6 +195,7 @@ function Bars(props) {
             id,
             task: update,
             diff,
+            mode,  // 'move', 'start', or 'end'
           });
         }
         ignoreNextClickRef.current = true;
