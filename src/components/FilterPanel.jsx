@@ -3,8 +3,9 @@
  * Provides UI for filtering tasks by milestones, epics, labels, etc.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GitLabFilters } from '../utils/GitLabFilters';
+import { FilterPresetSelector } from './FilterPresetSelector';
 
 export function FilterPanel({
   milestones,
@@ -12,6 +13,14 @@ export function FilterPanel({
   tasks,
   onFilterChange,
   initialFilters = {},
+  // Preset-related props
+  presets = [],
+  presetsLoading = false,
+  presetsSaving = false,
+  canEditPresets = false,
+  onCreatePreset,
+  onRenamePreset,
+  onDeletePreset,
 }) {
   const [filters, setFilters] = useState({
     milestoneIds: initialFilters.milestoneIds || [],
@@ -101,6 +110,25 @@ export function FilterPanel({
     });
   };
 
+  // Apply preset filters
+  const handleApplyPreset = useCallback((presetFilters) => {
+    setFilters({
+      milestoneIds: presetFilters.milestoneIds || [],
+      epicIds: presetFilters.epicIds || [],
+      labels: presetFilters.labels || [],
+      assignees: presetFilters.assignees || [],
+      states: presetFilters.states || [],
+      search: presetFilters.search || '',
+    });
+  }, []);
+
+  // Create preset with current filters
+  const handleCreatePreset = useCallback(async (name) => {
+    if (onCreatePreset) {
+      await onCreatePreset(name, filters);
+    }
+  }, [onCreatePreset, filters]);
+
   const activeFilterCount =
     filters.milestoneIds.length +
     filters.epicIds.length +
@@ -112,16 +140,30 @@ export function FilterPanel({
   return (
     <div className="gitlab-filter-panel">
       <div className="filter-header">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="filter-toggle"
-        >
-          <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="filter-badge">{activeFilterCount}</span>
-          )}
-        </button>
+        <div className="filter-header-left">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="filter-toggle"
+          >
+            <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="filter-badge">{activeFilterCount}</span>
+            )}
+          </button>
+
+          <FilterPresetSelector
+            presets={presets}
+            currentFilters={filters}
+            loading={presetsLoading}
+            saving={presetsSaving}
+            canEdit={canEditPresets}
+            onSelectPreset={handleApplyPreset}
+            onCreatePreset={handleCreatePreset}
+            onRenamePreset={onRenamePreset}
+            onDeletePreset={onDeletePreset}
+          />
+        </div>
 
         {activeFilterCount > 0 && (
           <button onClick={handleClearAll} className="btn-clear">
@@ -268,6 +310,12 @@ export function FilterPanel({
           justify-content: space-between;
           align-items: center;
           padding: 12px;
+        }
+
+        .filter-header-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .filter-toggle {

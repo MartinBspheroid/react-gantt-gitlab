@@ -14,6 +14,7 @@ import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
 import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
 import { useGitLabSync } from '../hooks/useGitLabSync.ts';
 import { useGitLabHolidays } from '../hooks/useGitLabHolidays.ts';
+import { useFilterPresets } from '../hooks/useFilterPresets.ts';
 import { useDateRangePreset } from '../hooks/useDateRangePreset.ts';
 import { useHighlightTime } from '../hooks/useHighlightTime.ts';
 import { GitLabFilters } from '../utils/GitLabFilters.ts';
@@ -241,6 +242,21 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     setHolidaysText,
     setWorkdaysText,
   } = useGitLabHolidays(projectPath, proxyConfig, canEditHolidays);
+
+  // Filter presets hook
+  const {
+    presets: filterPresets,
+    loading: presetsLoading,
+    saving: presetsSaving,
+    createNewPreset,
+    renamePreset,
+    deletePreset,
+  } = useFilterPresets(
+    projectPath,
+    proxyConfig,
+    currentConfig?.type || 'project',
+    canEditHolidays
+  );
 
   // Ref to store fold state before data updates
   const openStateRef = useRef(new Map());
@@ -1738,6 +1754,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         epics={epics}
         tasks={allTasks}
         onFilterChange={setFilterOptions}
+        presets={filterPresets}
+        presetsLoading={presetsLoading}
+        presetsSaving={presetsSaving}
+        canEditPresets={canEditHolidays}
+        onCreatePreset={createNewPreset}
+        onRenamePreset={renamePreset}
+        onDeletePreset={deletePreset}
       />
 
       {syncState.error && (
