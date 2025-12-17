@@ -1606,14 +1606,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           </div>
         )}
 
-        <ColumnSettingsDropdown
-          isOpen={showColumnSettings}
-          onToggle={() => setShowColumnSettings(!showColumnSettings)}
-          columnSettings={columnSettings}
-          onToggleColumn={toggleColumn}
-          onReorderColumns={reorderColumns}
-        />
-
         <SyncButton
           onSync={syncWithFoldState}
           syncState={syncState}
@@ -1773,7 +1765,16 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       )}
 
       <div className="gantt-wrapper">
-        <Toolbar api={api} onAddMilestone={handleAddMilestone} />
+        <div className="gantt-toolbar-row">
+          <ColumnSettingsDropdown
+            isOpen={showColumnSettings}
+            onToggle={() => setShowColumnSettings(!showColumnSettings)}
+            columnSettings={columnSettings}
+            onToggleColumn={toggleColumn}
+            onReorderColumns={reorderColumns}
+          />
+          <Toolbar api={api} onAddMilestone={handleAddMilestone} />
+        </div>
         <div className="gantt-chart-container">
           {syncState.isLoading ? (
             <div className="loading-message">
@@ -2412,6 +2413,24 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           display: flex;
           flex-direction: column;
           min-height: 0;
+        }
+
+        .gantt-toolbar-row {
+          display: flex;
+          align-items: center;
+          /* Match wx-toolbar padding */
+          padding: 4px;
+        }
+
+        .gantt-toolbar-row .column-settings-container {
+          /* Match wx-tb-element padding for consistent spacing */
+          padding: 4px;
+          flex-shrink: 0;
+        }
+
+        /* Remove wx-toolbar's left padding since gantt-toolbar-row provides it */
+        .gantt-toolbar-row .wx-toolbar {
+          padding-left: 0;
         }
 
         .gantt-chart-container {

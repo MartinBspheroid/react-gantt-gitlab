@@ -212,7 +212,7 @@ export function ColumnSettingsDropdown({
         className="btn-column-settings"
         title="Column Settings"
       >
-        <i className="fas fa-columns"></i>
+        <i className="fas fa-table-columns"></i>
       </button>
 
       {isOpen && (
