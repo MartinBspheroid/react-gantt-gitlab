@@ -20,6 +20,11 @@ import { GitLabFilters } from '../utils/GitLabFilters.ts';
 import { ProjectSelector } from './ProjectSelector.jsx';
 import { SyncButton } from './SyncButton.jsx';
 import { FilterPanel } from './FilterPanel.jsx';
+import {
+  ColumnSettingsDropdown,
+  useColumnSettings,
+  buildColumnsFromSettings,
+} from './ColumnSettingsDropdown.jsx';
 
 export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const [api, setApi] = useState(null);
@@ -79,6 +84,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     const saved = localStorage.getItem('gantt-length-unit');
     return saved || 'day';
   });
+
+  // Column settings (visibility + order) from extracted hook
+  const { columnSettings, toggleColumn, reorderColumns } = useColumnSettings();
+
+  // Show/hide column settings panel
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
 
   // Use shared date range preset hook
   const {
@@ -1401,40 +1412,32 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     );
   }, []);
 
-  // Simplified columns configuration - just the essentials
+  // Columns configuration with visibility and order control
   const columns = useMemo(() => {
+    // Build configurable columns from settings
+    const configurableCols = buildColumnsFromSettings(columnSettings, {
+      DateCell,
+      WorkdaysCell,
+    });
+
     return [
+      // Task Title is always first and always visible
       {
         id: 'text',
         header: 'Task Title',
         width: 250,
         cell: TaskTitleCell,
       },
-      {
-        id: 'start',
-        header: 'Start',
-        width: 110,
-        cell: DateCell,
-      },
-      {
-        id: 'end',
-        header: 'Due',
-        width: 110,
-        cell: DateCell,
-      },
-      {
-        id: 'workdays',
-        header: 'Workdays',
-        width: 70,
-        cell: WorkdaysCell,
-      },
+      // Configurable columns (ordered by user)
+      ...configurableCols,
+      // Add task button is always last
       {
         id: 'add-task',
         header: '',
         width: 50,
       },
     ];
-  }, [DateCell, TaskTitleCell, WorkdaysCell]);
+  }, [DateCell, TaskTitleCell, WorkdaysCell, columnSettings]);
 
   // Editor items configuration - customized for GitLab
   const editorItems = useMemo(() => {
@@ -1586,6 +1589,14 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             </label>
           </div>
         )}
+
+        <ColumnSettingsDropdown
+          isOpen={showColumnSettings}
+          onToggle={() => setShowColumnSettings(!showColumnSettings)}
+          columnSettings={columnSettings}
+          onToggleColumn={toggleColumn}
+          onReorderColumns={reorderColumns}
+        />
 
         <SyncButton
           onSync={syncWithFoldState}
@@ -2009,6 +2020,119 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         .btn-view-options .chevron-icon {
           font-size: 10px;
           opacity: 0.7;
+        }
+
+        .column-settings-container {
+          position: relative;
+        }
+
+        .btn-column-settings {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 10px;
+          border: none;
+          border-radius: 4px;
+          background: var(--wx-gitlab-button-background);
+          color: var(--wx-gitlab-button-text);
+          cursor: pointer;
+          font-size: 13px;
+          transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-column-settings:hover {
+          color: var(--wx-gitlab-button-hover-text);
+          background: var(--wx-gitlab-button-hover-background);
+        }
+
+        .column-settings-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          margin-top: 4px;
+          background: var(--wx-gitlab-dropdown-background, white);
+          border: 1px solid var(--wx-gitlab-dropdown-border, #ddd);
+          border-radius: 4px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
+          min-width: 180px;
+        }
+
+        .column-settings-header {
+          padding: 8px 12px 4px;
+          font-weight: 600;
+          font-size: 13px;
+          color: var(--wx-gitlab-dropdown-text, #333);
+        }
+
+        .column-settings-hint {
+          padding: 0 12px 8px;
+          font-size: 11px;
+          color: var(--wx-gitlab-dropdown-hint, #888);
+          border-bottom: 1px solid var(--wx-gitlab-dropdown-border, #eee);
+        }
+
+        .column-settings-list {
+          padding: 8px 0;
+        }
+
+        .column-item {
+          display: flex;
+          align-items: center;
+          padding: 4px 8px;
+          cursor: grab;
+          transition: background 0.15s;
+        }
+
+        .column-item:hover {
+          background: var(--wx-gitlab-dropdown-hover, #f5f5f5);
+        }
+
+        .column-item.dragging {
+          opacity: 0.5;
+          background: var(--wx-gitlab-dropdown-hover, #f0f0f0);
+        }
+
+        .column-item.drag-over {
+          border-top: 2px solid var(--wx-gitlab-primary, #1f75cb);
+        }
+
+        .column-drop-zone-end {
+          height: 8px;
+          margin: 0 8px;
+          border-radius: 2px;
+          transition: all 0.15s;
+        }
+
+        .column-drop-zone-end.active {
+          height: 12px;
+          background: var(--wx-gitlab-primary, #1f75cb);
+          opacity: 0.3;
+        }
+
+        .drag-handle {
+          display: flex;
+          align-items: center;
+          padding: 4px;
+          color: var(--wx-gitlab-dropdown-hint, #999);
+          cursor: grab;
+        }
+
+        .drag-handle:active {
+          cursor: grabbing;
+        }
+
+        .column-checkbox {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--wx-gitlab-dropdown-text, #333);
+        }
+
+        .column-checkbox input {
+          margin-right: 8px;
         }
 
         .settings-modal-overlay {
