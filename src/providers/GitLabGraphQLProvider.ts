@@ -170,8 +170,14 @@ export class GitLabGraphQLProvider {
                 ... on WorkItemWidgetMilestone {
                   milestone {
                     id
-                    title
                     iid
+                    title
+                    description
+                    state
+                    dueDate
+                    startDate
+                    webPath
+                    createdAt
                   }
                 }
                 ... on WorkItemWidgetHierarchy {
@@ -419,13 +425,58 @@ export class GitLabGraphQLProvider {
       this.convertMilestoneToTask(m),
     );
 
+    // Create a set of existing milestone IIDs for quick lookup
+    const existingMilestoneIids = new Set(milestones.map((m) => Number(m.iid)));
+
+    // Collect milestones referenced by work items but not in our milestones list
+    // This handles Group Milestones when viewing a Project
+    const referencedMilestones = new Map<number, any>(); // iid -> milestone data
+
+    for (const wi of workItems) {
+      const milestoneWidget = wi.widgets?.find(
+        (w: any) => w.milestone !== undefined,
+      ) as any;
+
+      if (milestoneWidget?.milestone) {
+        const milestoneIid = Number(milestoneWidget.milestone.iid);
+        if (
+          !existingMilestoneIids.has(milestoneIid) &&
+          !referencedMilestones.has(milestoneIid)
+        ) {
+          // This milestone is not in our list - likely a Group Milestone
+          referencedMilestones.set(milestoneIid, milestoneWidget.milestone);
+          console.log(
+            `[GitLabGraphQL] Found referenced milestone not in list (possibly Group Milestone): iid=${milestoneIid}, title="${milestoneWidget.milestone.title}"`,
+          );
+        }
+      }
+    }
+
+    // Convert referenced milestones (Group Milestones) to tasks
+    // These are milestones not in the project/group milestone list but referenced by work items
+    // When in Project mode, these are likely Group Milestones
+    const isProjectMode = this.config.type === 'project';
+    const referencedMilestoneTasks: ITask[] = Array.from(
+      referencedMilestones.values(),
+    ).map((m) => this.convertMilestoneToTask(m, isProjectMode)); // Mark as Group Milestone if in Project mode
+
+    if (referencedMilestoneTasks.length > 0) {
+      console.log(
+        `[GitLabGraphQL] Added ${referencedMilestoneTasks.length} Group Milestone(s) from work item references`,
+      );
+    }
+
     // Convert work items to tasks (with relativePosition map and children order map)
     const workItemTasks: ITask[] = workItems.map((wi) =>
       this.convertWorkItemToTask(wi, relativePositionMap, childrenOrderMap),
     );
 
-    // Combine all tasks
-    let tasks: ITask[] = [...milestoneTasks, ...workItemTasks];
+    // Combine all tasks (including referenced Group Milestones)
+    let tasks: ITask[] = [
+      ...milestoneTasks,
+      ...referencedMilestoneTasks,
+      ...workItemTasks,
+    ];
 
     // Sort tasks by display order if available
     tasks = this.sortTasksByOrder(tasks);
@@ -601,8 +652,13 @@ export class GitLabGraphQLProvider {
 
   /**
    * Convert GitLab Milestone to Gantt Task
+   * @param milestone - The milestone data from GraphQL or REST API
+   * @param isGroupMilestone - Whether this is a Group Milestone (for API endpoint selection)
    */
-  private convertMilestoneToTask(milestone: any): ITask {
+  private convertMilestoneToTask(
+    milestone: any,
+    isGroupMilestone: boolean = false,
+  ): ITask {
     // Construct full web URL from webPath (GraphQL) or web_url (REST API)
     const webUrl = milestone.webPath
       ? `${this.config.gitlabUrl}${milestone.webPath}`
@@ -635,13 +691,27 @@ export class GitLabGraphQLProvider {
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const duration = Math.max(1, days);
 
-    // Determine globalId:
+    // Determine globalId and internalId:
     // - GraphQL returns id as "gid://gitlab/Milestone/1141"
     // - REST API returns id as numeric 1141, need to construct global ID
-    const globalId =
-      typeof milestone.id === 'string' && milestone.id.startsWith('gid://')
-        ? milestone.id
-        : `gid://gitlab/Milestone/${milestone.id}`;
+    let globalId: string;
+    let internalId: number | undefined;
+
+    if (typeof milestone.id === 'string' && milestone.id.startsWith('gid://')) {
+      // GraphQL: extract internal ID from globalId
+      globalId = milestone.id;
+      const match = milestone.id.match(/\/Milestone\/(\d+)$/);
+      if (match) {
+        internalId = parseInt(match[1], 10);
+      }
+    } else if (typeof milestone.id === 'number') {
+      // REST API: milestone.id is the internal ID
+      globalId = `gid://gitlab/Milestone/${milestone.id}`;
+      internalId = milestone.id;
+    } else {
+      // Fallback
+      globalId = `gid://gitlab/Milestone/${milestone.id}`;
+    }
 
     return {
       id: milestoneTaskId,
@@ -658,8 +728,10 @@ export class GitLabGraphQLProvider {
       _gitlab: {
         type: 'milestone',
         id: milestone.iid,
+        internalId, // Store internal ID for REST API calls (different from iid)
         globalId, // Store global ID for mutations (constructed if from REST API)
         web_url: webUrl,
+        isGroupMilestone, // Whether this milestone belongs to a Group (affects API endpoint)
       },
     };
   }
@@ -2137,13 +2209,41 @@ export class GitLabGraphQLProvider {
     }
     const milestoneInternalId = match[1];
 
-    // Get project ID and encode it for URL
-    const projectId = this.getFullPath();
-    const encodedProjectId = encodeURIComponent(projectId);
+    // Determine the correct API endpoint (same logic as updateMilestone)
+    let endpoint: string;
+    let apiPath: string;
+
+    const isGroupMilestone = task?._gitlab?.isGroupMilestone;
+    const webPath = task?._gitlab?.web_url || '';
+
+    if (isGroupMilestone) {
+      // This is a Group Milestone - extract group path from webPath
+      // The group path is between /groups/ and /-/milestones
+      const groupMatch = webPath.match(/\/groups\/(.+?)\/-\/milestones/);
+      if (groupMatch) {
+        endpoint = 'groups';
+        apiPath = groupMatch[1];
+        console.log(
+          `[GitLabGraphQL] Deleting Group Milestone, extracted group path: ${apiPath}`,
+        );
+      } else {
+        console.warn(
+          '[GitLabGraphQL] Cannot extract group path from webPath, falling back to config',
+          webPath,
+        );
+        endpoint = this.config.type === 'group' ? 'groups' : 'projects';
+        apiPath = this.getFullPath();
+      }
+    } else {
+      endpoint = this.config.type === 'group' ? 'groups' : 'projects';
+      apiPath = this.getFullPath();
+    }
+
+    const encodedPath = encodeURIComponent(apiPath);
 
     // Use shared REST API utility to delete the milestone
     await gitlabRestRequest(
-      `/projects/${encodedProjectId}/milestones/${milestoneInternalId}`,
+      `/${endpoint}/${encodedPath}/milestones/${milestoneInternalId}`,
       {
         gitlabUrl: this.config.gitlabUrl,
         token: this.config.token,
@@ -2186,13 +2286,15 @@ export class GitLabGraphQLProvider {
       payload.due_date = this.formatDateForGitLab(endDate);
     }
 
-    // Get project ID and encode it for URL
-    const projectId = this.getFullPath();
-    const encodedProjectId = encodeURIComponent(projectId);
+    // Get path and encode it for URL
+    // Use correct endpoint based on config type (group vs project)
+    const endpoint = this.config.type === 'group' ? 'groups' : 'projects';
+    const path = this.getFullPath();
+    const encodedPath = encodeURIComponent(path);
 
     // Use shared REST API utility
     const createdMilestone = await gitlabRestRequest(
-      `/projects/${encodedProjectId}/milestones`,
+      `/${endpoint}/${encodedPath}/milestones`,
       {
         gitlabUrl: this.config.gitlabUrl,
         token: this.config.token,
@@ -2220,25 +2322,38 @@ export class GitLabGraphQLProvider {
       milestone,
     });
 
-    // Extract milestone ID from globalId
-    // globalId format: "gid://gitlab/Milestone/1130"
+    // Extract milestone internal ID for REST API
     // GitLab REST API uses the internal ID (not iid) for milestone_id parameter
+    // Priority: internalId > globalId parsing > fallback to iid (may cause 404)
     let milestoneId: string;
 
-    if (milestone._gitlab?.globalId) {
+    if (milestone._gitlab?.internalId) {
+      // Best case: use stored internal ID directly
+      milestoneId = String(milestone._gitlab.internalId);
+    } else if (milestone._gitlab?.globalId) {
       // Extract internal ID from globalId (e.g., "gid://gitlab/Milestone/1130" -> "1130")
       const match = milestone._gitlab.globalId.match(/\/Milestone\/(\d+)$/);
       if (match) {
         milestoneId = match[1];
       } else {
-        // Fallback to iid if globalId format is unexpected
+        // Fallback to iid if globalId format is unexpected (may cause 404)
+        console.warn(
+          '[GitLabGraphQL] Invalid globalId format, falling back to iid:',
+          milestone._gitlab.globalId,
+        );
         milestoneId = String(milestone._gitlab.id || Number(id) - 10000);
       }
     } else if (milestone._gitlab?.id) {
-      // Fallback: use iid
+      // Fallback: use iid (may cause 404 if iid !== internal ID)
+      console.warn(
+        '[GitLabGraphQL] Using iid as fallback for milestone update, may cause 404',
+      );
       milestoneId = String(milestone._gitlab.id);
     } else {
-      // Last resort: calculate from task ID
+      // Last resort: calculate from task ID (may cause 404)
+      console.warn(
+        '[GitLabGraphQL] No milestone ID info, using calculated iid',
+      );
       milestoneId = String(Number(id) - 10000);
     }
 
@@ -2265,13 +2380,49 @@ export class GitLabGraphQLProvider {
         : null;
     }
 
-    // Get project ID and encode it for URL
-    const projectId = this.getFullPath();
-    const encodedProjectId = encodeURIComponent(projectId);
+    // Determine the correct API endpoint
+    // Group Milestones need /groups/ endpoint, Project Milestones need /projects/
+    // We can determine this from:
+    // 1. isGroupMilestone flag (set when milestone was discovered from work item reference)
+    // 2. webPath format: /groups/xxx/-/milestones/N vs /project-path/-/milestones/N
+    let endpoint: string;
+    let apiPath: string;
+
+    const isGroupMilestone = milestone._gitlab?.isGroupMilestone;
+    const webPath = milestone._gitlab?.web_url || '';
+
+    if (isGroupMilestone) {
+      // This is a Group Milestone - need to find the group path from webPath
+      // webPath format: https://gitlab.com/groups/group-name/-/milestones/42
+      // or webPath (from GraphQL): /groups/group-name/-/milestones/42
+      // The group path is between /groups/ and /-/milestones
+      const groupMatch = webPath.match(/\/groups\/(.+?)\/-\/milestones/);
+      if (groupMatch) {
+        endpoint = 'groups';
+        apiPath = groupMatch[1];
+        console.log(
+          `[GitLabGraphQL] Updating Group Milestone, extracted group path: ${apiPath}`,
+        );
+      } else {
+        // Fallback: cannot determine group path, this will likely fail
+        console.warn(
+          '[GitLabGraphQL] Cannot extract group path from webPath, falling back to config',
+          webPath,
+        );
+        endpoint = this.config.type === 'group' ? 'groups' : 'projects';
+        apiPath = this.getFullPath();
+      }
+    } else {
+      // Project Milestone or config-based selection
+      endpoint = this.config.type === 'group' ? 'groups' : 'projects';
+      apiPath = this.getFullPath();
+    }
+
+    const encodedPath = encodeURIComponent(apiPath);
 
     // Use shared REST API utility
     const updatedMilestone = await gitlabRestRequest(
-      `/projects/${encodedProjectId}/milestones/${milestoneId}`,
+      `/${endpoint}/${encodedPath}/milestones/${milestoneId}`,
       {
         gitlabUrl: this.config.gitlabUrl,
         token: this.config.token,

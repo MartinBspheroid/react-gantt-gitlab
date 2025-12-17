@@ -586,6 +586,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
           if (changes && Object.keys(changes).length > 0) {
             try {
+              // Get _gitlab info from current task for proper ID resolution
+              // This is especially important for milestones which need internalId
+              const currentTask = ganttApi.getTask(taskId);
+              if (currentTask?._gitlab) {
+                changes._gitlab = currentTask._gitlab;
+              }
+
               await syncTask(taskId, changes);
               pendingEditorChangesRef.current.clear();
 
