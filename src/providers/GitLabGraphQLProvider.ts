@@ -122,7 +122,7 @@ export class GitLabGraphQLProvider {
     const workItemsQuery = `
       query getWorkItems($fullPath: ID!, $state: IssuableState, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          workItems(types: [ISSUE, TASK], state: $state, first: 100, after: $after) {
+          workItems(types: [ISSUE, TASK], state: $state, first: 300, after: $after) {
             pageInfo {
               hasNextPage
               endCursor
@@ -247,7 +247,7 @@ export class GitLabGraphQLProvider {
     const issuesQuery = `
       query getIssues($fullPath: ID!, $state: IssuableState, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          issues(state: $state, first: 100, after: $after) {
+          issues(state: $state, first: 300, after: $after) {
             pageInfo {
               hasNextPage
               endCursor
@@ -268,7 +268,7 @@ export class GitLabGraphQLProvider {
 
     // Fetch work items with optional pagination
     const enablePagination = options.enablePagination !== false; // Default to true
-    const MAX_PAGES = enablePagination ? 3 : 1; // If pagination enabled, limit to 3 pages (300 items)
+    const MAX_PAGES = 1; // Fetch up to 300 items in a single request
     const allWorkItems: WorkItem[] = [];
     let hasNextPage = true;
     let endCursor: string | null = null;
