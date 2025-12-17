@@ -4,7 +4,11 @@
  */
 
 import type { ITask, ILink, TID } from '@svar-ui/gantt-store';
-import type { GitLabSyncOptions, GitLabDataResponse } from '../types/gitlab';
+import type {
+  GitLabSyncOptions,
+  GitLabDataResponse,
+  GitLabFilterOptionsData,
+} from '../types/gitlab';
 import { GitLabGraphQLClient } from './GitLabGraphQLClient';
 import { gitlabRestRequest } from './GitLabApiUtils';
 
@@ -111,6 +115,109 @@ export class GitLabGraphQLProvider {
   }
 
   /**
+   * Fetch filter options (members, labels, milestones) for server-side filtering
+   * This should be called before sync to allow users to set filters immediately
+   */
+  async getFilterOptions(): Promise<GitLabFilterOptionsData> {
+    const fullPath = this.getFullPath();
+
+    // Query to get members, labels, and milestones in one request
+    const filterOptionsQuery = `
+      query getFilterOptions($fullPath: ID!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          ${this.config.type === 'group' ? 'groupMembers' : 'projectMembers'}(first: 100) {
+            nodes {
+              user {
+                username
+                name
+              }
+            }
+          }
+          labels(first: 100) {
+            nodes {
+              title
+              color
+            }
+          }
+          milestones(state: active, first: 100) {
+            nodes {
+              iid
+              title
+            }
+          }
+        }
+      }
+    `;
+
+    interface FilterOptionsResponse {
+      project?: {
+        projectMembers?: {
+          nodes: Array<{ user: { username: string; name: string } | null }>;
+        };
+        labels?: { nodes: Array<{ title: string; color: string }> };
+        milestones?: { nodes: Array<{ iid: string; title: string }> };
+      };
+      group?: {
+        groupMembers?: {
+          nodes: Array<{ user: { username: string; name: string } | null }>;
+        };
+        labels?: { nodes: Array<{ title: string; color: string }> };
+        milestones?: { nodes: Array<{ iid: string; title: string }> };
+      };
+    }
+
+    try {
+      const result = await this.graphqlClient.query<FilterOptionsResponse>(
+        filterOptionsQuery,
+        { fullPath },
+      );
+
+      const data = this.config.type === 'group' ? result.group : result.project;
+
+      const membersKey =
+        this.config.type === 'group' ? 'groupMembers' : 'projectMembers';
+
+      // Extract members (filter out null users)
+      const members: GitLabFilterOptionsData['members'] = (
+        (data as any)?.[membersKey]?.nodes || []
+      )
+        .filter(
+          (node: { user: { username: string; name: string } | null }) =>
+            node.user !== null,
+        )
+        .map((node: { user: { username: string; name: string } | null }) => ({
+          username: node.user!.username,
+          name: node.user!.name,
+        }));
+
+      // Extract labels
+      const labels: GitLabFilterOptionsData['labels'] = (
+        data?.labels?.nodes || []
+      ).map((node) => ({
+        title: node.title,
+        color: node.color,
+      }));
+
+      // Extract milestones
+      const milestones: GitLabFilterOptionsData['milestones'] = (
+        data?.milestones?.nodes || []
+      ).map((node) => ({
+        iid: Number(node.iid),
+        title: node.title,
+      }));
+
+      return { members, labels, milestones };
+    } catch (error) {
+      console.error(
+        '[GitLabGraphQLProvider] Failed to fetch filter options:',
+        error,
+      );
+      // Return empty arrays on error
+      return { members: [], labels: [], milestones: [] };
+    }
+  }
+
+  /**
    * Fetch all work items (issues) using GraphQL
    */
   async getData(
@@ -119,10 +226,30 @@ export class GitLabGraphQLProvider {
     // Fetching work items and milestones
 
     // Query for work items with pagination
+    // Supports server-side filtering via labelName, milestoneTitle, assigneeUsernames, createdAfter/Before
     const workItemsQuery = `
-      query getWorkItems($fullPath: ID!, $state: IssuableState, $after: String) {
+      query getWorkItems(
+        $fullPath: ID!,
+        $state: IssuableState,
+        $after: String,
+        $labelName: [String!],
+        $milestoneTitle: [String!],
+        $assigneeUsernames: [String!],
+        $createdAfter: Time,
+        $createdBefore: Time
+      ) {
         ${this.config.type}(fullPath: $fullPath) {
-          workItems(types: [ISSUE, TASK], state: $state, first: 100, after: $after) {
+          workItems(
+            types: [ISSUE, TASK],
+            state: $state,
+            first: 100,
+            after: $after,
+            labelName: $labelName,
+            milestoneTitle: $milestoneTitle,
+            assigneeUsernames: $assigneeUsernames,
+            createdAfter: $createdAfter,
+            createdBefore: $createdBefore
+          ) {
             pageInfo {
               hasNextPage
               endCursor
@@ -244,10 +371,29 @@ export class GitLabGraphQLProvider {
     `;
 
     // Query for issues to get relativePosition (Issue API supports this field) with pagination
+    // Also supports server-side filtering to match workItems query
     const issuesQuery = `
-      query getIssues($fullPath: ID!, $state: IssuableState, $after: String) {
+      query getIssues(
+        $fullPath: ID!,
+        $state: IssuableState,
+        $after: String,
+        $labelName: [String!],
+        $milestoneTitle: String,
+        $assigneeUsernames: [String!],
+        $createdAfter: Time,
+        $createdBefore: Time
+      ) {
         ${this.config.type}(fullPath: $fullPath) {
-          issues(state: $state, first: 100, after: $after) {
+          issues(
+            state: $state,
+            first: 100,
+            after: $after,
+            labelName: $labelName,
+            milestoneTitle: $milestoneTitle,
+            assigneeUsernames: $assigneeUsernames,
+            createdAfter: $createdAfter,
+            createdBefore: $createdBefore
+          ) {
             pageInfo {
               hasNextPage
               endCursor
@@ -261,9 +407,41 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    const variables: any = {
+    // Build server filter variables (shared between workItems and issues queries)
+    const serverFilters = options.serverFilters;
+    const baseVariables: any = {
       fullPath: this.getFullPath(),
       state: options.includeClosed ? undefined : 'opened',
+    };
+
+    // Add server-side filter variables if present
+    if (serverFilters?.labelNames?.length) {
+      baseVariables.labelName = serverFilters.labelNames;
+    }
+    if (serverFilters?.assigneeUsernames?.length) {
+      baseVariables.assigneeUsernames = serverFilters.assigneeUsernames;
+    }
+    if (serverFilters?.createdAfter) {
+      baseVariables.createdAfter = serverFilters.createdAfter;
+    }
+    if (serverFilters?.createdBefore) {
+      baseVariables.createdBefore = serverFilters.createdBefore;
+    }
+
+    // Variables for workItems query (milestoneTitle accepts array)
+    const variables: any = {
+      ...baseVariables,
+      ...(serverFilters?.milestoneTitles?.length && {
+        milestoneTitle: serverFilters.milestoneTitles,
+      }),
+    };
+
+    // Variables for issues query (milestoneTitle accepts single string only)
+    const issuesVariables: any = {
+      ...baseVariables,
+      ...(serverFilters?.milestoneTitles?.length && {
+        milestoneTitle: serverFilters.milestoneTitles[0],
+      }),
     };
 
     // Fetch work items with optional pagination
@@ -350,7 +528,7 @@ export class GitLabGraphQLProvider {
       const MAX_ISSUE_PAGES = 20; // 100 × 20 = 2000 items max, same as work items
       while (hasNextPage && pageCount < MAX_ISSUE_PAGES) {
         const issuesResult = await this.graphqlClient.query<any>(issuesQuery, {
-          ...variables,
+          ...issuesVariables,
           after: endCursor,
         });
 

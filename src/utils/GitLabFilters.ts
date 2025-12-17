@@ -4,15 +4,61 @@
  */
 
 import type { ITask } from '@svar-ui/gantt-store';
-import type { GitLabMilestone, GitLabEpic } from '../types/gitlab';
+import type {
+  GitLabMilestone,
+  GitLabEpic,
+  GitLabServerFilters,
+} from '../types/gitlab';
 
+/**
+ * Server filter options for Preset storage
+ * Matches GitLabServerFilters but with dateRange grouped
+ */
+export interface ServerFilterOptions {
+  labelNames?: string[];
+  milestoneTitles?: string[];
+  assigneeUsernames?: string[];
+  dateRange?: {
+    createdAfter?: string;
+    createdBefore?: string;
+  };
+}
+
+/**
+ * Filter options used by FilterPanel
+ * Supports both client-side and server-side filtering
+ */
 export interface FilterOptions {
+  // Client-side filter options (applied after data is fetched)
   milestoneIds?: number[];
   epicIds?: number[];
   labels?: string[];
   assignees?: string[];
   states?: string[];
   search?: string;
+
+  // Filter type indicator for Preset
+  filterType?: 'client' | 'server';
+
+  // Server-side filter options (applied at API level)
+  serverFilters?: ServerFilterOptions;
+}
+
+/**
+ * Convert ServerFilterOptions to GitLabServerFilters for API call
+ */
+export function toGitLabServerFilters(
+  options?: ServerFilterOptions,
+): GitLabServerFilters | undefined {
+  if (!options) return undefined;
+
+  return {
+    labelNames: options.labelNames,
+    milestoneTitles: options.milestoneTitles,
+    assigneeUsernames: options.assigneeUsernames,
+    createdAfter: options.dateRange?.createdAfter,
+    createdBefore: options.dateRange?.createdBefore,
+  };
 }
 
 export class GitLabFilters {

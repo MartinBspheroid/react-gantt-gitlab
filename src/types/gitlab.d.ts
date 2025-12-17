@@ -123,11 +123,35 @@ export interface GitLabConfig {
   isDefault?: boolean;
 }
 
+/**
+ * Server-side filter options for GitLab GraphQL API
+ * These filters are applied at the API level to reduce data transfer
+ */
+export interface GitLabServerFilters {
+  labelNames?: string[]; // GitLab API: labelName
+  milestoneTitles?: string[]; // GitLab API: milestoneTitle
+  assigneeUsernames?: string[]; // GitLab API: assigneeUsernames
+  createdAfter?: string; // GitLab GraphQL Time type (ISO 8601 format)
+  createdBefore?: string; // GitLab GraphQL Time type (ISO 8601 format)
+}
+
+/**
+ * Filter options available for server-side filtering
+ * These are fetched before sync to allow users to set filters immediately
+ */
+export interface GitLabFilterOptionsData {
+  members: Array<{ username: string; name: string }>;
+  labels: Array<{ title: string; color?: string }>;
+  milestones: Array<{ iid: number; title: string }>;
+}
+
 export interface GitLabSyncOptions {
   includeClosed?: boolean;
   milestoneId?: number;
   epicId?: number;
   labels?: string[];
+  // Server-side filters (applied at API level)
+  serverFilters?: GitLabServerFilters;
 }
 
 export interface GitLabDataResponse {

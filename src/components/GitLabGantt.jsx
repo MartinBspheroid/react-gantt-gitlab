@@ -17,7 +17,7 @@ import { useGitLabHolidays } from '../hooks/useGitLabHolidays.ts';
 import { useFilterPresets } from '../hooks/useFilterPresets.ts';
 import { useDateRangePreset } from '../hooks/useDateRangePreset.ts';
 import { useHighlightTime } from '../hooks/useHighlightTime.ts';
-import { GitLabFilters } from '../utils/GitLabFilters.ts';
+import { GitLabFilters, toGitLabServerFilters } from '../utils/GitLabFilters.ts';
 import { ProjectSelector } from './ProjectSelector.jsx';
 import { SyncButton } from './SyncButton.jsx';
 import { FilterPanel } from './FilterPanel.jsx';
@@ -35,6 +35,12 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
   const [configs, setConfigs] = useState([]);
+
+  // Server filter options (labels, milestones, members from GitLab)
+  const [serverFilterOptions, setServerFilterOptions] = useState(null);
+  const [serverFilterOptionsLoading, setServerFilterOptionsLoading] = useState(false);
+  // Active server filters (applied to API calls)
+  const [activeServerFilters, setActiveServerFilters] = useState(null);
 
   // Store reference to all tasks for event handlers
   const allTasksRef = useRef([]);
@@ -240,6 +246,29 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     });
   }, [provider]);
 
+  // Load server filter options when provider changes
+  useEffect(() => {
+    if (!provider) {
+      setServerFilterOptions(null);
+      return;
+    }
+
+    const loadFilterOptions = async () => {
+      setServerFilterOptionsLoading(true);
+      try {
+        const options = await provider.getFilterOptions();
+        setServerFilterOptions(options);
+      } catch (error) {
+        console.error('[GitLabGantt] Failed to load filter options:', error);
+        setServerFilterOptions(null);
+      } finally {
+        setServerFilterOptionsLoading(false);
+      }
+    };
+
+    loadFilterOptions();
+  }, [provider]);
+
   // Use GitLab holidays hook
   const {
     holidays,
@@ -356,6 +385,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   }, [saveFoldStateToStorage]);
 
   // Wrapped sync function that preserves fold state
+  // Automatically applies activeServerFilters if set
   const syncWithFoldState = useCallback(
     async (options) => {
       // Save fold state before sync
@@ -380,10 +410,17 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
       }
 
-      // Call original sync
-      await sync(options);
+      // Merge activeServerFilters with provided options
+      // This ensures all syncs respect the current server filter settings
+      const mergedOptions = {
+        ...options,
+        serverFilters: options?.serverFilters || activeServerFilters,
+      };
+
+      // Call original sync with merged options
+      await sync(mergedOptions);
     },
-    [api, sync, saveFoldStateToStorage]
+    [api, sync, saveFoldStateToStorage, activeServerFilters]
   );
 
   // Update ref when allTasks changes
@@ -499,6 +536,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     }),
     []
   );
+
+  // Handler for applying server filters and triggering sync
+  const handleServerFilterApply = useCallback(async (serverFilters) => {
+    const gitlabFilters = toGitLabServerFilters(serverFilters);
+    setActiveServerFilters(gitlabFilters);
+    await syncWithFoldState({ serverFilters: gitlabFilters });
+  }, [syncWithFoldState]);
 
   // Handler for adding a new milestone
   const handleAddMilestone = useCallback(async () => {
@@ -1805,6 +1849,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         onDeletePreset={deletePreset}
         onPresetSelect={handlePresetSelect}
         initialPresetId={lastUsedPresetId}
+        filterOptions={serverFilterOptions}
+        filterOptionsLoading={serverFilterOptionsLoading}
+        serverFilters={activeServerFilters}
+        onServerFilterApply={handleServerFilterApply}
       />
 
       {syncState.error && (
