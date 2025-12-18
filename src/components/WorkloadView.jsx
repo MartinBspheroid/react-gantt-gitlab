@@ -1,18 +1,21 @@
 /**
  * WorkloadView Component
  * Main component for workload visualization by Assignee/Label
+ * Refactored to use shared hooks with GitLabGantt
  */
 
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WorkloadChart } from './WorkloadChart.jsx';
 import { WorkloadSidebar } from './WorkloadSidebar.jsx';
-import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
-import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
-import { useGitLabSync } from '../hooks/useGitLabSync.ts';
+import { useProjectConfig } from '../hooks/useProjectConfig.ts';
+import { useCellDimensions } from '../hooks/useCellDimensions.ts';
+import { useGitLabDataInit } from '../hooks/useGitLabDataInit.ts';
+import { useFilterPresets } from '../hooks/useFilterPresets.ts';
 import { useGitLabHolidays } from '../hooks/useGitLabHolidays.ts';
 import { useDateRangePreset } from '../hooks/useDateRangePreset.ts';
 import { useHighlightTime } from '../hooks/useHighlightTime.ts';
+import { GitLabFilters, toGitLabServerFilters } from '../utils/GitLabFilters.ts';
 import {
   getUniqueAssignees,
   getUniqueLabels,
@@ -20,16 +23,41 @@ import {
 } from '../utils/WorkloadUtils.ts';
 import { SyncButton } from './SyncButton.jsx';
 import { ProjectSelector } from './ProjectSelector.jsx';
+import { FilterPanel } from './FilterPanel.jsx';
 import './WorkloadView.css';
 
-export function WorkloadView({ initialConfigId, autoSync = false }) {
-  const [currentConfig, setCurrentConfig] = useState(null);
-  const [provider, setProvider] = useState(null);
-  const [configs, setConfigs] = useState([]);
+export function WorkloadView({ initialConfigId }) {
+  // Use shared project config hook
+  const {
+    currentConfig,
+    provider,
+    configs,
+    reloadConfigs,
+    handleConfigChange,
+    handleQuickSwitch,
+    projectPath,
+    proxyConfig,
+    configVersion,
+  } = useProjectConfig(initialConfigId);
 
-  // Selection state for workload grouping
+  // Use shared cell dimensions hook
+  const {
+    cellWidthDisplay,
+    handleCellWidthChange,
+    cellHeight,
+    cellHeightDisplay,
+    handleCellHeightChange,
+    lengthUnit,
+    setLengthUnit,
+    effectiveCellWidth,
+  } = useCellDimensions('workload');
+
+  // Selection state for workload grouping (sidebar - client-side grouping)
   const [selectedAssignees, setSelectedAssignees] = useState([]);
   const [selectedLabels, setSelectedLabels] = useState([]);
+
+  // Client-side filter options (from FilterPanel)
+  const [filterOptions, setFilterOptions] = useState({});
 
   // Project members and labels from GitLab API
   const [projectMembers, setProjectMembers] = useState([]);
@@ -38,44 +66,8 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
   // Store reference to all tasks for event handlers
   const allTasksRef = useRef([]);
 
-  // Load settings from localStorage with defaults
-  const [cellWidth, setCellWidth] = useState(() => {
-    const saved = localStorage.getItem('workload-cell-width');
-    return saved ? Number(saved) : 40;
-  });
-  const [cellWidthDisplay, setCellWidthDisplay] = useState(cellWidth);
-  const cellWidthTimerRef = useRef(null);
-
-  const [cellHeight, setCellHeight] = useState(() => {
-    const saved = localStorage.getItem('workload-cell-height');
-    return saved ? Number(saved) : 38;
-  });
-  const [cellHeightDisplay, setCellHeightDisplay] = useState(cellHeight);
-  const cellHeightTimerRef = useRef(null);
-
-  // Debounced cell width update
-  const handleCellWidthChange = useCallback((value) => {
-    setCellWidthDisplay(value);
-    if (cellWidthTimerRef.current) {
-      clearTimeout(cellWidthTimerRef.current);
-    }
-    cellWidthTimerRef.current = setTimeout(() => {
-      setCellWidth(value);
-    }, 100);
-  }, []);
-
-  // Debounced cell height update
-  const handleCellHeightChange = useCallback((value) => {
-    setCellHeightDisplay(value);
-    if (cellHeightTimerRef.current) {
-      clearTimeout(cellHeightTimerRef.current);
-    }
-    cellHeightTimerRef.current = setTimeout(() => {
-      setCellHeight(value);
-    }, 100);
-  }, []);
-
   const [canEditHolidays, setCanEditHolidays] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
 
@@ -96,134 +88,67 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     dateRange,
   } = useDateRangePreset({ storagePrefix: 'workload' });
 
-  const [lengthUnit, setLengthUnit] = useState(() => {
-    const saved = localStorage.getItem('workload-length-unit');
-    return saved || 'day';
-  });
-
-  // Calculate effective cellWidth based on lengthUnit
-  const effectiveCellWidth = useMemo(() => {
-    if (lengthUnit === 'day') {
-      return cellWidth;
-    }
-    switch (lengthUnit) {
-      case 'hour':
-        return 80;
-      case 'week':
-        return 100;
-      case 'month':
-        return 120;
-      case 'quarter':
-        return 150;
-      default:
-        return cellWidth;
-    }
-  }, [lengthUnit, cellWidth]);
-
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('workload-cell-width', cellWidth.toString());
-  }, [cellWidth]);
-
-  useEffect(() => {
-    localStorage.setItem('workload-cell-height', cellHeight.toString());
-  }, [cellHeight]);
-
-  useEffect(() => {
-    localStorage.setItem('workload-length-unit', lengthUnit);
-  }, [lengthUnit]);
-
   // Persist showOthers to localStorage
   useEffect(() => {
     localStorage.setItem('workload-show-others', showOthers.toString());
   }, [showOthers]);
 
-  // Reload configs list (used on mount and after add/update/delete)
-  const reloadConfigs = useCallback(() => {
-    setConfigs(gitlabConfigManager.getAllConfigs());
-  }, []);
-
-  // Load configs on mount
-  useEffect(() => {
-    reloadConfigs();
-  }, []);
-
-  // Initialize provider when config changes
-  const handleConfigChange = useCallback((config) => {
-    setCurrentConfig(config);
-
-    const newProvider = new GitLabGraphQLProvider({
-      gitlabUrl: config.gitlabUrl,
-      token: config.token,
-      projectId: config.projectId,
-      groupId: config.groupId,
-      type: config.type,
-    });
-
-    setProvider(newProvider);
-  }, []);
-
-  // Quick switch between projects
-  const handleQuickSwitch = useCallback(
-    (configId) => {
-      gitlabConfigManager.setActiveConfig(configId);
-      const config = gitlabConfigManager.getConfig(configId);
-      if (config) {
-        handleConfigChange(config);
-      }
-    },
-    [handleConfigChange]
-  );
-
-  // Initialize with active config on mount
-  useEffect(() => {
-    const activeConfig =
-      gitlabConfigManager.getConfig(initialConfigId) ||
-      gitlabConfigManager.getActiveConfig();
-
-    if (activeConfig) {
-      handleConfigChange(activeConfig);
-    }
-  }, [initialConfigId, handleConfigChange]);
-
-  // Use sync hook
-  const { tasks: allTasks, syncState, sync, syncTask } = useGitLabSync(
-    provider,
-    autoSync
-  );
-
-  // Get project path for holidays hook
-  const projectPath = useMemo(() => {
-    if (!currentConfig) return null;
-    if (currentConfig.type === 'project' && currentConfig.projectId) {
-      return String(currentConfig.projectId);
-    } else if (currentConfig.type === 'group' && currentConfig.groupId) {
-      return String(currentConfig.groupId);
-    }
-    return null;
-  }, [currentConfig]);
-
-  // Get proxy config for REST API calls
-  const proxyConfig = useMemo(() => {
-    if (!currentConfig) return null;
-    return {
-      gitlabUrl: currentConfig.gitlabUrl,
-      token: currentConfig.token,
-      isDev: import.meta.env.DEV,
-    };
-  }, [currentConfig?.gitlabUrl, currentConfig?.token]);
-
   // Check permissions when provider changes
   useEffect(() => {
     if (!provider) {
       setCanEditHolidays(false);
+      setCanEdit(false);
       return;
     }
 
-    provider.checkCanEdit().then((canEdit) => {
-      setCanEditHolidays(canEdit);
+    provider.checkCanEdit().then((canEditResult) => {
+      setCanEditHolidays(canEditResult);
+      setCanEdit(canEditResult);
     });
   }, [provider]);
+
+  // Use filter presets hook (shared with GitLabGantt)
+  const {
+    presets: filterPresets,
+    loading: presetsLoading,
+    saving: presetsSaving,
+    createNewPreset,
+    renamePreset,
+    deletePreset,
+  } = useFilterPresets(
+    projectPath,
+    proxyConfig,
+    currentConfig?.type || 'project',
+    canEdit
+  );
+
+  // Use shared GitLab data initialization hook
+  const {
+    tasks: allTasks,
+    syncState,
+    sync,
+    syncTask,
+    serverFilterOptions,
+    serverFilterOptionsLoading,
+    activeServerFilters,
+    setActiveServerFilters,
+    lastUsedPresetId,
+    setLastUsedPresetId,
+  } = useGitLabDataInit({
+    provider,
+    proxyConfig,
+    configVersion,
+    filterPresets,
+    presetsLoading,
+    configType: currentConfig?.type || 'project',
+    projectId: currentConfig?.projectId,
+    groupId: currentConfig?.groupId,
+  });
+
+  // Apply client-side filters to tasks (same as GitLabGantt)
+  const filteredTasks = useMemo(() => {
+    return GitLabFilters.applyFilters(allTasks, filterOptions);
+  }, [allTasks, filterOptions]);
 
   // Use GitLab holidays hook
   const { holidays, workdays } = useGitLabHolidays(
@@ -255,9 +180,9 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     });
   }, [provider]);
 
-  // Extract assignees and labels from tasks (fallback if API doesn't have them)
-  const taskAssignees = useMemo(() => getUniqueAssignees(allTasks), [allTasks]);
-  const taskLabels = useMemo(() => getUniqueLabels(allTasks), [allTasks]);
+  // Extract assignees and labels from filtered tasks (for sidebar)
+  const taskAssignees = useMemo(() => getUniqueAssignees(filteredTasks), [filteredTasks]);
+  const taskLabels = useMemo(() => getUniqueLabels(filteredTasks), [filteredTasks]);
 
   // Combine project members with task assignees, and project labels with task labels
   const availableAssignees = useMemo(() => {
@@ -270,14 +195,14 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     return Array.from(combined).sort();
   }, [projectLabels, taskLabels]);
 
-  // Generate storage key for current project
+  // Generate storage key for current project (for sidebar selection persistence)
   const filterStorageKey = useMemo(() => {
     if (!currentConfig) return null;
     const projectKey = currentConfig.projectId || currentConfig.groupId || 'default';
     return `workload-filter-${projectKey}`;
   }, [currentConfig]);
 
-  // Load saved filter when project changes
+  // Load saved sidebar filter when project changes
   useEffect(() => {
     if (!filterStorageKey) return;
 
@@ -298,7 +223,7 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     }
   }, [filterStorageKey]);
 
-  // Save filter when selection changes
+  // Save sidebar filter when selection changes
   useEffect(() => {
     if (!filterStorageKey) return;
 
@@ -438,6 +363,18 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
     },
     [provider, sync]
   );
+
+  // Handler for applying server filters and triggering sync (same as GitLabGantt)
+  const handleServerFilterApply = useCallback(async (serverFilters) => {
+    const gitlabFilters = toGitLabServerFilters(serverFilters);
+    setActiveServerFilters(gitlabFilters);
+    await sync({ serverFilters: gitlabFilters });
+  }, [sync, setActiveServerFilters]);
+
+  // Handle preset selection from FilterPanel
+  const handlePresetSelect = useCallback((presetId) => {
+    setLastUsedPresetId(presetId);
+  }, [setLastUsedPresetId]);
 
   // Use shared highlight time hook for weekend/holiday logic
   const { highlightTime } = useHighlightTime({ holidays, workdays });
@@ -598,6 +535,28 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
         </div>
       )}
 
+      {/* Full FilterPanel - same as GitLabGantt */}
+      <FilterPanel
+        key={currentConfig?.id || 'no-config'}
+        milestones={[]} // WorkloadView doesn't have separate milestone data
+        epics={[]} // WorkloadView doesn't have separate epic data
+        tasks={allTasks}
+        onFilterChange={setFilterOptions}
+        presets={filterPresets}
+        presetsLoading={presetsLoading}
+        presetsSaving={presetsSaving}
+        canEditPresets={canEdit}
+        onCreatePreset={createNewPreset}
+        onRenamePreset={renamePreset}
+        onDeletePreset={deletePreset}
+        onPresetSelect={handlePresetSelect}
+        initialPresetId={lastUsedPresetId}
+        filterOptions={serverFilterOptions}
+        filterOptionsLoading={serverFilterOptionsLoading}
+        serverFilters={activeServerFilters}
+        onServerFilterApply={handleServerFilterApply}
+      />
+
       {syncState.error && (
         <div className="error-banner">
           <strong>Sync Error:</strong> {syncState.error}
@@ -618,9 +577,9 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
         />
 
         <div className="workload-gantt-wrapper">
-          {syncState.isLoading || allTasks.length === 0 ? (
+          {syncState.isLoading || filteredTasks.length === 0 ? (
             <div className="loading-message">
-              <p>Loading GitLab data...</p>
+              <p>{syncState.isLoading ? 'Loading GitLab data...' : 'No tasks match the current filters.'}</p>
             </div>
           ) : !hasSelection ? (
             <div className="no-selection-message">
@@ -634,7 +593,7 @@ export function WorkloadView({ initialConfigId, autoSync = false }) {
           ) : (
             <WorkloadChart
               key={`workload-${lengthUnit}-${effectiveCellWidth}`}
-              tasks={allTasks}
+              tasks={filteredTasks}
               selectedAssignees={selectedAssignees}
               selectedLabels={selectedLabels}
               startDate={dateRange.start}

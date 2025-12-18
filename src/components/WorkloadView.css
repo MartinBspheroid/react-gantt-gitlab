@@ -228,6 +228,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0; /* Allow flex item to shrink below content size */
 }
 
 /* Sidebar */
@@ -382,6 +383,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Allow flex item to shrink below content size */
+  height: 100%;
 }
 
 /* Group header in Gantt grid */
