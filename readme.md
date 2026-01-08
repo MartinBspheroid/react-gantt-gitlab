@@ -24,6 +24,13 @@ https://react-gantt-gitlab-8d7d33.pages.rayark.io/
   - 點擊時間bar兩旁的圓圈，可以進入 Link 設置，點另外一個圓圈就會連結
   - 可以在編輯視窗裡面刪除/修改連線
 - 支援調整的時距
+- 使用 Server / Client Filter 用來對 Issues, Tasks 進行篩選
+  - 使用 Server 篩選器可以大幅改善過多 Issues 讀取的狀況
+- Color Rule 色彩規則功能
+  - 用標題設定條件，來讓 time bar 顯示指定的顏色條紋（最多顯示三個顏色）
+  - 會儲存在專案 snippet (必須要有 Maintainer 權限)
+- Grid Column 可自訂需要的欄位和順序
+  - 包含: Issue ID, Start, Due, Assignee, Weight, Workdays, Iteration
 
 ### 已知問題
 
