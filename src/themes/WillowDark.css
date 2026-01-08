@@ -2,7 +2,7 @@
   color-scheme: dark;
 
   --wx-gantt-border-color: #384047;
-  --wx-gantt-border: var(--wx-border);
+  --wx-gantt-border: 1px solid #384047;
   --wx-gantt-form-header-border: none;
   --wx-gantt-icon-color: #9fa1ae;
 
@@ -51,7 +51,7 @@
   --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size)
     var(--wx-font-family);
   --wx-grid-body-font-color: var(--wx-color-font);
-  --wx-grid-body-row-border: var(--wx-border);
+  --wx-grid-body-row-border: 1px solid #384047;
   --wx-grid-body-cell-border: 1px solid transparent;
 
   /* timescale */
@@ -60,7 +60,7 @@
   --wx-timescale-font-color: var(--wx-color-font);
   --wx-timescale-text-transform: uppercase;
   --wx-timescale-shadow: none;
-  --wx-timescale-border: var(--wx-border);
+  --wx-timescale-border: 1px solid #384047;
 
   /* grid and timescale */
   --wx-gantt-holiday-background: #303539;
@@ -164,3 +164,127 @@
 .wx-willow-dark-theme .wx-gitlab-task .wx-progress-percent {
   background-color: #099f81;
 }
+
+/* === Color Rules - Custom Color Stripes (Dark Theme) === */
+
+/* Base styles for all color rule bars - fix edge artifacts */
+.wx-willow-dark-theme .wx-bar.wx-color-rule-single,
+.wx-willow-dark-theme .wx-bar.wx-color-rule-double,
+.wx-willow-dark-theme .wx-bar.wx-color-rule-triple {
+  overflow: visible;
+  border: 1px solid transparent !important;
+  /* GPU acceleration for smoother rendering */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Single color stripe (1 rule match) */
+.wx-willow-dark-theme .wx-bar.wx-color-rule-single {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 12px,
+    var(--wx-base-color) 12px,
+    var(--wx-base-color) 24px
+  ) !important;
+  background-size: 34px 34px !important;
+}
+
+/* Double color stripe (2 rule matches) */
+.wx-willow-dark-theme .wx-bar.wx-color-rule-double {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 10px,
+    var(--wx-color-rule-2) 10px,
+    var(--wx-color-rule-2) 20px,
+    var(--wx-base-color) 20px,
+    var(--wx-base-color) 30px
+  ) !important;
+  background-size: 42px 42px !important;
+}
+
+/* Triple color stripe (3 rule matches) */
+.wx-willow-dark-theme .wx-bar.wx-color-rule-triple {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 8px,
+    var(--wx-color-rule-2) 8px,
+    var(--wx-color-rule-2) 16px,
+    var(--wx-color-rule-3) 16px,
+    var(--wx-color-rule-3) 24px,
+    var(--wx-base-color) 24px,
+    var(--wx-base-color) 32px
+  ) !important;
+  background-size: 45px 45px !important;
+}
+
+/* === GitLab Milestone Color Rules (Dark Theme) === */
+/* GitLab milestones are horizontal bars (not diamond shaped) */
+
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-single,
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-double,
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-triple {
+  overflow: visible;
+  border: 1px solid transparent !important;
+  /* GPU acceleration for smoother rendering */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Single color stripe for GitLab milestone */
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-single {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 12px,
+    var(--wx-base-color) 12px,
+    var(--wx-base-color) 24px
+  ) !important;
+  background-size: 34px 34px !important;
+}
+
+/* Double color stripe for GitLab milestone */
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-double {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 10px,
+    var(--wx-color-rule-2) 10px,
+    var(--wx-color-rule-2) 20px,
+    var(--wx-base-color) 20px,
+    var(--wx-base-color) 30px
+  ) !important;
+  background-size: 42px 42px !important;
+}
+
+/* Triple color stripe for GitLab milestone */
+.wx-willow-dark-theme .wx-bar.wx-gitlab-milestone.wx-color-rule-triple {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 8px,
+    var(--wx-color-rule-2) 8px,
+    var(--wx-color-rule-2) 16px,
+    var(--wx-color-rule-3) 16px,
+    var(--wx-color-rule-3) 24px,
+    var(--wx-base-color) 24px,
+    var(--wx-base-color) 32px
+  ) !important;
+  background-size: 45px 45px !important;
+}
+
+/* Text outside bar for color rules - positioned to the right */
+.wx-willow-dark-theme .wx-bar.wx-color-rule-single .wx-text-out,
+.wx-willow-dark-theme .wx-bar.wx-color-rule-double .wx-text-out,
+.wx-willow-dark-theme .wx-bar.wx-color-rule-triple .wx-text-out {
+  left: 100%;
+  padding: 0 6px;
+  white-space: nowrap;
+  color: #e6e6e6; /* Light text for dark theme */
+}
+
+/* === End Color Rules === */

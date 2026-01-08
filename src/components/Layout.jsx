@@ -22,7 +22,8 @@ function Layout(props) {
     readonly,
     cellBorders,
     highlightTime,
-    onTableAPIChange
+    onTableAPIChange,
+    colorRules,
   } = props;
 
   const api = useContext(storeContext);
@@ -298,6 +299,7 @@ function Layout(props) {
                 taskTemplate={taskTemplate}
                 cellBorders={cellBorders}
                 highlightTime={highlightTime}
+                colorRules={colorRules}
               />
             </div>
           </div>

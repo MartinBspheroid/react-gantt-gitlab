@@ -13,12 +13,15 @@ import {
   type HolidayEntry,
 } from '../providers/GitLabSnippetApi';
 import type { GitLabProxyConfig } from '../providers/GitLabApiUtils';
+import type { ColorRule } from '../types/colorRule';
 
 export interface UseGitLabHolidaysResult {
   /** Holiday entries (date + optional name) */
   holidays: HolidayEntry[];
   /** Workday entries (date + optional name) */
   workdays: HolidayEntry[];
+  /** Color rules for bar styling */
+  colorRules: ColorRule[];
   /** Raw text for holidays textarea */
   holidaysText: string;
   /** Raw text for workdays textarea */
@@ -33,6 +36,8 @@ export interface UseGitLabHolidaysResult {
   setHolidaysText: (text: string) => void;
   /** Update workdays from textarea value */
   setWorkdaysText: (text: string) => void;
+  /** Update color rules */
+  setColorRules: (rules: ColorRule[]) => void;
   /** Reload config from GitLab */
   reload: () => Promise<void>;
 }
@@ -79,6 +84,7 @@ export function useGitLabHolidays(
 ): UseGitLabHolidaysResult {
   const [holidays, setHolidays] = useState<HolidayEntry[]>([]);
   const [workdays, setWorkdays] = useState<HolidayEntry[]>([]);
+  const [colorRules, setColorRulesState] = useState<ColorRule[]>([]);
   const [holidaysText, setHolidaysTextState] = useState('');
   const [workdaysText, setWorkdaysTextState] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,6 +104,9 @@ export function useGitLabHolidays(
   const workdaysRef = useRef(workdays);
   workdaysRef.current = workdays;
 
+  const colorRulesRef = useRef(colorRules);
+  colorRulesRef.current = colorRules;
+
   // Load config from GitLab
   const loadConfig = useCallback(async () => {
     const currentProxyConfig = proxyConfigRef.current;
@@ -114,12 +123,14 @@ export function useGitLabHolidays(
       if (config) {
         setHolidays(config.holidays);
         setWorkdays(config.workdays);
+        setColorRulesState(config.colorRules || []);
         setHolidaysTextState(entriesToText(config.holidays));
         setWorkdaysTextState(entriesToText(config.workdays));
       } else {
         // No config exists yet
         setHolidays([]);
         setWorkdays([]);
+        setColorRulesState([]);
         setHolidaysTextState('');
         setWorkdaysTextState('');
       }
@@ -171,7 +182,11 @@ export function useGitLabHolidays(
 
       if (canEditProject) {
         saveTimerRef.current = setTimeout(() => {
-          saveConfig({ holidays: entries, workdays: workdaysRef.current });
+          saveConfig({
+            holidays: entries,
+            workdays: workdaysRef.current,
+            colorRules: colorRulesRef.current,
+          });
         }, 500);
       }
     },
@@ -192,7 +207,34 @@ export function useGitLabHolidays(
 
       if (canEditProject) {
         saveTimerRef.current = setTimeout(() => {
-          saveConfig({ holidays: holidaysRef.current, workdays: entries });
+          saveConfig({
+            holidays: holidaysRef.current,
+            workdays: entries,
+            colorRules: colorRulesRef.current,
+          });
+        }, 500);
+      }
+    },
+    [canEditProject, saveConfig],
+  );
+
+  // Update color rules and trigger save
+  const setColorRules = useCallback(
+    (rules: ColorRule[]) => {
+      setColorRulesState(rules);
+
+      // Debounced save
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+
+      if (canEditProject) {
+        saveTimerRef.current = setTimeout(() => {
+          saveConfig({
+            holidays: holidaysRef.current,
+            workdays: workdaysRef.current,
+            colorRules: rules,
+          });
         }, 500);
       }
     },
@@ -229,9 +271,28 @@ export function useGitLabHolidays(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableWorkdays = useMemo(() => workdays, [workdaysKey]);
 
+  const colorRulesKey = useMemo(
+    () =>
+      JSON.stringify(
+        colorRules.map((r) => ({
+          id: r.id,
+          enabled: r.enabled,
+          color: r.color,
+          opacity: r.opacity,
+          pattern: r.pattern,
+          matchType: r.matchType,
+          priority: r.priority,
+        })),
+      ),
+    [colorRules],
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableColorRules = useMemo(() => colorRules, [colorRulesKey]);
+
   return {
     holidays: stableHolidays,
     workdays: stableWorkdays,
+    colorRules: stableColorRules,
     holidaysText,
     workdaysText,
     loading,
@@ -239,6 +300,7 @@ export function useGitLabHolidays(
     error,
     setHolidaysText,
     setWorkdaysText,
+    setColorRules,
     reload: loadConfig,
   };
 }

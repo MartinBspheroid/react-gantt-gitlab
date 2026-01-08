@@ -26,6 +26,42 @@ import {
   useColumnSettings,
   buildColumnsFromSettings,
 } from './ColumnSettingsDropdown.jsx';
+import { ColorRulesEditor } from './ColorRulesEditor.jsx';
+
+/**
+ * Extract tasks array from SVAR Gantt store state
+ *
+ * IMPORTANT: SVAR Gantt Internal Data Structure
+ * ============================================
+ * state.tasks is NOT a simple Array or Map. It's a custom class (internally named "Xn")
+ * with the following structure:
+ *   - _pool: Map<id, task> - Contains ALL tasks (flat structure, including nested children)
+ *   - _sort: undefined | function - Sorting configuration
+ *
+ * The tasks in _pool have a hierarchical relationship via:
+ *   - task.parent: number | 0 - Parent task ID (0 = root level)
+ *   - task.data: Array<task> - Array of child tasks (for display purposes)
+ *   - task.open: boolean - Whether the task's children are expanded
+ *
+ * @param {Object} state - The state object from api.getState()
+ * @returns {Array} Array of task objects
+ */
+function getTasksFromState(state) {
+  let tasks = state?.tasks || [];
+
+  if (tasks._pool instanceof Map) {
+    // SVAR Gantt uses a custom class with _pool Map containing all tasks
+    tasks = Array.from(tasks._pool.values());
+  } else if (tasks instanceof Map) {
+    tasks = Array.from(tasks.values());
+  } else if (!Array.isArray(tasks)) {
+    // Fallback: Try to convert object to array if needed
+    tasks = Object.values(tasks);
+  }
+
+  // Filter out any undefined/null entries (sparse arrays or objects)
+  return tasks.filter(task => task != null);
+}
 
 export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const [api, setApi] = useState(null);
@@ -277,10 +313,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     loadFilterOptions();
   }, [provider]);
 
-  // Use GitLab holidays hook
+  // Use GitLab holidays hook (also includes colorRules)
   const {
     holidays,
     workdays,
+    colorRules,
     holidaysText,
     workdaysText,
     loading: holidaysLoading,
@@ -288,6 +325,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     error: holidaysError,
     setHolidaysText,
     setWorkdaysText,
+    setColorRules,
   } = useGitLabHolidays(projectPath, proxyConfig, canEditHolidays);
 
   // Filter presets hook
@@ -430,30 +468,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
   // Wrapped sync function that preserves fold state
   // Automatically applies activeServerFilters if set
+  // NOTE: Fold state is saved only via 'open-task' event listener (when user manually opens/closes)
+  // We don't save before sync because Gantt store may have stale data that would overwrite localStorage
   const syncWithFoldState = useCallback(
     async (options) => {
-      // Save fold state before sync
-      if (api) {
-        try {
-          const state = api.getState();
-          const currentTasks = state.tasks || [];
-          const newOpenState = new Map();
-
-          currentTasks.forEach((task) => {
-            if (task.open !== undefined) {
-              newOpenState.set(task.id, task.open);
-            }
-          });
-
-          openStateRef.current = newOpenState;
-
-          // Persist to localStorage
-          saveFoldStateToStorage();
-        } catch (error) {
-          console.error('[GitLabGantt] Failed to save fold state:', error);
-        }
-      }
-
       // Merge activeServerFilters with provided options
       // This ensures all syncs respect the current server filter settings
       const mergedOptions = {
@@ -464,7 +482,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       // Call original sync with merged options
       await sync(mergedOptions);
     },
-    [api, sync, saveFoldStateToStorage, activeServerFilters]
+    [sync, activeServerFilters]
   );
 
   // Trigger initial sync after presets are loaded
@@ -506,46 +524,59 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   // Update ref when allTasks changes
   useEffect(() => {
     allTasksRef.current = allTasks;
+  }, [allTasks]);
 
-    // Restore fold state after tasks update
-    if (api && allTasks.length > 0) {
-      // Small delay to ensure Gantt has processed the new tasks
-      setTimeout(() => {
-        try {
-          const state = api.getState();
-          const currentTasks = state.tasks || [];
-
-
-          // Restore open state from saved map
-          currentTasks.forEach((task) => {
-            // Skip tasks that don't have children (data property)
-            // Opening a task without children causes Gantt store error
-            if (!task.data || task.data.length === 0) {
-              return;
-            }
-
-            // Check both string and number versions of the ID
-            const taskIdStr = String(task.id);
-            const taskIdNum = Number(task.id);
-
-            let savedOpen = null;
-            if (openStateRef.current.has(taskIdStr)) {
-              savedOpen = openStateRef.current.get(taskIdStr);
-            } else if (openStateRef.current.has(taskIdNum)) {
-              savedOpen = openStateRef.current.get(taskIdNum);
-            } else if (openStateRef.current.has(task.id)) {
-              savedOpen = openStateRef.current.get(task.id);
-            }
-
-            if (savedOpen !== null && task.open !== savedOpen) {
-              api.exec('open-task', { id: task.id, mode: savedOpen });
-            }
-          });
-        } catch (error) {
-          console.error('[GitLabGantt] Failed to restore fold state:', error);
-        }
-      }, 100);
+  // Restore fold state after tasks update - separate effect to avoid timing issues
+  useEffect(() => {
+    if (!api || allTasks.length === 0 || openStateRef.current.size === 0) {
+      return;
     }
+
+    // Use requestAnimationFrame to ensure Gantt has processed the new tasks
+    // This runs after React has committed the DOM updates
+    const restoreFoldState = () => {
+      try {
+        const state = api.getState();
+        const currentTasks = getTasksFromState(state);
+
+        // If Gantt store hasn't processed the tasks yet, schedule another frame
+        if (currentTasks.length === 0) {
+          requestAnimationFrame(restoreFoldState);
+          return;
+        }
+
+        // Restore open state from saved map
+        currentTasks.forEach((task) => {
+          // Skip tasks that don't have children (data property)
+          // Opening a task without children causes Gantt store error
+          if (!task.data || task.data.length === 0) {
+            return;
+          }
+
+          // Check both string and number versions of the ID
+          // localStorage keys are always strings, but Gantt task IDs can be numbers
+          const taskIdStr = String(task.id);
+          const taskIdNum = Number(task.id);
+
+          let savedOpen = null;
+          if (openStateRef.current.has(taskIdStr)) {
+            savedOpen = openStateRef.current.get(taskIdStr);
+          } else if (openStateRef.current.has(taskIdNum)) {
+            savedOpen = openStateRef.current.get(taskIdNum);
+          } else if (openStateRef.current.has(task.id)) {
+            savedOpen = openStateRef.current.get(task.id);
+          }
+
+          if (savedOpen !== null && task.open !== savedOpen) {
+            api.exec('open-task', { id: task.id, mode: savedOpen });
+          }
+        });
+      } catch (error) {
+        console.error('[GitLabGantt] Failed to restore fold state:', error);
+      }
+    };
+
+    requestAnimationFrame(restoreFoldState);
   }, [allTasks, api]);
 
   // Apply filters to tasks
@@ -683,18 +714,14 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       // Expose API to window for debugging
       window.ganttApi = ganttApi;
 
-      // Helper function to inspect tasks
+      // Helper function to inspect tasks (uses getTasksFromState to handle SVAR internal structure)
       window.debugTasks = () => {
         try {
           const state = ganttApi.getState();
-          const allTasks = state.tasks || [];
-
-          return allTasks;
+          return getTasksFromState(state);
         } catch (error) {
           console.error('Error in debugTasks:', error);
-          // Try alternative method
-          const state = ganttApi.getState();
-          return state;
+          return ganttApi.getState();
         }
       };
 
@@ -702,11 +729,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       window.findTask = (id) => {
         try {
           const state = ganttApi.getState();
-          const allTasks = state.tasks || [];
-          const task = allTasks.find(t => t.id == id);
-
-
-          return task;
+          const tasks = getTasksFromState(state);
+          return tasks.find(t => t.id == id) || null;
         } catch (error) {
           console.error('Error in findTask:', error);
           return null;
@@ -748,6 +772,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       }
 
       // Listen to fold/unfold events to save state
+      // This is the ONLY place where fold state is saved (user manually opens/closes)
+      // We don't save during sync because Gantt store may have stale data
       ganttApi.on('open-task', (ev) => {
         // Update openStateRef with the new state
         if (ev.id && ev.mode !== undefined) {
@@ -1201,7 +1227,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           if (api) {
             try {
               const state = api.getState();
-              const currentTasks = state.tasks || [];
+              const currentTasks = getTasksFromState(state);
               currentTasks.forEach((task) => {
                 if (task.open !== undefined) {
                   savedOpenState.set(task.id, task.open);
@@ -1911,6 +1937,31 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 </div>
               )}
             </div>
+
+            <div className="settings-section">
+              <h4 className="settings-section-header">
+                Color Rules
+                {!canEditHolidays && (
+                  <span className="permission-warning">
+                    <i className="fas fa-lock"></i> Maintainer permission required
+                  </span>
+                )}
+                {holidaysSaving && (
+                  <span className="saving-indicator">
+                    <i className="fas fa-spinner fa-spin"></i> Saving...
+                  </span>
+                )}
+              </h4>
+              <p className="settings-hint">
+                Highlight time bars with diagonal stripes based on issue title matching conditions
+              </p>
+              <ColorRulesEditor
+                rules={colorRules}
+                onRulesChange={setColorRules}
+                canEdit={canEditHolidays}
+                saving={holidaysSaving}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -2053,6 +2104,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               baselines={true}
               taskTemplate={SmartTaskContent}
               autoScale={false}
+              colorRules={colorRules}
                   />
                 );
               } catch (error) {
@@ -2646,12 +2698,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         }
 
         /* Milestone styling - use class-based selector for GitLab milestones */
-        .wx-bar.wx-gitlab-milestone {
+        /* Exclude milestones with color rules (they use striped backgrounds) */
+        .wx-bar.wx-gitlab-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(.wx-color-rule-triple) {
           background-color: var(--wx-gantt-milestone-color) !important;
           border-color: var(--wx-gantt-milestone-color) !important;
         }
 
-        .wx-bar.wx-gitlab-milestone .wx-content {
+        .wx-bar.wx-gitlab-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(.wx-color-rule-triple) .wx-content {
           background-color: var(--wx-gantt-milestone-color) !important;
         }
 

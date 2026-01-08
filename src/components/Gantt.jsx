@@ -62,6 +62,7 @@ const Gantt = forwardRef(function Gantt(
     init = null,
     autoScale = true,
     unscheduledTasks = false,
+    colorRules = [],
     ...restProps
   },
   ref,
@@ -223,6 +224,7 @@ const Gantt = forwardRef(function Gantt(
           cellBorders={cellBorders}
           highlightTime={highlightTime}
           onTableAPIChange={setTableAPI}
+          colorRules={colorRules}
         />
       </StoreContext.Provider>
     </Locale>

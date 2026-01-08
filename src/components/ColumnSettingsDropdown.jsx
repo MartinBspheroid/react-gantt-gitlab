@@ -12,6 +12,7 @@ const STORAGE_KEY = 'gantt-column-settings';
 const ALL_COLUMNS = [
   { key: 'assignee', label: 'Assignee', defaultVisible: false },
   { key: 'issueId', label: 'Issue ID', defaultVisible: false },
+  { key: 'iteration', label: 'Iteration', defaultVisible: false },
   { key: 'weight', label: 'Weight', defaultVisible: false },
   { key: 'start', label: 'Start', defaultVisible: true },
   { key: 'end', label: 'Due', defaultVisible: true },
@@ -266,6 +267,12 @@ export const WeightCell = ({ row }) => {
   return <span>{row.weight}</span>;
 };
 
+export const IterationCell = ({ row }) => {
+  const iterationTitle = row._gitlab?.iterationTitle;
+  if (!iterationTitle) return null;
+  return <span title={iterationTitle}>{iterationTitle}</span>;
+};
+
 /**
  * Column configurations
  * Note: start, end, workdays cells are provided externally (DateCell, WorkdaysCell)
@@ -282,6 +289,12 @@ export const COLUMN_CONFIGS = {
     header: 'ID',
     width: 60,
     cell: IssueIdCell,
+  },
+  iteration: {
+    id: 'iteration',
+    header: 'Iteration',
+    width: 120,
+    cell: IterationCell,
   },
   weight: {
     id: 'weight',

@@ -1,0 +1,474 @@
+/**
+ * Color Rules Editor Styles
+ */
+
+.color-rules-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Rules List */
+.color-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.color-rules-empty {
+  color: var(--wx-gitlab-modal-hint-text, #666);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+  border: 1px dashed var(--wx-gitlab-modal-border, #ddd);
+  border-radius: 4px;
+}
+
+/* Rule Item */
+.color-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ccc);
+  border-radius: 4px;
+}
+
+.color-rule-item.disabled {
+  opacity: 0.5;
+}
+
+.color-rule-color-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-rule-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.color-rule-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--wx-gitlab-modal-text, #333);
+  margin-bottom: 2px;
+}
+
+.color-rule-pattern {
+  font-size: 12px;
+  color: var(--wx-gitlab-modal-hint-text, #666);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.color-rule-pattern .pattern-type {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.color-rule-pattern code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* Rule Actions */
+.color-rule-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.color-rule-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--wx-gitlab-button-text, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.color-rule-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-button-hover-background, #f5f5f5);
+  color: var(--wx-gitlab-button-hover-text, #333);
+}
+
+.color-rule-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.color-rule-btn.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Test Area */
+.color-rules-test {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--wx-gitlab-filter-background, #f5f5f5);
+  border-radius: 4px;
+}
+
+.color-rules-test label {
+  font-size: 12px;
+  color: var(--wx-gitlab-modal-hint-text, #666);
+}
+
+.color-rules-test input {
+  padding: 6px 10px;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ccc);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.color-rules-test-results {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--wx-gitlab-modal-hint-text, #666);
+}
+
+.matched-rule-tag {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.no-match {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Add Rule Form */
+.color-rule-add-form {
+  padding: 12px;
+  background: var(--wx-gitlab-filter-background, #f5f5f5);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-row label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.form-row input,
+.form-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ccc);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.form-row select {
+  cursor: pointer;
+}
+
+/* Color Picker */
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    border-color 0.1s;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.selected {
+  border-color: var(--wx-color-primary, #3983eb);
+  box-shadow: 0 0 0 2px rgba(57, 131, 235, 0.3);
+}
+
+.color-input {
+  width: 32px;
+  height: 24px;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ccc);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Opacity Slider */
+.opacity-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opacity-slider {
+  flex: 1;
+  height: 8px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    rgba(128, 128, 128, 0.2),
+    var(--wx-color-primary, #3983eb)
+  );
+  border-radius: 4px;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ccc);
+}
+
+.opacity-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid var(--wx-color-primary, #3983eb);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  margin-top: -5px;
+}
+
+.opacity-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    rgba(128, 128, 128, 0.2),
+    var(--wx-color-primary, #3983eb)
+  );
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid var(--wx-color-primary, #3983eb);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.opacity-preview {
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  /* Checkered background to show transparency */
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
+  position: relative;
+}
+
+.opacity-preview::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: inherit;
+  border-radius: 3px;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-primary {
+  background: var(--wx-color-primary, #3983eb);
+  color: #fff;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1f6bd9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--wx-gitlab-button-background, #fff);
+  color: var(--wx-gitlab-button-text, #666);
+  border: 1px solid var(--wx-gitlab-button-border, #ccc);
+}
+
+.btn-secondary:hover {
+  background: var(--wx-gitlab-button-hover-background, #f5f5f5);
+}
+
+/* Add Button */
+.color-rule-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 1px dashed var(--wx-gitlab-modal-border, #ddd);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--wx-color-primary, #3983eb);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.color-rule-add-btn:hover {
+  background: rgba(57, 131, 235, 0.05);
+  border-color: var(--wx-color-primary, #3983eb);
+}
+
+/* Modal */
+.color-rule-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wx-gitlab-modal-overlay, rgba(0, 0, 0, 0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.color-rule-modal {
+  background: var(--wx-gitlab-modal-background, #fff);
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--wx-gitlab-modal-header-background, #f8f9fa);
+  border-bottom: 1px solid var(--wx-gitlab-modal-border, #ddd);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--wx-gitlab-button-text, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: var(--wx-gitlab-button-hover-background, #f5f5f5);
+}
+
+.modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--wx-gitlab-modal-border, #ddd);
+}
+
+/* Saving Indicator */
+.color-rules-saving {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--wx-gitlab-modal-hint-text, #666);
+}

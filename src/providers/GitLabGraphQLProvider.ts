@@ -12,6 +12,52 @@ import type {
 import { GitLabGraphQLClient } from './GitLabGraphQLClient';
 import { gitlabRestRequest } from './GitLabApiUtils';
 
+/**
+ * Format iteration title for display
+ * Shows cadence title + date range (e.g. "Sprint 1: Feb 1-28")
+ */
+function formatIterationTitle(iteration: {
+  title?: string | null;
+  startDate?: string;
+  dueDate?: string;
+  iterationCadence?: { title: string };
+}): string {
+  const cadenceTitle = iteration.iterationCadence?.title;
+  const startDate = iteration.startDate;
+  const dueDate = iteration.dueDate;
+
+  // Format date range compactly
+  let dateRange = '';
+  if (startDate && dueDate) {
+    const start = new Date(startDate);
+    const end = new Date(dueDate);
+    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    const startDay = start.getDate();
+    const endDay = end.getDate();
+
+    if (startMonth === endMonth) {
+      // Same month: "Feb 1-28"
+      dateRange = `${startMonth} ${startDay}-${endDay}`;
+    } else {
+      // Different months: "Jan 15 - Feb 14"
+      dateRange = `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+    }
+  }
+
+  // Combine cadence title and date range
+  if (cadenceTitle && dateRange) {
+    return `${cadenceTitle}: ${dateRange}`;
+  } else if (cadenceTitle) {
+    return cadenceTitle;
+  } else if (dateRange) {
+    return dateRange;
+  } else if (iteration.title) {
+    return iteration.title;
+  }
+  return 'Iteration';
+}
+
 export interface GitLabGraphQLProviderConfig {
   gitlabUrl: string;
   token: string;
@@ -54,6 +100,13 @@ interface WorkItem {
     milestone?: {
       id: string;
       title: string;
+    };
+    iteration?: {
+      id: string;
+      iid: string;
+      title: string;
+      startDate?: string;
+      dueDate?: string;
     };
     parent?: {
       id: string;
@@ -311,6 +364,19 @@ export class GitLabGraphQLProvider {
                     startDate
                     webPath
                     createdAt
+                  }
+                }
+                ... on WorkItemWidgetIteration {
+                  iteration {
+                    id
+                    iid
+                    title
+                    startDate
+                    dueDate
+                    iterationCadence {
+                      id
+                      title
+                    }
                   }
                 }
                 ... on WorkItemWidgetHierarchy {
@@ -981,6 +1047,21 @@ export class GitLabGraphQLProvider {
     const milestoneWidget = workItem.widgets.find(
       (w) => w.milestone !== undefined,
     ) as { milestone?: { id: string; iid: string; title: string } } | undefined;
+    const iterationWidget = workItem.widgets.find(
+      (w: any) => w.__typename === 'WorkItemWidgetIteration',
+    ) as
+      | {
+          iteration?: {
+            id: string;
+            iid: string;
+            title: string;
+            startDate?: string;
+            dueDate?: string;
+            iterationCadence?: { id: string; title: string };
+          };
+        }
+      | undefined;
+
     const hierarchyWidget = workItem.widgets.find(
       (w) => w.parent !== undefined || w.children !== undefined,
     );
@@ -1141,6 +1222,14 @@ export class GitLabGraphQLProvider {
           ? Number(milestoneWidget.milestone.iid)
           : undefined,
         milestoneTitle: milestoneWidget?.milestone?.title,
+        // Iteration info for display
+        // GitLab iterations: cadence title (e.g. "Sprint 1") + date range (e.g. "Feb 1-28, 2026")
+        iterationIid: iterationWidget?.iteration
+          ? Number(iterationWidget.iteration.iid)
+          : undefined,
+        iterationTitle: iterationWidget?.iteration
+          ? formatIterationTitle(iterationWidget.iteration)
+          : undefined,
       },
     };
 

@@ -23,6 +23,7 @@ function Chart(props) {
     taskTemplate,
     cellBorders,
     highlightTime,
+    colorRules,
   } = props;
 
   const api = useContext(storeContext);
@@ -278,7 +279,7 @@ function Chart(props) {
           : null}
 
         <Links />
-        <Bars readonly={readonly} taskTemplate={taskTemplate} />
+        <Bars readonly={readonly} taskTemplate={taskTemplate} colorRules={colorRules} />
       </div>
     </div>
   );

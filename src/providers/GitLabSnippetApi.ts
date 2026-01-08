@@ -4,6 +4,7 @@
  */
 
 import { gitlabRestRequest, type GitLabProxyConfig } from './GitLabApiUtils';
+import type { ColorRule } from '../types/colorRule';
 
 export interface HolidayEntry {
   date: string;
@@ -13,6 +14,7 @@ export interface HolidayEntry {
 export interface GanttConfig {
   holidays: HolidayEntry[];
   workdays: HolidayEntry[];
+  colorRules?: ColorRule[];
 }
 
 interface GitLabSnippet {
@@ -65,20 +67,28 @@ function parseLine(line: string): HolidayEntry | null {
  *
  * # 補班日 (Workdays)
  * 2025-02-08
+ *
+ * # 顏色規則 (Color Rules)
+ * [{"id":"uuid-1","name":"Blocked",...}]
  */
 export function parseConfigText(text: string): GanttConfig {
   const lines = text.split('\n');
   const holidays: HolidayEntry[] = [];
   const workdays: HolidayEntry[] = [];
+  let colorRules: ColorRule[] = [];
 
-  let currentSection: 'holidays' | 'workdays' = 'holidays';
+  let currentSection: 'holidays' | 'workdays' | 'colorRules' = 'holidays';
+  let colorRulesJson = '';
 
   for (const line of lines) {
     const trimmed = line.trim().toLowerCase();
 
     // Check for section headers
     if (trimmed.startsWith('#')) {
-      if (trimmed.includes('workday') || trimmed.includes('補班')) {
+      if (trimmed.includes('color') || trimmed.includes('顏色')) {
+        currentSection = 'colorRules';
+        colorRulesJson = '';
+      } else if (trimmed.includes('workday') || trimmed.includes('補班')) {
         currentSection = 'workdays';
       } else if (trimmed.includes('holiday') || trimmed.includes('假日')) {
         currentSection = 'holidays';
@@ -86,17 +96,31 @@ export function parseConfigText(text: string): GanttConfig {
       continue;
     }
 
-    const entry = parseLine(line);
-    if (entry) {
-      if (currentSection === 'holidays') {
-        holidays.push(entry);
-      } else {
-        workdays.push(entry);
+    if (currentSection === 'colorRules') {
+      // Collect JSON content for color rules
+      colorRulesJson += line + '\n';
+    } else {
+      const entry = parseLine(line);
+      if (entry) {
+        if (currentSection === 'holidays') {
+          holidays.push(entry);
+        } else if (currentSection === 'workdays') {
+          workdays.push(entry);
+        }
       }
     }
   }
 
-  return { holidays, workdays };
+  // Parse color rules JSON
+  if (colorRulesJson.trim()) {
+    try {
+      colorRules = JSON.parse(colorRulesJson.trim());
+    } catch (e) {
+      console.warn('[GitLabSnippetApi] Failed to parse color rules:', e);
+    }
+  }
+
+  return { holidays, workdays, colorRules };
 }
 
 /**
@@ -125,6 +149,13 @@ export function formatConfigText(config: GanttConfig): string {
     } else {
       lines.push(entry.date);
     }
+  }
+
+  // Color rules section (if any rules exist)
+  if (config.colorRules && config.colorRules.length > 0) {
+    lines.push('');
+    lines.push('# 顏色規則 (Color Rules)');
+    lines.push(JSON.stringify(config.colorRules, null, 2));
   }
 
   return lines.join('\n');

@@ -11,10 +11,11 @@ import { locate, locateID } from '@svar-ui/lib-dom';
 import { getID } from '../../helpers/locate';
 import storeContext from '../../context';
 import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
+import { getMatchingRules } from '../../types/colorRule';
 import './Bars.css';
 
 function Bars(props) {
-  const { readonly, taskTemplate: TaskTemplate } = props;
+  const { readonly, taskTemplate: TaskTemplate, colorRules = [] } = props;
 
   const api = useContext(storeContext);
 
@@ -459,6 +460,47 @@ function Bars(props) {
     >
       {tasks.map((task) => {
         if (task.$skip) return null;
+
+        // Color rules matching
+        const matchedRules = getMatchingRules(task.text, colorRules);
+        const hasColorRules = matchedRules.length > 0;
+
+        // Build stripe class based on number of matches
+        let stripeClass = '';
+        if (hasColorRules) {
+          if (matchedRules.length === 1) stripeClass = ' wx-color-rule-single';
+          else if (matchedRules.length === 2) stripeClass = ' wx-color-rule-double';
+          else stripeClass = ' wx-color-rule-triple';
+        }
+
+        // Helper to convert hex + opacity to rgba
+        const toRgba = (hex, opacity = 1) => {
+          if (!hex) return 'transparent';
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          if (!result) return hex;
+          const r = parseInt(result[1], 16);
+          const g = parseInt(result[2], 16);
+          const b = parseInt(result[3], 16);
+          return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        };
+
+        // Determine base color based on task type
+        const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone' || task.type === 'milestone';
+        let baseColor = '#00ba94'; // Default: green for tasks
+        if (isMilestone) {
+          baseColor = '#ad44ab'; // Purple for milestones
+        } else if (task.$isIssue) {
+          baseColor = '#3983eb'; // Blue for issues
+        }
+
+        // Build inline style for CSS variables
+        const stripeStyle = hasColorRules ? {
+          '--wx-base-color': baseColor,
+          '--wx-color-rule-1': toRgba(matchedRules[0]?.color, matchedRules[0]?.opacity ?? 1),
+          '--wx-color-rule-2': toRgba(matchedRules[1]?.color || matchedRules[0]?.color, matchedRules[1]?.opacity ?? matchedRules[0]?.opacity ?? 1),
+          '--wx-color-rule-3': toRgba(matchedRules[2]?.color || matchedRules[0]?.color, matchedRules[2]?.opacity ?? matchedRules[0]?.opacity ?? 1),
+        } : {};
+
         const barClass =
           `wx-bar wx-${taskTypeCss(task.type)}` +
           (touched && taskMove && task.id === taskMove.id ? ' wx-touch' : '') +
@@ -466,7 +508,8 @@ function Bars(props) {
           (task.$reorder ? ' wx-reorder-task' : '') +
           (task.$parent ? ' wx-parent-task' : '') +
           (task.$isIssue !== undefined ? (task.$isIssue ? ' wx-gitlab-issue' : ' wx-gitlab-task') : '') +
-          (task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-gitlab-milestone' : '');
+          (task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-gitlab-milestone' : '') +
+          stripeClass;
         const leftLinkClass =
           'wx-link wx-left' +
           (linkFrom ? ' wx-visible' : '') +
@@ -485,7 +528,7 @@ function Bars(props) {
           <Fragment key={task.id}>
             <div
               className={'wx-GKbcLEGA ' + barClass}
-              style={taskStyle(task)}
+              style={{ ...taskStyle(task), ...stripeStyle }}
               data-tooltip-id={task.id}
               data-id={task.id}
               tabIndex={focused === task.id ? 0 : -1}
@@ -499,6 +542,12 @@ function Bars(props) {
               {task.type !== 'milestone' ? (
                 TaskTemplate ? (
                   <TaskTemplate data={task} api={api} onAction={forward} />
+                ) : hasColorRules ? (
+                  // For bars with color rules, show text outside to avoid stripe interference
+                  <>
+                    <div className="wx-GKbcLEGA wx-content"></div>
+                    <div className="wx-GKbcLEGA wx-text-out">{task.text || ''}</div>
+                  </>
                 ) : (
                   <div className="wx-GKbcLEGA wx-content">
                     {task.text || ''}
