@@ -1,6 +1,20 @@
 import { getMatchingRules } from '../../types/colorRule';
 import './TextCell.css';
 
+/**
+ * Convert hex color + opacity to rgba string
+ * This matches the approach used in Bars.jsx for consistency
+ */
+function toRgba(hex, opacity = 1) {
+  if (!hex) return 'transparent';
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex;
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 function TextCell({ row, column }) {
   function getStyle(row, col) {
     return {
@@ -32,7 +46,7 @@ function TextCell({ row, column }) {
             <span
               key={rule.id}
               className="wx-color-indicator"
-              style={{ backgroundColor: rule.color, opacity: rule.opacity ?? 1 }}
+              style={{ backgroundColor: toRgba(rule.color, (rule.opacity ?? 1) * 0.7) }}
               title={rule.name}
             />
           ))}
