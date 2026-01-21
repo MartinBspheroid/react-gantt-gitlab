@@ -3315,7 +3315,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         /* Parent task bracket baseline */
         .wx-baseline-bracket {
           color: #00ba94 !important;
-          opacity: 0.85 !important;
+          opacity: 0.5 !important;
         }
 
         .wx-baseline-bracket.wx-milestone {
