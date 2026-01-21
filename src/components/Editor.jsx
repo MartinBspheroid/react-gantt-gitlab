@@ -15,6 +15,7 @@ import { useStore, useWritableProp } from '@svar-ui/lib-react';
 
 // helpers
 import { modeObserver } from '../helpers/modeResizeObserver';
+import { getGitLabUrl, openGitLabLink } from '../utils/GitLabLinkUtils';
 
 import './Editor.css';
 
@@ -58,8 +59,7 @@ function Editor({
       ];
 
       // Add GitLab link button with Font Awesome icon
-      const webUrl = activeTask?._gitlab?.web_url || activeTask?.web_url;
-      if (webUrl) {
+      if (getGitLabUrl(activeTask)) {
         buttons.push({
           comp: 'button',
           id: 'gitlab-link',
@@ -288,11 +288,7 @@ function Editor({
       else hide();
     }
     if (item.id === 'gitlab-link') {
-      // Open GitLab link in new tab
-      const webUrl = activeTask?._gitlab?.web_url || activeTask?.web_url;
-      if (webUrl) {
-        window.open(webUrl, '_blank');
-      }
+      openGitLabLink(activeTask);
       return; // Don't hide editor
     }
     if (item.comp) hide();

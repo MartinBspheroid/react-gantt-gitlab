@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getGitLabLinkInfo } from '../utils/GitLabLinkUtils';
 
 const STORAGE_KEY = 'gantt-column-settings';
 
@@ -275,8 +276,26 @@ export const AssigneeCell = ({ row }) => {
 };
 
 export const IssueIdCell = ({ row }) => {
-  if (!row.issueId) return null;
-  return <span style={{ color: '#666' }}>#{row.issueId}</span>;
+  const linkInfo = getGitLabLinkInfo(row);
+
+  if (!linkInfo.displayId) return null;
+
+  if (linkInfo.url) {
+    return (
+      <a
+        href={linkInfo.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        style={{ color: '#3983eb', textDecoration: 'none' }}
+        title={linkInfo.title}
+      >
+        {linkInfo.displayId}
+      </a>
+    );
+  }
+
+  return <span style={{ color: '#666' }}>{linkInfo.displayId}</span>;
 };
 
 export const WeightCell = ({ row }) => {
