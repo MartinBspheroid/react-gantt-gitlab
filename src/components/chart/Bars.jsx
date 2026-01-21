@@ -16,9 +16,9 @@ import './Bars.css';
 
 // Parent task baseline 括號樣式常數（9-slice 設計：斜邊固定，中間伸縮）
 const BRACKET_CONFIG = {
-  GAP: 6,           // 與 task bar 的間距
-  ARM_LENGTH: 12,   // 斜邊水平寬度（固定）
-  DROP_HEIGHT: 10,  // 斜邊垂直落差（固定）
+  GAP: 10,           // 與 task bar 的間距
+  ARM_LENGTH: 3,    // 斜邊水平寬度（固定）- 改小讓斜邊更短
+  DROP_HEIGHT: 4,   // 斜邊垂直落差（固定）- 改小讓直線更貼近下方
   STROKE_WIDTH: 4,  // 線條粗細
 };
 
