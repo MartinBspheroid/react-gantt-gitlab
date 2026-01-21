@@ -3312,6 +3312,16 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           background-color: #37a9ef !important; /* Blue - represents GitLab Issue original range */
         }
 
+        /* Parent task bracket baseline */
+        .wx-baseline-bracket {
+          color: #00ba94 !important;
+          opacity: 0.85 !important;
+        }
+
+        .wx-baseline-bracket.wx-milestone {
+          color: #37a9ef !important;
+        }
+
         /* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
         .wx-bar.wx-parent-task {
           z-index: 2 !important;

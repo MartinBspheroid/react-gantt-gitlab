@@ -7,6 +7,16 @@
 .wx-baseline.wx-milestone.wx-GKbcLEGA {
   background-color: #37a9ef; /* Blue color for milestone baseline (contains issues) */
 }
+
+/* Parent task bracket baseline - 向下包覆形式 /────────\ */
+.wx-baseline-bracket.wx-GKbcLEGA {
+  z-index: 1;
+  color: #00ba94;
+}
+
+.wx-baseline-bracket.wx-milestone.wx-GKbcLEGA {
+  color: #37a9ef;
+}
 .wx-bars.wx-GKbcLEGA {
   position: absolute;
   top: 0;

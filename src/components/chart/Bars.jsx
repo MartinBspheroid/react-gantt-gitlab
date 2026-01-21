@@ -14,6 +14,57 @@ import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
 import { getMatchingRules } from '../../types/colorRule';
 import './Bars.css';
 
+// Parent task baseline 括號樣式常數（9-slice 設計：斜邊固定，中間伸縮）
+const BRACKET_CONFIG = {
+  GAP: 6,           // 與 task bar 的間距
+  ARM_LENGTH: 12,   // 斜邊水平寬度（固定）
+  DROP_HEIGHT: 10,  // 斜邊垂直落差（固定）
+  STROKE_WIDTH: 4,  // 線條粗細
+};
+
+/**
+ * Parent task baseline 括號組件
+ * 形成向下包覆子任務的形狀：/────────\
+ */
+const ParentBaselineBracket = ({ task, isMilestone, cellWidth }) => {
+  const { GAP, ARM_LENGTH, DROP_HEIGHT, STROKE_WIDTH } = BRACKET_CONFIG;
+
+  const x = task.$x_base;
+  const width = task.$w_base;
+  const bracketTop = task.$y + task.$h + GAP;
+
+  // 窄寬度時等比縮小斜邊長度
+  const minWidth = cellWidth || 40;
+  const armLength = width < minWidth ? width / 2 : ARM_LENGTH;
+
+  // 點位：左下 -> 左上 -> 右上 -> 右下
+  const points = `0,${DROP_HEIGHT} ${armLength},0 ${width - armLength},0 ${width},${DROP_HEIGHT}`;
+
+  return (
+    <svg
+      className={`wx-GKbcLEGA wx-baseline-bracket${isMilestone ? ' wx-milestone' : ''}`}
+      style={{
+        position: 'absolute',
+        left: `${x}px`,
+        top: `${bracketTop}px`,
+        width: `${width}px`,
+        height: `${DROP_HEIGHT + STROKE_WIDTH}px`,
+        overflow: 'visible',
+        pointerEvents: 'none',
+      }}
+    >
+      <polyline
+        points={points}
+        stroke="currentColor"
+        strokeWidth={STROKE_WIDTH}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
 function Bars(props) {
   const { readonly, taskTemplate: TaskTemplate, colorRules = [] } = props;
 
@@ -27,6 +78,7 @@ function Bars(props) {
   const baselinesValue = useStore(api,"baselines");
   const selectedValue = useStore(api,"_selected");
   const scrollTaskStore = useStore(api,"_scrollTask" );
+  const cellWidthValue = useStore(api, "cellWidth");
 
   const tasks = useMemo(() => {
     if (!areaValue || !Array.isArray(rTasksValue)) return [];
@@ -592,13 +644,23 @@ function Bars(props) {
               ) : null}
             </div>
             {baselinesValue && !task.$skip_baseline ? (
-              <div
-                className={
-                  'wx-GKbcLEGA wx-baseline' +
-                  (task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-milestone' : '')
-                }
-                style={baselineStyle(task)}
-              ></div>
+              task.$parent ? (
+                // Parent tasks: 使用括號形式 baseline（向下包覆子任務）
+                <ParentBaselineBracket
+                  task={task}
+                  isMilestone={task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone'}
+                  cellWidth={cellWidthValue}
+                />
+              ) : (
+                // Non-parent tasks: 保持原有 bar 形式 baseline
+                <div
+                  className={
+                    'wx-GKbcLEGA wx-baseline' +
+                    (task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-milestone' : '')
+                  }
+                  style={baselineStyle(task)}
+                ></div>
+              )
             ) : null}
           </Fragment>
         );
