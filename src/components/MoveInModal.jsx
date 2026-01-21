@@ -180,22 +180,21 @@ export function MoveInModal({
 
   // Handle move action
   const handleMove = useCallback(async () => {
-    const selection = getCurrentSelection();
     let items;
     let targetId;
 
     switch (activeTab) {
       case 'parent':
         items = tasksMovableToParent;
-        targetId = selection; // Issue iid or null
+        targetId = selectedParent; // Issue iid or null
         break;
       case 'milestone':
         items = tasksMovableToMilestone;
-        targetId = selection; // Milestone iid or null
+        targetId = selectedMilestone; // Milestone iid or null
         break;
       case 'epic':
         items = tasksMovableToEpic;
-        targetId = selection; // Epic iid or null
+        targetId = selectedEpic; // Epic iid or null
         break;
       default:
         return;

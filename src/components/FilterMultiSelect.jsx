@@ -24,6 +24,7 @@ import { useState, useMemo } from 'react';
  * @param {string} [props.emptyMessage] - Message when no options available
  * @param {boolean} [props.showCount] - Whether to show count in title
  * @param {boolean} [props.singleSelect] - Whether to allow only single selection (radio button style)
+ * @param {boolean} [props.selectedFirst] - Whether to show selected items at the top (default: true)
  */
 export function FilterMultiSelect({
   title,
@@ -34,18 +35,34 @@ export function FilterMultiSelect({
   emptyMessage = 'No options available',
   showCount = true,
   singleSelect = false,
+  selectedFirst = true,
 }) {
   const [search, setSearch] = useState('');
 
-  // Filter options by search term
+  // Filter options by search term, then sort selected items to top if enabled
   const filteredOptions = useMemo(() => {
-    if (!search.trim()) return options;
-    const searchLower = search.toLowerCase();
-    return options.filter(opt =>
-      opt.label.toLowerCase().includes(searchLower) ||
-      (opt.subtitle && opt.subtitle.toLowerCase().includes(searchLower))
-    );
-  }, [options, search]);
+    let filtered = options;
+
+    // Apply search filter
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = options.filter(
+        (opt) =>
+          opt.label.toLowerCase().includes(searchLower) ||
+          (opt.subtitle && opt.subtitle.toLowerCase().includes(searchLower)),
+      );
+    }
+
+    // Sort selected items to top if enabled
+    if (selectedFirst && selected.length > 0) {
+      const selectedSet = new Set(selected);
+      const selectedItems = filtered.filter((opt) => selectedSet.has(opt.value));
+      const unselectedItems = filtered.filter((opt) => !selectedSet.has(opt.value));
+      return [...selectedItems, ...unselectedItems];
+    }
+
+    return filtered;
+  }, [options, search, selected, selectedFirst]);
 
   // Toggle selection
   const handleToggle = (value) => {

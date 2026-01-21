@@ -251,108 +251,6 @@
   border: 1px solid var(--wx-gantt-border-color, #e1e4e8);
 }
 
-.sidebar-section h3 {
-  color: var(--wx-color-font, #24292e);
-}
-
-.sidebar-section .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--wx-gantt-border-color, #e1e4e8);
-}
-
-.sidebar-section h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--wx-color-font, #24292e);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sidebar-section h3 i {
-  color: var(--wx-color-font, #6b4fbb);
-}
-
-.section-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.action-btn {
-  padding: 4px 10px;
-  font-size: 12px;
-  min-width: 40px;
-  border: 1px solid var(--wx-gantt-border-color, #d1d5da);
-  background: var(--wx-background, #fff);
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--wx-color-font, #333);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.action-btn:hover {
-  background: var(--wx-background-alt, #f6f8fa);
-  border-color: var(--wx-color-font, #24292e);
-}
-
-.checkbox-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.checkbox-item:hover {
-  background: var(--wx-background-alt, #f6f8fa);
-}
-
-.checkbox-item input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.checkbox-label {
-  font-size: 13px;
-  color: var(--wx-color-font, #24292e);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.checkbox-label.label-tag {
-  padding: 2px 8px;
-  background: var(--wx-background-alt, #f6f8fa);
-  border-radius: 12px;
-  font-size: 12px;
-}
-
-.empty-message {
-  color: var(--wx-color-font, #6a737d);
-  font-size: 13px;
-  font-style: italic;
-  padding: 8px;
-  text-align: center;
-  opacity: 0.7;
-}
-
 /* Selection summary */
 .selection-summary {
   background: var(--wx-background-alt, #f6f8fa);
@@ -520,45 +418,6 @@
   border: 1px solid var(--wx-gantt-border-color);
 }
 
-.wx-dark-theme .sidebar-section h3 {
-  color: var(--wx-color-font);
-}
-
-.wx-dark-theme .sidebar-section h3 i {
-  color: var(--wx-color-font);
-  opacity: 0.7;
-}
-
-.wx-dark-theme .sidebar-section .section-header {
-  border-bottom: 1px solid var(--wx-gantt-border-color);
-}
-
-/* Buttons */
-.wx-dark-theme .action-btn {
-  background: var(--wx-background);
-  border: 1px solid var(--wx-gantt-border-color);
-  color: var(--wx-color-font);
-}
-
-.wx-dark-theme .action-btn:hover {
-  background: var(--wx-background-alt);
-  border: 1px solid var(--wx-color-font);
-}
-
-/* Checkbox items */
-.wx-dark-theme .checkbox-item:hover {
-  background: var(--wx-background);
-}
-
-.wx-dark-theme .checkbox-label {
-  color: var(--wx-color-font);
-}
-
-.wx-dark-theme .checkbox-label.label-tag {
-  background: var(--wx-background);
-  color: var(--wx-color-font);
-}
-
 /* Summary section */
 .wx-dark-theme .selection-summary {
   background: var(--wx-background);
@@ -638,10 +497,6 @@
 .wx-dark-theme .no-selection-message h3 {
   color: var(--wx-color-font);
   opacity: 1;
-}
-
-.wx-dark-theme .empty-message {
-  color: var(--wx-color-font);
 }
 
 .wx-dark-theme .workload-group-header .group-name {
