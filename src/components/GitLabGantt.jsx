@@ -45,6 +45,10 @@ import { BlueprintManager } from './BlueprintManager.jsx';
 import { useBlueprint } from '../hooks/useBlueprint.ts';
 import { applyBlueprint as applyBlueprintService } from '../providers/BlueprintService.ts';
 import { defaultMenuOptions } from '@svar-ui/gantt-store';
+import {
+  findLinkBySourceTarget,
+  validateLinkGitLabMetadata,
+} from '../utils/GitLabLinkUtils';
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -108,6 +112,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
   // Store reference to all tasks for event handlers
   const allTasksRef = useRef([]);
+  // Store reference to links for event handlers (to avoid stale closure)
+  const linksRef = useRef([]);
 
   // Load settings from localStorage with defaults
   const [cellWidth, setCellWidth] = useState(() => {
@@ -781,6 +787,11 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   useEffect(() => {
     allTasksRef.current = allTasks;
   }, [allTasks]);
+
+  // Update ref when links changes (to avoid stale closure in event handlers)
+  useEffect(() => {
+    linksRef.current = links;
+  }, [links]);
 
   // Restore fold state after tasks update - separate effect to avoid timing issues
   useEffect(() => {
@@ -1998,11 +2009,42 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       });
 
       // Handle link deletion
+      // NOTE: Link IDs from Gantt store may not match React state IDs after sync.
+      // Gantt assigns its own IDs, while our sync uses a counter.
+      // We find the link by source/target instead of ID.
       ganttApi.on('delete-link', async (ev) => {
         try {
-          const link = links.find((l) => l.id === ev.id);
-          if (link) {
-            await deleteLink(ev.id, link.source);
+          // IMPORTANT: Use linksRef.current instead of links to get the latest value.
+          // The closure captures `links` at registration time, so it would be stale.
+          const currentLinks = linksRef.current;
+          const sourceId = ev.link?.source;
+          const targetId = ev.link?.target;
+
+          // If source/target not in event, we can't proceed
+          if (!sourceId || !targetId) {
+            console.warn('[delete-link] No source/target in event, cannot find link');
+            return;
+          }
+
+          // Find matching link by source/target (prefers link with _gitlab metadata)
+          const link = findLinkBySourceTarget(currentLinks, sourceId, targetId);
+
+          if (!link) {
+            console.warn('[delete-link] Link not found in React state, skipping API call');
+            return;
+          }
+
+          // Validate GitLab metadata for API call
+          const validation = validateLinkGitLabMetadata(link);
+
+          if (validation.valid) {
+            await deleteLink(link.id, validation.apiSourceIid, validation.linkedWorkItemGlobalId);
+          } else if (link._gitlab === undefined) {
+            // Link exists but no _gitlab metadata - newly created and not yet synced
+            showToast('Link was just created. Syncing to update...', 'info');
+            await syncWithFoldState();
+          } else {
+            throw new Error(validation.error);
           }
         } catch (error) {
           console.error('Failed to delete link:', error);
@@ -2261,6 +2303,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       { key: 'start', comp: 'date', label: 'Start Date' },
       { key: 'end', comp: 'date', label: 'Due Date' },
       { key: 'workdays', comp: 'workdays', label: 'Workdays' },
+      { key: 'links', comp: 'links', label: 'Links' },
     ];
   }, []);
 
@@ -2680,6 +2723,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
                   if (tasksWithMissingParent.length > 0) {
                     // This is an actual error - Tasks with missing parents
+                    // Collect unique missing parent IDs
+                    const missingParentIds = new Set(tasksWithMissingParent.map(t => t.parent));
                     console.error('[GitLabGantt RENDER] Found orphaned tasks (parent does not exist):', {
                       count: tasksWithMissingParent.length,
                       orphanedTaskIds: tasksWithMissingParent.map(t => ({

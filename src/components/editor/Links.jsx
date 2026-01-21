@@ -44,9 +44,10 @@ export default function Links({ api, autoSave, onLinksChange }) {
     [_],
   );
 
-  function deleteLink(id) {
+  function deleteLink(id, linkObj) {
     if (autoSave) {
-      api.exec('delete-link', { id });
+      // Pass full link object with source/target for handler to find correct link
+      api.exec('delete-link', { id, link: linkObj });
     } else {
       setLinksData((prev) =>
         (prev || []).map((group) => ({
@@ -54,11 +55,12 @@ export default function Links({ api, autoSave, onLinksChange }) {
           data: group.data.filter((item) => item.link.id !== id),
         })),
       );
+      // Pass full link object for source/target info needed by delete handler
       onLinksChange &&
         onLinksChange({
           id,
           action: 'delete-link',
-          data: { id },
+          data: { id, link: linkObj },
         });
     }
   }
@@ -66,6 +68,9 @@ export default function Links({ api, autoSave, onLinksChange }) {
   function handleChange(ev, id) {
     const value = ev.value;
     if (autoSave) {
+      // NOTE: GitLab API doesn't support updating link types.
+      // GitLab only supports one link type (blocks/is_blocked_by which maps to e2s).
+      // This event will update the Gantt store locally but won't sync to GitLab.
       api.exec('update-link', {
         id,
         link: { type: value },
@@ -125,7 +130,7 @@ export default function Links({ api, autoSave, onLinksChange }) {
                       <td className="wx-j93aYGQf wx-cell">
                         <i
                           className="wx-j93aYGQf wxi-delete wx-delete-icon"
-                          onClick={() => deleteLink(obj.link.id)}
+                          onClick={() => deleteLink(obj.link.id, obj.link)}
                           role="button"
                         ></i>
                       </td>

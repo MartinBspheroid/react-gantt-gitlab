@@ -30,12 +30,17 @@ https://react-gantt-gitlab-8d7d33.pages.rayark.io/
   - 用標題設定條件，來讓 time bar 顯示指定的顏色條紋（最多顯示三個顏色）
   - 會儲存在專案 snippet (必須要有 Maintainer 權限)
 - Grid Column 可自訂需要的欄位和順序
-  - 包含: Issue ID, Start, Due, Assignee, Weight, Workdays, Iteration
+  - 包含: Issue ID, Start, Due, Assignee, Weight, Workdays, Iteration, Epic, Labels, Order(手動排序)
+- 建立 Blueprint (範本) 功能
+  - 現在可以把一個 milestone 裡面所有的 issues/tasks 以及它們之間的關聯性全部包成一個範本，下次要做類似的事情的時候就可以直接新增這個範本。可以自動幫忙把 issues 的名字加上 prefix，也能保持他們原本的工期。
+  - 範本可以存在 local 也可以存在 snippet 裡面共享。
+- 批次將 Issues / Tasks 重新指定 Milestone / Issues parent / Epic
+  - 左邊的任務清單可以按著 shift / ctrl 複選，然後按右鍵找到 Move In 選項，就可以開啟 ui 決定要放入的 Milestone / Issue / Epic
 
 ### 已知問題
 
 - 新建 milestone 裡面的 issue, task 會隔一小段時間同步後才會正常顯示
-- 目前不支援拖到其他 Milestone / Issue 底下
+- 目前不支援拖曳到其他 Milestone / Issue 底下
 
 ## Workload View
 

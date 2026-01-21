@@ -3536,12 +3536,28 @@ export class GitLabGraphQLProvider {
         processedLinks.add(linkIdentifier);
 
         // Adding link to collection
-
+        // NOTE: For deletion, we need the ORIGINAL API relationship (before direction swap)
+        // GitLab's workItemRemoveLinkedItems requires:
+        // - id: source work item's global ID (the work item we're calling the mutation on)
+        // - workItemsIds: array of target work item global IDs to unlink
+        //
+        // IMPORTANT: linkSource/linkTarget may be swapped for Gantt visualization,
+        // but for deletion we need the ORIGINAL API relationship:
+        // - sourceIid = current work item (the one we iterate from)
+        // - linkedItem.workItem = the linked work item
         links.push({
           id: linkIdCounter++,
           source: linkSource,
           target: linkTarget,
           type: ganttLinkType,
+          _gitlab: {
+            // Store ORIGINAL API source work item's IID (for getWorkItemGlobalId lookup)
+            apiSourceIid: sourceIid,
+            // Store the LINKED work item's global ID (this is what we pass to workItemsIds)
+            linkedWorkItemGlobalId: linkedItem.workItem?.id,
+          },
+        } as ILink & {
+          _gitlab: { apiSourceIid: number; linkedWorkItemGlobalId: string };
         });
       }
     }
@@ -3627,12 +3643,32 @@ export class GitLabGraphQLProvider {
 
   /**
    * Delete issue link using GraphQL Work Items API
+   *
+   * @param apiSourceIid - The IID of the ORIGINAL API source work item (before any direction swap)
+   * @param linkedWorkItemGlobalId - The global ID of the linked work item to unlink
+   *
+   * NOTE: GitLab's workItemRemoveLinkedItems mutation requires:
+   * - id: source work item's global ID (the work item we fetched the link from)
+   * - workItemsIds: array of linked work item global IDs to unlink
+   *
+   * IMPORTANT: We use the ORIGINAL API relationship, not the Gantt visualization direction.
+   * The link was fetched from apiSourceIid's linkedItems widget, so we must call
+   * the mutation on apiSourceIid to remove the link.
    */
-  async deleteIssueLink(linkId: TID, sourceIid: TID): Promise<void> {
+  async deleteIssueLink(
+    apiSourceIid: TID,
+    linkedWorkItemGlobalId: string,
+  ): Promise<void> {
     // Deleting issue link
 
-    // Get global ID for source work item
-    const sourceGlobalId = await this.getWorkItemGlobalId(sourceIid);
+    // Get global ID for the original API source work item
+    const sourceGlobalId = await this.getWorkItemGlobalId(apiSourceIid);
+
+    console.log('[GitLabGraphQL] Deleting link:', {
+      apiSourceIid,
+      sourceGlobalId,
+      linkedWorkItemGlobalId,
+    });
 
     const mutation = `
       mutation workItemRemoveLinkedItems($input: WorkItemRemoveLinkedItemsInput!) {
@@ -3649,7 +3685,7 @@ export class GitLabGraphQLProvider {
     const variables = {
       input: {
         id: sourceGlobalId,
-        workItemsLinkIds: [linkId],
+        workItemsIds: [linkedWorkItemGlobalId],
       },
     };
 

@@ -32,6 +32,10 @@ export default [
         FormData: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        queueMicrotask: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
+        prompt: 'readonly',
       },
     },
     plugins: {

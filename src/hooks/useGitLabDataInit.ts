@@ -56,7 +56,8 @@ export interface UseGitLabDataInitReturn {
   createLink: (link: Partial<ILink>) => Promise<void>;
   deleteLink: (
     linkId: number | string,
-    sourceId: number | string,
+    apiSourceIid: number | string,
+    linkedWorkItemGlobalId: string,
   ) => Promise<void>;
   // Server filter options (labels, milestones, members)
   serverFilterOptions: GitLabFilterOptionsData | null;

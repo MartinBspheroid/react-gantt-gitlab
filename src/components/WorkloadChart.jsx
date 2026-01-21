@@ -632,16 +632,7 @@ export function WorkloadChart({
     return { timeScaleCells: cells, monthHeaders: months };
   }, [startDate, endDate, highlightTime]);
 
-  if (groups.length === 0) {
-    return (
-      <div className="workload-chart-empty">
-        <i className="fas fa-hand-pointer"></i>
-        <p>Select assignees or labels to view workload</p>
-      </div>
-    );
-  }
-
-  // Refs for syncing scroll
+  // Refs for syncing scroll (must be declared before any conditional returns)
   const timeScaleMonthRef = useRef(null);
   const timeScaleDayRef = useRef(null);
   const sidebarRef = useRef(null);
@@ -701,6 +692,16 @@ export function WorkloadChart({
       }
     }
   }, [startDate, endDate, cellWidth, lengthUnit]); // Run once when dates/scale change
+
+  // Early return for empty state (after all hooks)
+  if (groups.length === 0) {
+    return (
+      <div className="workload-chart-empty">
+        <i className="fas fa-hand-pointer"></i>
+        <p>Select assignees or labels to view workload</p>
+      </div>
+    );
+  }
 
   return (
     <div className="workload-chart-container" ref={containerRef}>

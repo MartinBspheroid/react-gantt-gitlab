@@ -39,7 +39,8 @@ export interface GitLabSyncResult {
   createLink: (link: Partial<ILink>) => Promise<void>;
   deleteLink: (
     linkId: number | string,
-    sourceId: number | string,
+    apiSourceIid: number | string,
+    linkedWorkItemGlobalId: string,
   ) => Promise<void>;
 }
 
@@ -97,6 +98,16 @@ export function useGitLabSync(
 
       try {
         const data = await provider.getData(options);
+
+        console.log(
+          '[useGitLabSync] Sync completed, received links:',
+          data.links.map((l) => ({
+            id: l.id,
+            source: l.source,
+            target: l.target,
+            _gitlab: l._gitlab,
+          })),
+        );
 
         if (isMountedRef.current) {
           setTasks(data.tasks);
@@ -296,9 +307,19 @@ export function useGitLabSync(
 
   /**
    * Delete a link
+   *
+   * @param linkId - The local link ID (used for optimistic update)
+   * @param apiSourceIid - The IID of the ORIGINAL API source work item
+   *                       (from link._gitlab.apiSourceIid)
+   * @param linkedWorkItemGlobalId - The global ID of the linked work item to unlink
+   *                                 (from link._gitlab.linkedWorkItemGlobalId)
    */
   const deleteLink = useCallback(
-    async (linkId: number | string, sourceId: number | string) => {
+    async (
+      linkId: number | string,
+      apiSourceIid: number | string,
+      linkedWorkItemGlobalId: string,
+    ) => {
       if (!provider) {
         throw new Error('GitLab provider not initialized');
       }
@@ -307,7 +328,7 @@ export function useGitLabSync(
       setLinks((prevLinks) => prevLinks.filter((link) => link.id !== linkId));
 
       try {
-        await provider.deleteIssueLink(linkId, sourceId);
+        await provider.deleteIssueLink(apiSourceIid, linkedWorkItemGlobalId);
       } catch (error) {
         console.error('Failed to delete link:', error);
 
