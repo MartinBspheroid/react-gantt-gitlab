@@ -1,9 +1,10 @@
 /**
  * Reusable Toast Component
  * Displays temporary notifications with auto-dismiss functionality
+ * Supports multiple stacked toasts
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
@@ -29,50 +30,64 @@ const TOAST_TYPES = {
 };
 
 /**
- * Toast Component
- * @param {string} message - The message to display
- * @param {string} type - Toast type: 'error' | 'success' | 'warning' | 'info'
- * @param {function} onClose - Callback when toast is closed
+ * Single Toast Item Component
+ */
+function ToastItem({ id, message, type, onClose, duration }) {
+  const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.error;
+
+  useEffect(() => {
+    if (duration > 0) {
+      const timer = setTimeout(() => onClose(id), duration);
+      return () => clearTimeout(timer);
+    }
+  }, [id, duration, onClose]);
+
+  return (
+    <div className={`toast ${toastConfig.className}`}>
+      <i className={`fas ${toastConfig.icon}`}></i>
+      <span className="toast-message">{message}</span>
+      <button onClick={() => onClose(id)} className="toast-close-btn">
+        <i className="fas fa-times"></i>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Toast Container Component - manages multiple toasts
+ * @param {Array} toasts - Array of toast objects { id, message, type }
+ * @param {function} onRemove - Callback to remove a toast by id
  * @param {number} duration - Auto-dismiss duration in ms (0 to disable)
  * @param {string} position - Position: 'top-right' | 'top-center' | 'bottom-right' | 'bottom-center'
  */
-export function Toast({
-  message,
-  type = 'error',
-  onClose,
+export function ToastContainer({
+  toasts = [],
+  onRemove,
   duration = 5000,
   position = 'top-right',
 }) {
-  const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.error;
-
-  // Auto-dismiss after duration
-  useEffect(() => {
-    if (duration > 0 && onClose) {
-      const timer = setTimeout(onClose, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [duration, onClose]);
-
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [onClose]);
+  if (toasts.length === 0) return null;
 
   const toastContent = (
     <div className={`toast-container toast-${position}`}>
-      <div className={`toast ${toastConfig.className}`}>
-        <i className={`fas ${toastConfig.icon}`}></i>
-        <span className="toast-message">{message}</span>
-        {onClose && (
-          <button onClick={handleClose} className="toast-close-btn">
-            <i className="fas fa-times"></i>
-          </button>
-        )}
-      </div>
+      {toasts.map((toast) => (
+        <ToastItem
+          key={toast.id}
+          id={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={onRemove}
+          duration={duration}
+        />
+      ))}
 
       <style>{`
         .toast-container {
           position: fixed;
           z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
           pointer-events: none;
         }
 
@@ -131,6 +146,8 @@ export function Toast({
         .toast-message {
           flex: 1;
           line-height: 1.4;
+          white-space: pre-wrap;
+          word-break: break-word;
         }
 
         .toast-close-btn {
@@ -233,8 +250,54 @@ export function Toast({
     </div>
   );
 
-  // Use portal to render toast at document body level
   return createPortal(toastContent, document.body);
+}
+
+/**
+ * Legacy Toast Component (single toast) - for backward compatibility
+ * @deprecated Use ToastContainer with useToast hook instead
+ */
+export function Toast({
+  message,
+  type = 'error',
+  onClose,
+  duration = 5000,
+  position = 'top-right',
+}) {
+  const toasts = message ? [{ id: 'single', message, type }] : [];
+  return (
+    <ToastContainer
+      toasts={toasts}
+      onRemove={onClose}
+      duration={duration}
+      position={position}
+    />
+  );
+}
+
+/**
+ * Hook for managing multiple toasts
+ * @returns {{ toasts, showToast, removeToast, clearToasts }}
+ */
+export function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const idCounter = useRef(0);
+
+  const showToast = useCallback((message, type = 'error') => {
+    const id = ++idCounter.current;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    return id;
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const clearToasts = useCallback(() => {
+    setToasts([]);
+  }, []);
+
+  return { toasts, showToast, removeToast, clearToasts };
 }
 
 export default Toast;

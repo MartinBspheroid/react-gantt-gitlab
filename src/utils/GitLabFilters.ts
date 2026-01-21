@@ -317,17 +317,24 @@ export class GitLabFilters {
     const taskMap = new Map<number | string, ITask>();
 
     // Process each task
+    //
+    // GitLab Work Item Hierarchy Rules:
+    // - Issue's parent can ONLY be: Epic (via hierarchyWidget) or Milestone (via milestoneWidget, shown as parent in Gantt)
+    // - Task's parent can ONLY be: Issue (via hierarchyWidget)
+    // - NEVER use ID ranges (e.g., < 10000) to guess parent type - this is unreliable and causes bugs
+    // - Always use _gitlab metadata (workItemType, epicParentId, etc.) to determine relationships
+    //
     filteredTasks.forEach((task) => {
       // Check if this task has a parent
       if (task.parent && task.parent !== 0) {
-        // Check if this is an Issue
+        // Check if this is an Issue (Issue's parent in Gantt = Milestone, Epic parent stored separately)
         const isIssue =
           task.$isIssue ||
           task._gitlab?.workItemType === 'Issue' ||
           (task._gitlab?.workItemType !== 'Task' && !task._gitlab?.type);
 
         if (isIssue) {
-          // For Issues, check if parent exists (should be a Milestone)
+          // Issue's parent in Gantt context is Milestone
           const parentExists = allTasks.some((t) => t.id === task.parent);
 
           if (parentExists) {
@@ -342,25 +349,19 @@ export class GitLabFilters {
               }
             }
           } else {
-            // Parent doesn't exist (could be filtered Milestone or Epic)
+            // Parent doesn't exist (filtered Milestone)
             // Move to root level
             const modifiedTask = { ...task, parent: 0 };
             taskMap.set(task.id, modifiedTask);
           }
         } else {
-          // For Tasks, check if parent exists in allTasks
+          // Task's parent can ONLY be an Issue (never Epic, never Milestone)
           const parentExists = allTasks.some((t) => t.id === task.parent);
 
           if (!parentExists) {
-            // Parent doesn't exist - could be filtered out or Epic
+            // Parent Issue doesn't exist - likely filtered out (e.g., closed issue)
             // Move task to root level
             const modifiedTask = { ...task, parent: 0 };
-
-            // If parent ID is < 10000, it's likely an Epic ID
-            if (typeof task.parent === 'number' && task.parent < 10000) {
-              modifiedTask.text = `${task.text} [Epic #${task.parent}]`;
-            }
-
             taskMap.set(task.id, modifiedTask);
           } else {
             // Parent exists, add task as-is

@@ -1,0 +1,404 @@
+/**
+ * MoveInModal Styles
+ * Modal for batch moving tasks/issues to different parents
+ */
+
+/* Modal Overlay */
+.move-in-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wx-gitlab-modal-overlay, rgba(0, 0, 0, 0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Modal Container */
+.move-in-modal {
+  background: var(--wx-gitlab-modal-background, #fff);
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal Header - Reuse from ColorRulesEditor */
+.move-in-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--wx-gitlab-modal-header-background, #f8f9fa);
+  border-bottom: 1px solid var(--wx-gitlab-modal-border, #ddd);
+  flex-shrink: 0;
+}
+
+.move-in-modal .modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.move-in-modal .modal-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--wx-gitlab-button-text, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-in-modal .modal-close:hover {
+  background: var(--wx-gitlab-button-hover-background, #f5f5f5);
+}
+
+/* Modal Body */
+.move-in-modal .modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Tab Navigation */
+.move-in-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+}
+
+.move-in-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gitlab-control-text, #666);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+
+.move-in-tab:hover:not(:disabled) {
+  color: var(--wx-gitlab-filter-text, #333);
+  background: var(--wx-gitlab-filter-hover-background, #f5f5f5);
+}
+
+.move-in-tab.active {
+  color: #1f75cb;
+  border-bottom-color: #1f75cb;
+  background: transparent;
+}
+
+.move-in-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.move-in-tab .tab-badge {
+  background: var(--wx-gitlab-filter-input-border, #ddd);
+  color: var(--wx-gitlab-filter-text, #333);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.move-in-tab.active .tab-badge {
+  background: #1f75cb;
+  color: white;
+}
+
+/* Tab Content */
+.move-in-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.move-in-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-description {
+  font-size: 12px;
+  color: var(--wx-gitlab-control-text, #666);
+  padding: 4px 0;
+}
+
+/* Target Search */
+.target-search {
+  position: relative;
+}
+
+.target-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+  border-radius: 4px;
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  color: var(--wx-gitlab-filter-text, #333);
+  font-size: 13px;
+}
+
+.target-search-input:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+/* Target Options List */
+.target-options {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+  border-radius: 4px;
+  background: var(--wx-gitlab-filter-input-background, #fff);
+}
+
+.target-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.target-options::-webkit-scrollbar-track {
+  background: var(--wx-gitlab-filter-hover-background, #f5f5f5);
+}
+
+.target-options::-webkit-scrollbar-thumb {
+  background: var(--wx-gitlab-control-text, #999);
+  border-radius: 3px;
+}
+
+.target-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--wx-gitlab-filter-input-border, #eee);
+  transition: background 0.1s;
+}
+
+.target-option:last-child {
+  border-bottom: none;
+}
+
+.target-option:hover {
+  background: var(--wx-gitlab-filter-hover-background, #f5f5f5);
+}
+
+.target-option.selected {
+  background: rgba(31, 117, 203, 0.1);
+}
+
+.target-option input[type='radio'] {
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.target-option-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.target-id {
+  font-size: 12px;
+  color: var(--wx-gitlab-control-text, #666);
+  flex-shrink: 0;
+}
+
+.target-title {
+  font-size: 13px;
+  color: var(--wx-gitlab-filter-text, #333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.target-none {
+  font-size: 13px;
+  color: var(--wx-gitlab-control-text, #666);
+  font-style: italic;
+}
+
+.target-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--wx-gitlab-control-text, #666);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Items Preview */
+.items-preview {
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+  border-radius: 4px;
+  background: var(--wx-gitlab-filter-hover-background, #f9f9f9);
+}
+
+.items-preview-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wx-gitlab-filter-text, #333);
+  border-bottom: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+  background: var(--wx-gitlab-modal-header-background, #f5f5f5);
+}
+
+.items-preview-list {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.items-preview-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.items-preview-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.items-preview-list::-webkit-scrollbar-thumb {
+  background: var(--wx-gitlab-control-text, #999);
+  border-radius: 3px;
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--wx-gitlab-filter-input-border, #eee);
+}
+
+.preview-item:last-child {
+  border-bottom: none;
+}
+
+.preview-item-id {
+  color: var(--wx-gitlab-control-text, #666);
+  flex-shrink: 0;
+}
+
+.preview-item-title {
+  color: var(--wx-gitlab-filter-text, #333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modal Footer */
+.move-in-modal .modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--wx-gitlab-modal-border, #ddd);
+  background: var(--wx-gitlab-modal-header-background, #f8f9fa);
+  flex-shrink: 0;
+}
+
+.selected-summary {
+  font-size: 12px;
+  color: var(--wx-gitlab-control-text, #666);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.move-in-modal .btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.move-in-modal .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.move-in-modal .btn-secondary {
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  border: 1px solid var(--wx-gitlab-filter-input-border, #ddd);
+  color: var(--wx-gitlab-filter-text, #333);
+}
+
+.move-in-modal .btn-secondary:hover:not(:disabled) {
+  background: var(--wx-gitlab-filter-hover-background, #f5f5f5);
+}
+
+.move-in-modal .btn-primary {
+  background: #1f75cb;
+  border: 1px solid #1f75cb;
+  color: white;
+}
+
+.move-in-modal .btn-primary:hover:not(:disabled) {
+  background: #1a65b3;
+  border-color: #1a65b3;
+}
+
+/* Empty State */
+.move-in-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--wx-gitlab-control-text, #666);
+}
+
+.move-in-empty-state i {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: var(--wx-gitlab-control-text, #999);
+}
+
+.move-in-empty-state p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--wx-gitlab-filter-text, #333);
+}
+
+.move-in-empty-hint {
+  font-size: 12px !important;
+  color: var(--wx-gitlab-control-text, #666) !important;
+}

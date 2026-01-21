@@ -3917,15 +3917,20 @@ export class GitLabGraphQLProvider {
 
     if (this.config.type === 'group') {
       // Direct group access
-      groupPath = String(this.config.groupId);
+      groupPath = this.getFullPath();
     } else {
       // For project, extract group path from project path (e.g., "mygroup/myproject" -> "mygroup")
       // Or for nested groups: "parent/child/project" -> "parent/child"
-      const projectPath = String(this.config.projectId);
+      const projectPath = this.getFullPath();
       const lastSlashIndex = projectPath.lastIndexOf('/');
 
       if (lastSlashIndex === -1) {
-        // No group in path (shouldn't happen for GitLab projects)
+        // projectId might be a numeric ID without group path - try to get group from project info
+        console.warn(
+          '[GitLabGraphQL] Cannot extract group path from projectId for Epic fetch. ' +
+            'Epics require a group path. projectId:',
+          projectPath,
+        );
         return [];
       }
 
@@ -4004,5 +4009,500 @@ export class GitLabGraphQLProvider {
       console.warn('[GitLabGraphQL] Failed to fetch epics:', error);
       return [];
     }
+  }
+
+  // ============================================
+  // Batch Update Methods for Move In... Feature
+  // ============================================
+
+  /**
+   * Batch update parent for multiple work items (Tasks)
+   * Used for moving Tasks to an Issue as children
+   * @param childIids - Array of child work item iids to update
+   * @param parentIid - Target parent Issue iid, or null to remove parent
+   * @returns Result with success and failed items
+   */
+  async batchUpdateParent(
+    childIids: number[],
+    parentIid: number | null,
+  ): Promise<{
+    success: number[];
+    failed: Array<{ iid: number; error: string }>;
+  }> {
+    const results: {
+      success: number[];
+      failed: Array<{ iid: number; error: string }>;
+    } = {
+      success: [],
+      failed: [],
+    };
+
+    // Get parent's Global ID if specified
+    let parentGlobalId: string | null = null;
+    if (parentIid !== null) {
+      try {
+        const query = `
+          query GetParentWorkItem($fullPath: ID!, $iid: String!) {
+            ${this.config.type}(fullPath: $fullPath) {
+              workItems(iids: [$iid], first: 1) {
+                nodes {
+                  id
+                }
+              }
+            }
+          }
+        `;
+
+        const queryResult = await this.graphqlClient.query<any>(query, {
+          fullPath: this.getFullPath(),
+          iid: String(parentIid),
+        });
+
+        parentGlobalId =
+          queryResult[this.config.type]?.workItems?.nodes?.[0]?.id;
+
+        if (!parentGlobalId) {
+          // All items fail if parent not found
+          childIids.forEach((iid) => {
+            results.failed.push({
+              iid,
+              error: `Parent work item with iid ${parentIid} not found`,
+            });
+          });
+          return results;
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        childIids.forEach((iid) => {
+          results.failed.push({
+            iid,
+            error: `Failed to get parent: ${errorMessage}`,
+          });
+        });
+        return results;
+      }
+    }
+
+    // Process each child
+    for (const childIid of childIids) {
+      try {
+        // Get child's Global ID
+        const childQuery = `
+          query GetChildWorkItem($fullPath: ID!, $iid: String!) {
+            ${this.config.type}(fullPath: $fullPath) {
+              workItems(iids: [$iid], first: 1) {
+                nodes {
+                  id
+                }
+              }
+            }
+          }
+        `;
+
+        const childResult = await this.graphqlClient.query<any>(childQuery, {
+          fullPath: this.getFullPath(),
+          iid: String(childIid),
+        });
+
+        const childGlobalId =
+          childResult[this.config.type]?.workItems?.nodes?.[0]?.id;
+
+        if (!childGlobalId) {
+          results.failed.push({
+            iid: childIid,
+            error: `Work item with iid ${childIid} not found`,
+          });
+          continue;
+        }
+
+        // Update parent using hierarchyWidget
+        const mutation = `
+          mutation UpdateWorkItemParent($input: WorkItemUpdateInput!) {
+            workItemUpdate(input: $input) {
+              workItem {
+                id
+              }
+              errors
+            }
+          }
+        `;
+
+        const updateResult = await this.graphqlClient.query<any>(mutation, {
+          input: {
+            id: childGlobalId,
+            hierarchyWidget: {
+              parentId: parentGlobalId, // null removes parent
+            },
+          },
+        });
+
+        if (
+          updateResult.workItemUpdate.errors &&
+          updateResult.workItemUpdate.errors.length > 0
+        ) {
+          results.failed.push({
+            iid: childIid,
+            error: updateResult.workItemUpdate.errors.join(', '),
+          });
+        } else {
+          results.success.push(childIid);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.failed.push({
+          iid: childIid,
+          error: errorMessage,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Batch update milestone for multiple work items
+   * Used for moving Issues/Tasks to a Milestone
+   * @param iids - Array of work item iids to update
+   * @param milestoneIid - Target Milestone iid, or null to remove milestone
+   * @returns Result with success and failed items
+   */
+  async batchUpdateMilestone(
+    iids: number[],
+    milestoneIid: number | null,
+  ): Promise<{
+    success: number[];
+    failed: Array<{ iid: number; error: string }>;
+  }> {
+    const results: {
+      success: number[];
+      failed: Array<{ iid: number; error: string }>;
+    } = {
+      success: [],
+      failed: [],
+    };
+
+    // Get milestone's Global ID if specified
+    let milestoneGlobalId: string | null = null;
+    // Ensure milestoneIid is a number for comparison
+    const targetMilestoneIid =
+      milestoneIid !== null ? Number(milestoneIid) : null;
+
+    if (targetMilestoneIid !== null) {
+      try {
+        // Note: GitLab milestones query doesn't support filtering by iids directly,
+        // so we fetch all and filter client-side
+        const query = `
+          query GetMilestone($fullPath: ID!) {
+            ${this.config.type}(fullPath: $fullPath) {
+              milestones(includeAncestors: true, first: 100) {
+                nodes {
+                  id
+                  iid
+                }
+              }
+            }
+          }
+        `;
+
+        const queryResult = await this.graphqlClient.query<any>(query, {
+          fullPath: this.getFullPath(),
+        });
+
+        const milestones =
+          queryResult[this.config.type]?.milestones?.nodes || [];
+        const milestone = milestones.find(
+          (m: any) => Number(m.iid) === targetMilestoneIid,
+        );
+
+        if (milestone) {
+          milestoneGlobalId = milestone.id;
+        } else {
+          // All items fail if milestone not found
+          iids.forEach((iid) => {
+            results.failed.push({
+              iid,
+              error: `Milestone with iid ${targetMilestoneIid} not found`,
+            });
+          });
+          return results;
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        iids.forEach((iid) => {
+          results.failed.push({
+            iid,
+            error: `Failed to get milestone: ${errorMessage}`,
+          });
+        });
+        return results;
+      }
+    }
+
+    // Process each work item
+    for (const iid of iids) {
+      try {
+        // Get work item's Global ID
+        const workItemQuery = `
+          query GetWorkItem($fullPath: ID!, $iid: String!) {
+            ${this.config.type}(fullPath: $fullPath) {
+              workItems(iids: [$iid], first: 1) {
+                nodes {
+                  id
+                }
+              }
+            }
+          }
+        `;
+
+        const workItemResult = await this.graphqlClient.query<any>(
+          workItemQuery,
+          {
+            fullPath: this.getFullPath(),
+            iid: String(iid),
+          },
+        );
+
+        const workItemGlobalId =
+          workItemResult[this.config.type]?.workItems?.nodes?.[0]?.id;
+
+        if (!workItemGlobalId) {
+          results.failed.push({
+            iid,
+            error: `Work item with iid ${iid} not found`,
+          });
+          continue;
+        }
+
+        // Update milestone using milestoneWidget
+        const mutation = `
+          mutation UpdateWorkItemMilestone($input: WorkItemUpdateInput!) {
+            workItemUpdate(input: $input) {
+              workItem {
+                id
+                widgets {
+                  ... on WorkItemWidgetMilestone {
+                    milestone {
+                      id
+                      iid
+                      title
+                    }
+                  }
+                }
+              }
+              errors
+            }
+          }
+        `;
+
+        const updateResult = await this.graphqlClient.query<any>(mutation, {
+          input: {
+            id: workItemGlobalId,
+            milestoneWidget: {
+              milestoneId: milestoneGlobalId, // null removes milestone
+            },
+          },
+        });
+
+        if (
+          updateResult.workItemUpdate.errors &&
+          updateResult.workItemUpdate.errors.length > 0
+        ) {
+          results.failed.push({
+            iid,
+            error: updateResult.workItemUpdate.errors.join(', '),
+          });
+        } else {
+          results.success.push(iid);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.failed.push({
+          iid,
+          error: errorMessage,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Batch update epic for multiple Issues
+   * Used for moving Issues to an Epic
+   * Note: Epic is a parent relationship using hierarchyWidget, same as Issue-Task relationship
+   * @param issueIids - Array of Issue iids to update
+   * @param epicIid - Target Epic iid, or null to remove epic
+   * @returns Result with success and failed items
+   */
+  async batchUpdateEpic(
+    issueIids: number[],
+    epicIid: number | null,
+  ): Promise<{
+    success: number[];
+    failed: Array<{ iid: number; error: string }>;
+  }> {
+    const results: {
+      success: number[];
+      failed: Array<{ iid: number; error: string }>;
+    } = {
+      success: [],
+      failed: [],
+    };
+
+    // Determine group path for Epic lookup
+    // Use same logic as fetchEpics() for consistency
+    let groupPath: string;
+    if (this.config.type === 'group') {
+      groupPath = this.getFullPath();
+    } else {
+      // For project config, extract group from project path
+      const projectPath = this.getFullPath();
+      const lastSlashIndex = projectPath.lastIndexOf('/');
+      if (lastSlashIndex !== -1) {
+        groupPath = projectPath.substring(0, lastSlashIndex);
+      } else {
+        // Cannot determine group path (projectId might be numeric)
+        issueIids.forEach((iid) => {
+          results.failed.push({
+            iid,
+            error: 'Cannot determine group path for Epic lookup',
+          });
+        });
+        return results;
+      }
+    }
+
+    // Get epic's Global ID if specified
+    let epicGlobalId: string | null = null;
+    if (epicIid !== null) {
+      try {
+        const query = `
+          query GetEpic($groupPath: ID!, $iid: ID!) {
+            group(fullPath: $groupPath) {
+              epic(iid: $iid) {
+                id
+              }
+            }
+          }
+        `;
+
+        const queryResult = await this.graphqlClient.query<any>(query, {
+          groupPath,
+          iid: String(epicIid),
+        });
+
+        epicGlobalId = queryResult.group?.epic?.id;
+
+        if (!epicGlobalId) {
+          // All items fail if epic not found
+          issueIids.forEach((iid) => {
+            results.failed.push({
+              iid,
+              error: `Epic with iid ${epicIid} not found`,
+            });
+          });
+          return results;
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        issueIids.forEach((iid) => {
+          results.failed.push({
+            iid,
+            error: `Failed to get epic: ${errorMessage}`,
+          });
+        });
+        return results;
+      }
+    }
+
+    // Process each Issue
+    for (const issueIid of issueIids) {
+      try {
+        // Get Issue's Global ID
+        const issueQuery = `
+          query GetIssue($fullPath: ID!, $iid: String!) {
+            ${this.config.type}(fullPath: $fullPath) {
+              workItems(iids: [$iid], first: 1) {
+                nodes {
+                  id
+                }
+              }
+            }
+          }
+        `;
+
+        const issueResult = await this.graphqlClient.query<any>(issueQuery, {
+          fullPath: this.getFullPath(),
+          iid: String(issueIid),
+        });
+
+        const issueGlobalId =
+          issueResult[this.config.type]?.workItems?.nodes?.[0]?.id;
+
+        if (!issueGlobalId) {
+          results.failed.push({
+            iid: issueIid,
+            error: `Issue with iid ${issueIid} not found`,
+          });
+          continue;
+        }
+
+        // Update epic parent using hierarchyWidget
+        // Note: Epic is treated as a parent type in GitLab's hierarchy
+        const mutation = `
+          mutation UpdateIssueEpic($input: WorkItemUpdateInput!) {
+            workItemUpdate(input: $input) {
+              workItem {
+                id
+                widgets {
+                  ... on WorkItemWidgetHierarchy {
+                    parent {
+                      id
+                      iid
+                    }
+                  }
+                }
+              }
+              errors
+            }
+          }
+        `;
+
+        const updateResult = await this.graphqlClient.query<any>(mutation, {
+          input: {
+            id: issueGlobalId,
+            hierarchyWidget: {
+              parentId: epicGlobalId, // null removes epic parent
+            },
+          },
+        });
+
+        if (
+          updateResult.workItemUpdate.errors &&
+          updateResult.workItemUpdate.errors.length > 0
+        ) {
+          results.failed.push({
+            iid: issueIid,
+            error: updateResult.workItemUpdate.errors.join(', '),
+          });
+        } else {
+          results.success.push(issueIid);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.failed.push({
+          iid: issueIid,
+          error: errorMessage,
+        });
+      }
+    }
+
+    return results;
   }
 }

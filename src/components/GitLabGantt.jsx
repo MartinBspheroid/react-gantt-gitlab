@@ -11,7 +11,7 @@ import Editor from './Editor.jsx';
 import Toolbar from './Toolbar.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import SmartTaskContent from './SmartTaskContent.jsx';
-import { Toast } from './Toast.jsx';
+import { ToastContainer, useToast } from './Toast.jsx';
 import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
 import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
 import { useGitLabSync } from '../hooks/useGitLabSync.ts';
@@ -38,6 +38,8 @@ import {
   buildColumnsFromSettings,
 } from './ColumnSettingsDropdown.jsx';
 import { ColorRulesEditor } from './ColorRulesEditor.jsx';
+import { MoveInModal } from './MoveInModal.jsx';
+import { defaultMenuOptions } from '@svar-ui/gantt-store';
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -81,6 +83,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const [filterOptions, setFilterOptions] = useState({});
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
+
+  // MoveInModal state
+  const [showMoveInModal, setShowMoveInModal] = useState(false);
+  const [moveInProcessing, setMoveInProcessing] = useState(false);
   const [configs, setConfigs] = useState([]);
 
   // Server filter options (labels, milestones, members from GitLab)
@@ -134,18 +140,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   // canEditHolidays: whether user has permission to edit holidays and other project settings
   const [canEditHolidays, setCanEditHolidays] = useState(false);
 
-  // Toast notification state
-  const [toastState, setToastState] = useState({ message: null, type: 'error' });
-
-  // Show toast notification helper
-  const showToast = useCallback((message, type = 'error') => {
-    setToastState({ message, type });
-  }, []);
-
-  // Clear toast notification
-  const clearToast = useCallback(() => {
-    setToastState({ message: null, type: 'error' });
-  }, []);
+  // Toast notification state (supports multiple stacked toasts)
+  const { toasts, showToast, removeToast } = useToast();
 
   const [lengthUnit, setLengthUnit] = useState(() => {
     const saved = localStorage.getItem('gantt-length-unit');
@@ -950,6 +946,123 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       showToast(`Failed to create milestone: ${error.message}`, 'error');
     }
   }, [createMilestone]);
+
+  // ============================================
+  // Move In... Feature - Context Menu Integration
+  // ============================================
+
+  // Get selected tasks from Gantt API when modal opens
+  // NOTE: We fetch this on-demand rather than using useStoreLater to avoid
+  // infinite re-render loops caused by the reactive hook triggering cascading updates
+  const getSelectedTasks = useCallback(() => {
+    if (!api) return [];
+    const state = api.getState();
+    // state._selected contains the selected task objects
+    return state._selected || [];
+  }, [api]);
+
+  // State to hold selected tasks when modal is opened
+  const [selectedTasksForModal, setSelectedTasksForModal] = useState([]);
+
+  // Custom context menu options with Move In... action
+  const contextMenuOptions = useMemo(() => {
+    const options = [...defaultMenuOptions];
+    // Find the delete-task option index and insert Move In... before it
+    const deleteIndex = options.findIndex((opt) => opt.id === 'delete-task');
+    if (deleteIndex !== -1) {
+      // Insert Move In... before delete (after the separator that precedes delete)
+      options.splice(deleteIndex, 0, {
+        id: 'move-in',
+        text: 'Move In...',
+        icon: 'wxi-folder',
+        // Enable when any task is selected
+        check: (task) => task != null,
+      });
+    } else {
+      // Fallback: add at the end if delete not found
+      options.push({ type: 'separator' });
+      options.push({
+        id: 'move-in',
+        text: 'Move In...',
+        icon: 'wxi-folder',
+        check: (task) => task != null,
+      });
+    }
+    return options;
+  }, []);
+
+  // Handle context menu click events
+  const handleContextMenuClick = useCallback(({ action, context: ctx }) => {
+    if (action?.id === 'move-in') {
+      // Capture selected tasks at the moment the menu is clicked
+      const tasks = getSelectedTasks();
+      setSelectedTasksForModal(tasks);
+      // Open the Move In modal
+      setShowMoveInModal(true);
+    }
+  }, [getSelectedTasks]);
+
+  // Handle Move In action
+  const handleMoveIn = useCallback(async (type, targetId, items) => {
+    if (!provider || items.length === 0) return;
+
+    setMoveInProcessing(true);
+
+    try {
+      const iids = items.map(item => Number(item.id));
+      let result;
+
+      switch (type) {
+        case 'parent':
+          // Move Tasks to an Issue (set parent)
+          result = await provider.batchUpdateParent(iids, targetId);
+          break;
+        case 'milestone':
+          // Move Issues/Tasks to a Milestone
+          result = await provider.batchUpdateMilestone(iids, targetId);
+          break;
+        case 'epic':
+          // Move Issues to an Epic
+          result = await provider.batchUpdateEpic(iids, targetId);
+          break;
+        default:
+          throw new Error(`Unknown move type: ${type}`);
+      }
+
+      // Show result notification
+      if (result.success.length > 0 && result.failed.length === 0) {
+        showToast(`Successfully moved ${result.success.length} item(s)`, 'success');
+      } else if (result.success.length > 0 && result.failed.length > 0) {
+        showToast(
+          `Moved ${result.success.length} item(s), ${result.failed.length} failed`,
+          'warning'
+        );
+      } else if (result.failed.length > 0) {
+        // Show each failed item as a separate toast for better visibility
+        result.failed.forEach(f => {
+          showToast(`#${f.iid}: ${f.error}`, 'error');
+        });
+        throw new Error('Move operation failed');
+      }
+
+      // Trigger data refresh to reflect changes
+      // NOTE: This is a simple approach - trigger a sync to refresh data from GitLab
+      // In a more optimized implementation, we could update local state directly
+      if (result.success.length > 0) {
+        // Close modal first
+        setShowMoveInModal(false);
+        // Trigger re-sync to get updated data
+        // The sync will update the tasks with new parent/milestone/epic relationships
+        await syncWithFoldState();
+      }
+    } catch (error) {
+      console.error('[GitLabGantt] Move In failed:', error);
+      showToast(`Move failed: ${error.message}`, 'error');
+      throw error; // Re-throw so modal knows operation failed
+    } finally {
+      setMoveInProcessing(false);
+    }
+  }, [provider, showToast, syncWithFoldState]);
 
   // Use refs to store latest workdays functions for use in intercept closure
   // This prevents stale closure issues when holidays/workdays change
@@ -2093,16 +2206,13 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
 
   return (
     <div className="gitlab-gantt-container">
-      {/* Toast notification */}
-      {toastState.message && (
-        <Toast
-          message={toastState.message}
-          type={toastState.type}
-          onClose={clearToast}
-          duration={5000}
-          position="top-right"
-        />
-      )}
+      {/* Toast notifications (supports multiple stacked) */}
+      <ToastContainer
+        toasts={toasts}
+        onRemove={removeToast}
+        duration={5000}
+        position="top-right"
+      />
 
       <div className="gitlab-gantt-header">
         <div className="project-switcher">
@@ -2437,7 +2547,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               <p>Loading GitLab data...</p>
             </div>
           ) : (
-            <ContextMenu api={api}>
+            <ContextMenu api={api} options={contextMenuOptions} onClick={handleContextMenuClick}>
               {(() => {
 
                 // Validate tasks structure before passing to Gantt
@@ -2552,6 +2662,17 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           />
         )}
       </div>
+
+      {/* Move In Modal */}
+      <MoveInModal
+        isOpen={showMoveInModal}
+        onClose={() => setShowMoveInModal(false)}
+        selectedTasks={selectedTasksForModal}
+        allTasks={allTasksRef.current}
+        epics={epics || []}
+        onMove={handleMoveIn}
+        isProcessing={moveInProcessing}
+      />
 
       <style>{`
         .gitlab-gantt-container {
