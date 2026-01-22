@@ -9,7 +9,11 @@
  * @see https://gitlab.com/gitlab-org/gitlab/-/issues/15958
  */
 
-import { gitlabRestRequest, type GitLabProxyConfig } from './GitLabApiUtils';
+import {
+  gitlabRestRequest,
+  gitlabRestRequestPaginated,
+  type GitLabProxyConfig,
+} from './GitLabApiUtils';
 import {
   type Blueprint,
   type BlueprintConfig,
@@ -106,7 +110,8 @@ export async function findBlueprintSnippet(
   const prefix = getEndpointPrefix(fullPath, configType);
 
   try {
-    const snippets = await gitlabRestRequest<GitLabSnippet[]>(
+    // Use paginated request to handle projects with many snippets (>20 default)
+    const snippets = await gitlabRestRequestPaginated<GitLabSnippet>(
       `${prefix}/snippets`,
       proxyConfig,
     );

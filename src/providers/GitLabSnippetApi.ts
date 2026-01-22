@@ -16,7 +16,11 @@
  * See GitLabFilterPresetsApi.ts for similar pattern implementation.
  */
 
-import { gitlabRestRequest, type GitLabProxyConfig } from './GitLabApiUtils';
+import {
+  gitlabRestRequest,
+  gitlabRestRequestPaginated,
+  type GitLabProxyConfig,
+} from './GitLabApiUtils';
 import type { ColorRule } from '../types/colorRule';
 
 export interface HolidayEntry {
@@ -203,7 +207,8 @@ export async function findGanttConfigSnippet(
   });
 
   try {
-    const snippets = await gitlabRestRequest<GitLabSnippet[]>(
+    // Use paginated request to handle projects with many snippets (>20 default)
+    const snippets = await gitlabRestRequestPaginated<GitLabSnippet>(
       `${prefix}/snippets`,
       proxyConfig,
     );

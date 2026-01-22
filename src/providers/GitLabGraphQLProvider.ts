@@ -198,18 +198,102 @@ export class GitLabGraphQLProvider {
   }
 
   /**
+   * Helper to extract paginated data from GraphQL result based on config type
+   * Reduces boilerplate in queryPaginated calls
+   */
+  private extractPaginatedData<T>(
+    result: unknown,
+    fieldPath: string,
+  ): {
+    nodes: T[];
+    pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+  } {
+    const root = (result as Record<string, unknown>)[this.config.type] as
+      | Record<string, unknown>
+      | undefined;
+    const data = fieldPath
+      .split('.')
+      .reduce<unknown>(
+        (obj, key) => (obj as Record<string, unknown>)?.[key],
+        root,
+      ) as
+      | {
+          nodes?: T[];
+          pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+        }
+      | undefined;
+    return {
+      nodes: data?.nodes || [],
+      pageInfo: data?.pageInfo,
+    };
+  }
+
+  /**
+   * Execute a paginated GraphQL query and return all results
+   * Handles the common pattern of fetching all pages using cursor-based pagination
+   *
+   * @param query - GraphQL query string (must include $after variable and pageInfo in response)
+   * @param variables - Variables to pass to the query (excluding 'after')
+   * @param extractData - Function to extract nodes array and pageInfo from query result
+   * @param maxPages - Maximum pages to fetch (default: 20, = 2000 items with first:100)
+   * @returns Combined array of all nodes from all pages
+   */
+  private async queryPaginated<T>(
+    query: string,
+    variables: Record<string, unknown>,
+    extractData: (result: unknown) => {
+      nodes: T[];
+      pageInfo?: { hasNextPage: boolean; endCursor: string | null };
+    },
+    maxPages: number = 20,
+  ): Promise<T[]> {
+    const allNodes: T[] = [];
+    let hasNextPage = true;
+    let endCursor: string | null = null;
+    let pageCount = 0;
+
+    while (hasNextPage && pageCount < maxPages) {
+      const result = await this.graphqlClient.query<unknown>(query, {
+        ...variables,
+        after: endCursor,
+      });
+
+      const data = extractData(result);
+      allNodes.push(...data.nodes);
+
+      hasNextPage = data.pageInfo?.hasNextPage || false;
+      endCursor = data.pageInfo?.endCursor || null;
+      pageCount++;
+    }
+
+    if (pageCount === maxPages && hasNextPage) {
+      console.warn(
+        `[GitLabGraphQL] Reached max pages limit (${maxPages}). Some data may not be loaded.`,
+      );
+    }
+
+    return allNodes;
+  }
+
+  /**
    * Fetch filter options (members, labels, milestones) for server-side filtering
    * This should be called before sync to allow users to set filters immediately
+   * All queries support pagination to handle large datasets (>100 items)
    */
   async getFilterOptions(): Promise<GitLabFilterOptionsData> {
     const fullPath = this.getFullPath();
+    const membersField =
+      this.config.type === 'group' ? 'groupMembers' : 'projectMembers';
 
-    // Query to get members and milestones via GraphQL
-    // Labels are fetched via REST API to get priority field
-    const filterOptionsQuery = `
-      query getFilterOptions($fullPath: ID!) {
+    // Paginated query for members
+    const membersQuery = `
+      query getMembers($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          ${this.config.type === 'group' ? 'groupMembers' : 'projectMembers'}(first: 100) {
+          ${membersField}(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               user {
                 username
@@ -217,7 +301,19 @@ export class GitLabGraphQLProvider {
               }
             }
           }
-          milestones(state: active, first: 100) {
+        }
+      }
+    `;
+
+    // Paginated query for milestones
+    const milestonesQuery = `
+      query getMilestones($fullPath: ID!, $after: String) {
+        ${this.config.type}(fullPath: $fullPath) {
+          milestones(state: active, first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               iid
               title
@@ -227,21 +323,6 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    interface FilterOptionsResponse {
-      project?: {
-        projectMembers?: {
-          nodes: Array<{ user: { username: string; name: string } | null }>;
-        };
-        milestones?: { nodes: Array<{ iid: string; title: string }> };
-      };
-      group?: {
-        groupMembers?: {
-          nodes: Array<{ user: { username: string; name: string } | null }>;
-        };
-        milestones?: { nodes: Array<{ iid: string; title: string }> };
-      };
-    }
-
     // GitLab REST API label response type
     interface GitLabRestLabel {
       name: string;
@@ -250,41 +331,38 @@ export class GitLabGraphQLProvider {
     }
 
     try {
-      // Fetch members and milestones via GraphQL, labels via REST API in parallel
-      // Note: Labels use paginated request because some CORS proxies or GitLab servers
-      // may ignore per_page parameter, defaulting to 20 items per page
+      // Fetch members, milestones, and labels in parallel with pagination support
       const labelsEndpoint =
         this.config.type === 'project'
           ? `/projects/${encodeURIComponent(fullPath)}/labels`
           : `/groups/${encodeURIComponent(fullPath)}/labels?include_ancestor_groups=true`;
 
-      const [graphqlResult, labelsFromRest] = await Promise.all([
-        this.graphqlClient.query<FilterOptionsResponse>(filterOptionsQuery, {
-          fullPath,
-        }),
-        gitlabRestRequestPaginated<GitLabRestLabel>(labelsEndpoint, {
-          gitlabUrl: this.config.gitlabUrl,
-          token: this.config.token,
-        }),
-      ]);
-
-      const data =
-        this.config.type === 'group'
-          ? graphqlResult.group
-          : graphqlResult.project;
-
-      const membersKey =
-        this.config.type === 'group' ? 'groupMembers' : 'projectMembers';
+      const [membersNodes, milestonesNodes, labelsFromRest] = await Promise.all(
+        [
+          // Paginated members query
+          this.queryPaginated<{
+            user: { username: string; name: string } | null;
+          }>(membersQuery, { fullPath }, (result) =>
+            this.extractPaginatedData(result, membersField),
+          ),
+          // Paginated milestones query
+          this.queryPaginated<{ iid: string; title: string }>(
+            milestonesQuery,
+            { fullPath },
+            (result) => this.extractPaginatedData(result, 'milestones'),
+          ),
+          // Paginated labels via REST API
+          gitlabRestRequestPaginated<GitLabRestLabel>(labelsEndpoint, {
+            gitlabUrl: this.config.gitlabUrl,
+            token: this.config.token,
+          }),
+        ],
+      );
 
       // Extract members (filter out null users)
-      const members: GitLabFilterOptionsData['members'] = (
-        (data as any)?.[membersKey]?.nodes || []
-      )
-        .filter(
-          (node: { user: { username: string; name: string } | null }) =>
-            node.user !== null,
-        )
-        .map((node: { user: { username: string; name: string } | null }) => ({
+      const members: GitLabFilterOptionsData['members'] = membersNodes
+        .filter((node) => node.user !== null)
+        .map((node) => ({
           username: node.user!.username,
           name: node.user!.name,
         }));
@@ -295,16 +373,15 @@ export class GitLabGraphQLProvider {
       ).map((label) => ({
         title: label.name,
         color: label.color,
-        priority: label.priority ?? null, // Group labels don't have priority
+        priority: label.priority ?? null,
       }));
 
       // Extract milestones
-      const milestones: GitLabFilterOptionsData['milestones'] = (
-        data?.milestones?.nodes || []
-      ).map((node) => ({
-        iid: Number(node.iid),
-        title: node.title,
-      }));
+      const milestones: GitLabFilterOptionsData['milestones'] =
+        milestonesNodes.map((node) => ({
+          iid: Number(node.iid),
+          title: node.title,
+        }));
 
       return { members, labels, milestones };
     } catch (error) {
@@ -312,7 +389,6 @@ export class GitLabGraphQLProvider {
         '[GitLabGraphQLProvider] Failed to fetch filter options:',
         error,
       );
-      // Return empty arrays on error
       return { members: [], labels: [], milestones: [] };
     }
   }
@@ -2409,11 +2485,15 @@ export class GitLabGraphQLProvider {
       }
     }
 
-    // For root level Issues, use relativePosition
+    // For root level Issues, use relativePosition (with pagination)
     const issuesQuery = `
-      query getIssuesPosition($fullPath: ID!) {
+      query getIssuesPosition($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          issues(first: 100) {
+          issues(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               iid
               relativePosition
@@ -2423,19 +2503,20 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    const issuesResult = await this.graphqlClient
-      .query<any>(issuesQuery, {
-        fullPath: this.getFullPath(),
-      })
-      .catch(() => ({ [this.config.type]: { issues: { nodes: [] } } }));
+    let issues: Array<{ iid: string; relativePosition: number | null }> = [];
+    try {
+      issues = await this.queryPaginated<{
+        iid: string;
+        relativePosition: number | null;
+      }>(issuesQuery, { fullPath: this.getFullPath() }, (result) =>
+        this.extractPaginatedData(result, 'issues'),
+      );
+    } catch {
+      // Ignore errors, use empty array
+    }
 
     const relativePositionMap = new Map<number, number>();
-    const issues =
-      this.config.type === 'group'
-        ? issuesResult.group?.issues.nodes || []
-        : issuesResult.project?.issues.nodes || [];
-
-    issues.forEach((issue: any) => {
+    issues.forEach((issue) => {
       if (
         issue.relativePosition !== null &&
         issue.relativePosition !== undefined
@@ -2444,11 +2525,15 @@ export class GitLabGraphQLProvider {
       }
     });
 
-    // Query all work items to find root-level siblings
-    const query = `
-      query getSiblingTasks($fullPath: ID!) {
+    // Query all work items to find root-level siblings (with pagination)
+    const workItemsQuery = `
+      query getSiblingTasks($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          workItems(types: [ISSUE, TASK], first: 100) {
+          workItems(types: [ISSUE, TASK], first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               id
               iid
@@ -2470,14 +2555,11 @@ export class GitLabGraphQLProvider {
       }
     `;
 
-    const result = await this.graphqlClient.query<WorkItemsResponse>(query, {
-      fullPath: this.getFullPath(),
-    });
-
-    const workItems =
-      this.config.type === 'group'
-        ? result.group?.workItems.nodes || []
-        : result.project?.workItems.nodes || [];
+    const workItems = await this.queryPaginated<WorkItem>(
+      workItemsQuery,
+      { fullPath: this.getFullPath() },
+      (result) => this.extractPaginatedData(result, 'workItems'),
+    );
 
     // Filter for root-level siblings (no parent)
     const siblings: Array<{
@@ -3794,18 +3876,22 @@ export class GitLabGraphQLProvider {
   /**
    * Fetch project/group members with IDs
    * Returns list of members with id, name, and username
+   * Supports pagination to handle large teams (>100 members)
    */
   async getProjectMembersWithIds(): Promise<
     Array<{ id: string; name: string; username: string }>
   > {
-    // Different member field for project vs group
     const membersField =
       this.config.type === 'group' ? 'groupMembers' : 'projectMembers';
 
     const query = `
-      query getMembers($fullPath: ID!) {
+      query getMembers($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          ${membersField}(first: 100) {
+          ${membersField}(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               user {
                 id
@@ -3819,21 +3905,18 @@ export class GitLabGraphQLProvider {
     `;
 
     try {
-      const result = await this.graphqlClient.query<any>(query, {
-        fullPath: this.getFullPath(),
-      });
+      const membersNodes = await this.queryPaginated<{
+        user: { id: string; name: string; username: string } | null;
+      }>(query, { fullPath: this.getFullPath() }, (result) =>
+        this.extractPaginatedData(result, membersField),
+      );
 
-      const members =
-        this.config.type === 'group'
-          ? result.group?.groupMembers?.nodes || []
-          : result.project?.projectMembers?.nodes || [];
-
-      return members
-        .filter((m: any) => m.user?.id && m.user?.name && m.user?.username)
-        .map((m: any) => ({
-          id: m.user.id,
-          name: m.user.name,
-          username: m.user.username,
+      return membersNodes
+        .filter((m) => m.user?.id && m.user?.name && m.user?.username)
+        .map((m) => ({
+          id: m.user!.id,
+          name: m.user!.name,
+          username: m.user!.username,
         }));
     } catch (error) {
       console.warn('[GitLabGraphQL] Failed to fetch members:', error);
@@ -3895,15 +3978,15 @@ export class GitLabGraphQLProvider {
 
     for (const name of assigneeNames) {
       try {
-        // Search for user by name
-        const users = await gitlabRestRequest<{ id: number; name: string }[]>(
-          `/users?search=${encodeURIComponent(name)}`,
-          {
-            gitlabUrl: this.config.gitlabUrl,
-            token: this.config.token,
-            isDev: this.isDev,
-          },
-        );
+        // Search for user by name (with pagination to handle many matches)
+        const users = await gitlabRestRequestPaginated<{
+          id: number;
+          name: string;
+        }>(`/users?search=${encodeURIComponent(name)}`, {
+          gitlabUrl: this.config.gitlabUrl,
+          token: this.config.token,
+          isDev: this.isDev,
+        });
 
         // Find exact match
         const user = users.find((u) => u.name === name);
@@ -4065,14 +4148,19 @@ export class GitLabGraphQLProvider {
   /**
    * Fetch labels from GitLab (project or group) with IDs
    * Returns list of labels with id and title
+   * Supports pagination to handle projects with many labels (>100)
    */
   async getProjectLabelsWithIds(): Promise<
     Array<{ id: string; title: string }>
   > {
     const query = `
-      query getProjectLabels($fullPath: ID!) {
+      query getProjectLabels($fullPath: ID!, $after: String) {
         ${this.config.type}(fullPath: $fullPath) {
-          labels(first: 100) {
+          labels(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
             nodes {
               id
               title
@@ -4083,18 +4171,16 @@ export class GitLabGraphQLProvider {
     `;
 
     try {
-      const result = await this.graphqlClient.query<any>(query, {
-        fullPath: this.getFullPath(),
-      });
+      const labelsNodes = await this.queryPaginated<{
+        id: string;
+        title: string;
+      }>(query, { fullPath: this.getFullPath() }, (result) =>
+        this.extractPaginatedData(result, 'labels'),
+      );
 
-      const labels =
-        this.config.type === 'group'
-          ? result.group?.labels?.nodes || []
-          : result.project?.labels?.nodes || [];
-
-      return labels
-        .filter((l: any) => l.id && l.title)
-        .map((l: any) => ({ id: l.id, title: l.title }));
+      return labelsNodes
+        .filter((l) => l.id && l.title)
+        .map((l) => ({ id: l.id, title: l.title }));
     } catch (error) {
       console.warn('[GitLabGraphQL] Failed to fetch project labels:', error);
       return [];
@@ -4411,11 +4497,15 @@ export class GitLabGraphQLProvider {
     if (targetMilestoneIid !== null) {
       try {
         // Note: GitLab milestones query doesn't support filtering by iids directly,
-        // so we fetch all and filter client-side
+        // so we fetch all with pagination and filter client-side
         const query = `
-          query GetMilestone($fullPath: ID!) {
+          query GetMilestone($fullPath: ID!, $after: String) {
             ${this.config.type}(fullPath: $fullPath) {
-              milestones(includeAncestors: true, first: 100) {
+              milestones(includeAncestors: true, first: 100, after: $after) {
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
                 nodes {
                   id
                   iid
@@ -4425,14 +4515,15 @@ export class GitLabGraphQLProvider {
           }
         `;
 
-        const queryResult = await this.graphqlClient.query<any>(query, {
-          fullPath: this.getFullPath(),
-        });
+        const milestones = await this.queryPaginated<{
+          id: string;
+          iid: string;
+        }>(query, { fullPath: this.getFullPath() }, (result) =>
+          this.extractPaginatedData(result, 'milestones'),
+        );
 
-        const milestones =
-          queryResult[this.config.type]?.milestones?.nodes || [];
         const milestone = milestones.find(
-          (m: any) => Number(m.iid) === targetMilestoneIid,
+          (m) => Number(m.iid) === targetMilestoneIid,
         );
 
         if (milestone) {
