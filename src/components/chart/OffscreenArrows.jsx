@@ -77,10 +77,11 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
 
       // Check if task has valid dates for showing arrows
       // GitLab milestones: dates stored directly on task.start/end (not in _gitlab)
-      // Regular tasks: need explicit startDate/dueDate in _gitlab to avoid fallback dates
+      // Regular tasks: need at least dueDate in _gitlab
+      // (if no startDate, system uses createdAt as fallback to display bar)
       const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone';
       if (!isMilestone) {
-        if (!task._gitlab?.startDate || !task._gitlab?.dueDate) return;
+        if (!task._gitlab?.dueDate) return;
       }
 
       const barLeft = task.$x;
