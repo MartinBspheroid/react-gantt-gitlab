@@ -3,14 +3,21 @@ import storeContext from '../../context';
 import { useStore } from '@svar-ui/lib-react';
 import './OffscreenArrows.css';
 
+// Constants for label width estimation
+const LABEL_CHAR_WIDTH = 7; // Approximate pixels per character
+const LABEL_PADDING = 8; // Additional padding for label
+const ARROW_EDGE_PADDING = 4; // Padding from viewport edge
+const SCROLL_PADDING = 50; // Padding when scrolling to bar
+const DISPLAY_NAME_MAX_LENGTH = 12;
+
 /**
- * OffscreenArrows - Shows arrow labels for tasks whose bars are completely off-screen
+ * OffscreenArrows - Shows arrow indicators for tasks whose bars are completely off-screen
  *
- * When a task's bar is entirely outside the visible viewport:
- * - If the bar is to the LEFT of the viewport → show arrow label on the LEFT edge
- * - If the bar is to the RIGHT of the viewport → show arrow label on the RIGHT edge
- *
- * The arrow label uses the same color as the task's bar.
+ * Features:
+ * - Shows left arrow when bar + title are off-screen to the left
+ * - Shows right arrow when bar is off-screen to the right
+ * - Considers bar's external label width to avoid arrow overlapping with visible title
+ * - Click arrow to scroll the bar into view
  *
  * NOTE: Uses fixed positioning to avoid being clipped by overflow:hidden on parent elements.
  */
@@ -31,12 +38,10 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
     if (!chartEl) return;
 
     const updateContainerRect = () => {
-      const rect = chartEl.getBoundingClientRect();
-      setChartContainerRect(rect);
+      setChartContainerRect(chartEl.getBoundingClientRect());
     };
     updateContainerRect();
 
-    // Update on scroll since getBoundingClientRect changes with scroll
     chartEl.addEventListener('scroll', updateContainerRect);
     window.addEventListener('resize', updateContainerRect);
 
@@ -58,20 +63,7 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
     return rTasksValue.slice(start, end);
   }, [rTasksValue, areaValue]);
 
-  /**
-   * Get the base color for a task (same logic as Bars.jsx)
-   */
-  const getTaskColor = useCallback((task) => {
-    const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone' || task.type === 'milestone';
-    if (isMilestone) {
-      return '#ad44ab'; // Purple for milestones
-    } else if (task.$isIssue) {
-      return '#3983eb'; // Blue for issues
-    }
-    return '#00ba94'; // Default: green for tasks
-  }, []);
-
-  // Calculate which tasks have off-screen bars
+  // Calculate which tasks have off-screen bars (considering external labels)
   const offscreenTasks = useMemo(() => {
     if (!visibleTasks.length || viewportWidth <= 0) return [];
 
@@ -79,66 +71,56 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
     const result = [];
 
     visibleTasks.forEach((task) => {
-      // Skip tasks without REAL date range from GitLab (not using created_at as fallback)
-      // Check _gitlab.startDate and _gitlab.dueDate which contain the original GitLab values
-      // If these are undefined/null, the task doesn't have real dates set
-      const hasRealStartDate = task._gitlab?.startDate;
-      const hasRealDueDate = task._gitlab?.dueDate;
-      if (!hasRealStartDate || !hasRealDueDate) return;
-      // Skip tasks without bars (no width means no visible bar)
+      // Skip tasks without valid bar dimensions
       if (task.$w === undefined || task.$w <= 0) return;
-      // Skip tasks without valid Y position
-      if (task.$y === undefined) return;
+      if (task.$x === undefined || task.$y === undefined) return;
+
+      // Check if task has valid dates for showing arrows
+      // GitLab milestones: dates stored directly on task.start/end (not in _gitlab)
+      // Regular tasks: need explicit startDate/dueDate in _gitlab to avoid fallback dates
+      const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone';
+      if (!isMilestone) {
+        if (!task._gitlab?.startDate || !task._gitlab?.dueDate) return;
+      }
 
       const barLeft = task.$x;
       const barRight = task.$x + task.$w;
 
-      // Check if bar is completely off-screen to the left
-      if (barRight <= scrollLeft) {
-        result.push({
-          task,
-          // Use task.$y which is the pre-calculated Y position (already accounts for virtual scroll)
-          taskY: task.$y,
-          direction: 'left',
-          displayName: truncateName(task.text || task.label || `#${task.id}`, 12),
-          color: getTaskColor(task),
-        });
-      }
-      // Check if bar is completely off-screen to the right
-      else if (barLeft >= viewportRight) {
-        result.push({
-          task,
-          taskY: task.$y,
-          direction: 'right',
-          displayName: truncateName(task.text || task.label || `#${task.id}`, 12),
-          color: getTaskColor(task),
-        });
+      // All GitLab items display title to the RIGHT of the bar
+      // Include label width when checking if visual element is off-screen
+      const labelWidth = estimateLabelWidth(task.text || task.label);
+      const visualRight = barRight + labelWidth;
+
+      // Determine off-screen direction
+      // Left: bar AND label must both be off-screen (to avoid overlapping with visible label)
+      // Right: only check bar position
+      if (visualRight <= scrollLeft) {
+        result.push(createOffscreenTask(task, 'left'));
+      } else if (barLeft >= viewportRight) {
+        result.push(createOffscreenTask(task, 'right'));
       }
     });
 
     return result;
-  }, [visibleTasks, scrollLeft, viewportWidth, getTaskColor]);
+  }, [visibleTasks, scrollLeft, viewportWidth]);
 
   // Handle arrow click - scroll to show the bar
-  const handleArrowClick = useCallback((task, direction) => {
-    if (!api) return;
+  const handleArrowClick = useCallback(
+    (task, direction) => {
+      if (!api) return;
 
-    const barLeft = task.$x;
-    const barRight = task.$x + task.$w;
-    const padding = 50; // Some padding from the edge
+      const barLeft = task.$x;
+      const barRight = task.$x + task.$w;
 
-    let targetScrollLeft;
-    if (direction === 'left') {
-      // Scroll so the bar's left edge is visible with padding
-      targetScrollLeft = Math.max(0, barLeft - padding);
-    } else {
-      // Scroll so the bar's right edge is visible with padding
-      targetScrollLeft = Math.max(0, barRight - viewportWidth + padding);
-    }
+      const targetScrollLeft =
+        direction === 'left'
+          ? Math.max(0, barLeft - SCROLL_PADDING)
+          : Math.max(0, barRight - viewportWidth + SCROLL_PADDING);
 
-    // Use the API to scroll
-    api.exec('scroll-chart', { left: targetScrollLeft });
-  }, [api, viewportWidth]);
+      api.exec('scroll-chart', { left: targetScrollLeft });
+    },
+    [api, viewportWidth],
+  );
 
   // Don't render if no arrows to show or container rect not ready
   if (!chartContainerRect || offscreenTasks.length === 0 || viewportWidth <= 0) {
@@ -148,16 +130,13 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
   return (
     <>
       {offscreenTasks.map(({ task, taskY, direction, displayName, color }) => {
-        // Calculate fixed position for this row
-        // taskY is the pre-calculated Y position from the task (already accounts for virtual scroll offset)
-        // We need to convert it from content-relative to viewport-relative coordinates
-        // taskY is relative to the full content, scrollTop is how much we've scrolled
+        // Convert content-relative Y to viewport-relative coordinates
         const rowTopInChart = taskY - scrollTop;
         const fixedTop = chartContainerRect.top + rowTopInChart;
         const fixedLeft = chartContainerRect.left;
         const fixedRight = window.innerWidth - chartContainerRect.right;
 
-        // Skip if the row would be outside the visible chart area
+        // Skip if row is outside visible chart area
         if (fixedTop < chartContainerRect.top || fixedTop + cellHeight > chartContainerRect.bottom) {
           return null;
         }
@@ -169,8 +148,8 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
             style={{
               position: 'fixed',
               top: `${fixedTop}px`,
-              left: direction === 'left' ? `${fixedLeft + 4}px` : 'auto',
-              right: direction === 'right' ? `${fixedRight + 4}px` : 'auto',
+              left: direction === 'left' ? `${fixedLeft + ARROW_EDGE_PADDING}px` : 'auto',
+              right: direction === 'right' ? `${fixedRight + ARROW_EDGE_PADDING}px` : 'auto',
               height: `${cellHeight}px`,
               '--arrow-color': color,
               zIndex: 100,
@@ -197,12 +176,46 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
 }
 
 /**
- * Truncate a name to specified length with ellipsis
+ * Estimate the pixel width of a label text
+ */
+function estimateLabelWidth(text) {
+  if (!text) return 0;
+  return text.length * LABEL_CHAR_WIDTH + LABEL_PADDING;
+}
+
+/**
+ * Get the bar color based on task type (same logic as Bars.jsx)
+ */
+function getTaskColor(task) {
+  if (task.$isMilestone || task._gitlab?.type === 'milestone' || task.type === 'milestone') {
+    return '#ad44ab'; // Purple for milestones
+  }
+  if (task.$isIssue) {
+    return '#3983eb'; // Blue for issues
+  }
+  return '#00ba94'; // Default: green for tasks
+}
+
+/**
+ * Truncate text to specified length with ellipsis
  */
 function truncateName(name, maxLength) {
   if (!name) return '';
   if (name.length <= maxLength) return name;
   return name.substring(0, maxLength - 1) + '…';
+}
+
+/**
+ * Create an off-screen task entry for rendering
+ */
+function createOffscreenTask(task, direction) {
+  return {
+    task,
+    taskY: task.$y,
+    direction,
+    displayName: truncateName(task.text || task.label || `#${task.id}`, DISPLAY_NAME_MAX_LENGTH),
+    color: getTaskColor(task),
+  };
 }
 
 export default OffscreenArrows;

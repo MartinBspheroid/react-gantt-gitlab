@@ -20,3 +20,4 @@
 
 - 這個專案在sycn初始化的時候因為要先去讀取一些config，所以加入功能、修改功能時要先把初始化流程考慮清楚。
 - GitLabGantt.jsx 已經相當龐大，希望寫新功能的時候要注意控制，盡量慢慢低風險的拆分重構，不要再讓他擴大。
+- 專案中如果提到 milestone，通常指的是 gitlab milestone 而不是 gantt api milestone。
