@@ -13,6 +13,7 @@ import { hotkeys } from '@svar-ui/grid-store';
 import storeContext from '../../context';
 import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
 import { useMiddleMouseDrag } from '../../hooks/useMiddleMouseDrag';
+import { useScrollSync } from '../../hooks/useScrollSync';
 import './Chart.css';
 
 function Chart(props) {
@@ -39,18 +40,22 @@ function Chart(props) {
   const zoom = useStore(api, "zoom");
 
   const [chartHeight, setChartHeight] = useState();
-  const [scrollLeft, setScrollLeft] = useState();
-  const [scrollTop, setScrollTop] = useState();
   const chartRef = useRef(null);
+
+  /**
+   * 滾動同步 Hook - 防止 Store ↔ DOM 滾動同步時的無限循環
+   *
+   * 重要：如果你需要新增滾動相關功能，請使用這個 hook 的 API，
+   * 不要直接設定 el.scrollTop 後又在 onScroll 裡更新 store！
+   *
+   * 詳細說明請參考: src/hooks/useScrollSync.js
+   */
+  const { syncScrollToDOM, createScrollHandler } = useScrollSync();
 
   // Middle mouse drag to scroll
   const { isDragging, onMouseDown } = useMiddleMouseDrag(chartRef);
 
   const extraRows = 1;
-  useEffect(() => {
-    setScrollLeft(rScrollLeft);
-    setScrollTop(rScrollTop);
-  }, [rScrollLeft, rScrollTop]);
 
 
   const selectStyle = useMemo(() => {
@@ -63,42 +68,13 @@ function Chart(props) {
     return t;
   }, [selectedCounter, cellHeight]);
 
-  useEffect(() => {
-    dataRequest();
-  }, [chartHeight]);
-
   const chartGridHeight = useMemo(
     () => Math.max(chartHeight || 0, fullHeight),
     [chartHeight, fullHeight],
   );
 
-  useEffect(() => {
-    const el = chartRef.current;
-    if (!el) return;
-    if (typeof scrollTop === 'number') el.scrollTop = scrollTop;
-    if (typeof scrollLeft === 'number') el.scrollLeft = scrollLeft;
-    if (typeof scrollTop === 'number' && scrollTop !== el.scrollTop)
-      setScroll({ top: true });
-    if (typeof scrollLeft === 'number' && scrollLeft !== el.scrollLeft)
-      setScroll({ left: true });
-  }, [scrollTop, scrollLeft]);
-
-  const onScroll = () => {
-    const scroll = { left: true, top: true };
-    setScroll(scroll);
-    dataRequest();
-  };
-
-  function setScroll(scroll) {
-    const el = chartRef.current;
-    if (!el) return;
-    const pos = {};
-    if (scroll.top) pos.top = el.scrollTop;
-    if (scroll.left) pos.left = el.scrollLeft;
-    api.exec('scroll-chart', pos);
-  }
-
-  function dataRequest() {
+  // Data request function for virtual scrolling
+  const dataRequest = useCallback(() => {
     const el = chartRef.current;
     const clientHeightLocal = chartHeight || 0;
     const num = Math.ceil(clientHeightLocal / (cellHeight || 1)) + 1;
@@ -111,7 +87,46 @@ function Chart(props) {
       end,
       from,
     });
-  }
+  }, [chartHeight, cellHeight, api]);
+
+  useEffect(() => {
+    dataRequest();
+  }, [dataRequest]);
+
+  /**
+   * 同步 Store → DOM 的滾動位置
+   *
+   * 當 store 的 scrollTop/scrollLeft 變化時，同步到 DOM。
+   * syncScrollToDOM 會設定內部 flag，讓 scroll handler 知道這是「程式化滾動」，
+   * 從而避免觸發 store 更新造成無限循環。
+   */
+  useEffect(() => {
+    syncScrollToDOM(chartRef.current, { top: rScrollTop, left: rScrollLeft });
+  }, [rScrollTop, rScrollLeft, syncScrollToDOM]);
+
+  /**
+   * 滾動事件處理器 - 使用 useScrollSync 防止無限循環
+   *
+   * - onUserScroll: 只在「使用者實際滾動」時呼叫，用於更新 store
+   * - onAnyScroll: 不管是程式化還是使用者滾動都會呼叫，用於 virtual scrolling
+   * - throttle: 使用 requestAnimationFrame 節流，避免過度頻繁的更新
+   */
+  const onScroll = useMemo(
+    () =>
+      createScrollHandler({
+        element: chartRef,
+        onUserScroll: (scrollPos) => {
+          // 只在使用者滾動時更新 store，避免程式化滾動造成循環
+          api.exec('scroll-chart', scrollPos);
+        },
+        onAnyScroll: () => {
+          // Virtual scrolling: 更新可見的列，不管滾動來源
+          dataRequest();
+        },
+        throttle: true,
+      }),
+    [createScrollHandler, api, dataRequest],
+  );
 
   const showTask = useCallback(
     (value) => {
@@ -124,19 +139,21 @@ function Chart(props) {
       if (!el) return;
       const { clientWidth } = el;
       const task = api.getTask(id);
-      if (task.$x + task.$w < (scrollLeft || 0)) {
-        setScrollLeft(task.$x - (cellWidth || 0));
-      } else if (task.$x >= clientWidth + (scrollLeft || 0)) {
+      const currentScrollLeft = el.scrollLeft;
+
+      if (task.$x + task.$w < currentScrollLeft) {
+        api.exec('scroll-chart', { left: task.$x - (cellWidth || 0) });
+      } else if (task.$x >= clientWidth + currentScrollLeft) {
         const width = clientWidth < task.$w ? cellWidth || 0 : task.$w;
-        setScrollLeft(task.$x - clientWidth + width);
+        api.exec('scroll-chart', { left: task.$x - clientWidth + width });
       }
     },
-    [api, scrollLeft, cellWidth],
+    [api, cellWidth],
   );
 
   useEffect(() => {
     showTask(rScrollTask);
-  }, [rScrollTask]);
+  }, [rScrollTask, showTask]);
 
 
   function onWheel(e) {

@@ -14,6 +14,7 @@ import Resizer from './Resizer.jsx';
 import { modeObserver } from '../helpers/modeResizeObserver';
 import storeContext from '../context';
 import { useStore } from '@svar-ui/lib-react';
+import { useScrollSync } from '../hooks/useScrollSync';
 import './Layout.css';
 
 function Layout(props) {
@@ -132,21 +133,44 @@ function Layout(props) {
   const ganttDivRef = useRef(null);
   const pseudoRowsRef = useRef(null);
 
-  const syncScroll = useCallback(() => {
-    const el = ganttDivRef.current;
-    if (el && scrollTop !== el.scrollTop) el.scrollTop = scrollTop;
-  }, [scrollTop]);
+  /**
+   * 滾動同步 Hook - 防止 Store ↔ DOM 滾動同步時的無限循環
+   *
+   * 重要：如果你需要新增滾動相關功能，請使用這個 hook 的 API，
+   * 不要直接設定 el.scrollTop 後又在 onScroll 裡更新 store！
+   *
+   * 詳細說明請參考: src/hooks/useScrollSync.js
+   */
+  const { syncScrollToDOM, createScrollHandler } = useScrollSync();
 
+  /**
+   * 同步 Store → DOM 的滾動位置
+   *
+   * 當 store 的 scrollTop 變化時，同步到外層容器。
+   * syncScrollToDOM 會設定內部 flag，讓 scroll handler 知道這是「程式化滾動」。
+   */
   useEffect(() => {
-    syncScroll();
-  }, [scrollTop, syncScroll]);
+    syncScrollToDOM(ganttDivRef.current, { top: scrollTop });
+  }, [scrollTop, syncScrollToDOM]);
 
-  const onScroll = useCallback(() => {
-    const el = ganttDivRef.current;
-    api.exec('scroll-chart', {
-      top: el ? el.scrollTop : 0,
-    });
-  }, [api]);
+  /**
+   * 滾動事件處理器 - 使用 useScrollSync 防止無限循環
+   *
+   * - onUserScroll: 只在「使用者實際滾動」時呼叫，用於更新 store
+   * - throttle: false，因為 Layout 的滾動不需要 RAF 節流
+   */
+  const onScroll = useMemo(
+    () =>
+      createScrollHandler({
+        element: ganttDivRef,
+        onUserScroll: (scrollPos) => {
+          // 只在使用者滾動時更新 store，避免程式化滾動造成循環
+          api.exec('scroll-chart', { top: scrollPos.top });
+        },
+        throttle: false,
+      }),
+    [createScrollHandler, api],
+  );
 
   const latest = useRef({
     rTasks: [],
