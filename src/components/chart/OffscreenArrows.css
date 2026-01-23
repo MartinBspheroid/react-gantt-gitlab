@@ -1,0 +1,61 @@
+/* Individual arrow item - minimal style without background box */
+.wx-offscreen-arrow-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: 11px;
+  font-weight: 500;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+  opacity: 0.85;
+}
+
+.wx-offscreen-arrow-item:hover {
+  opacity: 1;
+}
+
+/* Triangle arrow using CSS border trick */
+.wx-arrow-triangle {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* Left pointing triangle */
+.wx-arrow-triangle.wx-left {
+  border-width: 5px 7px 5px 0;
+  border-color: transparent var(--arrow-color, #3983eb) transparent transparent;
+}
+
+/* Right pointing triangle */
+.wx-arrow-triangle.wx-right {
+  border-width: 5px 0 5px 7px;
+  border-color: transparent transparent transparent var(--arrow-color, #3983eb);
+}
+
+/* Arrow label (task name) - independent text color */
+.wx-arrow-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  max-width: 100px;
+  color: var(--wx-gitlab-filter-text, #333);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .wx-arrow-label {
+    color: var(--wx-gitlab-filter-text, #e0e0e0);
+  }
+}
+
+/* Willow theme support (GitLab dark theme) */
+:root[data-theme='willow'] .wx-arrow-label,
+.wx-willow .wx-arrow-label {
+  color: var(--wx-gitlab-filter-text, #e0e0e0);
+}

@@ -9,8 +9,11 @@ import {
 import CellGrid from './CellGrid.jsx';
 import Bars from './Bars.jsx';
 import Links from './Links.jsx';
+import RowHoverOverlay from './RowHoverOverlay.jsx';
+import OffscreenArrows from './OffscreenArrows.jsx';
 import { hotkeys } from '@svar-ui/grid-store';
 import storeContext from '../../context';
+import '../shared/TodayMarker.css';
 import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
 import { useMiddleMouseDrag } from '../../hooks/useMiddleMouseDrag';
 import { useScrollSync } from '../../hooks/useScrollSync';
@@ -30,6 +33,7 @@ function Chart(props) {
   const api = useContext(storeContext);
 
   const [selected, selectedCounter] = useStoreWithCounter(api, "_selected");
+  const rTasksValue = useStore(api, "_tasks");
   const rScrollLeft = useStore(api, "scrollLeft");
   const rScrollTop = useStore(api, "scrollTop");
   const cellHeight = useStore(api, "cellHeight");
@@ -40,7 +44,9 @@ function Chart(props) {
   const zoom = useStore(api, "zoom");
 
   const [chartHeight, setChartHeight] = useState();
+  const [chartWidth, setChartWidth] = useState(0);
   const chartRef = useRef(null);
+  const areaRef = useRef(null);
 
   /**
    * 滾動同步 Hook - 防止 Store ↔ DOM 滾動同步時的無限循環
@@ -195,7 +201,10 @@ function Chart(props) {
   useEffect(() => {
     const el = chartRef.current;
     if (!el) return;
-    const update = () => setChartHeight(el.clientHeight);
+    const update = () => {
+      setChartHeight(el.clientHeight);
+      setChartWidth(el.clientWidth);
+    };
     update();
     const ro = new ResizeObserver(() => update());
     ro.observe(el);
@@ -257,6 +266,7 @@ function Chart(props) {
       ) : null}
 
       <div
+        ref={areaRef}
         className="wx-mR7v2Xag wx-area"
         style={{ width: `${fullWidth}px`, height: `${chartGridHeight}px` }}
       >
@@ -298,6 +308,28 @@ function Chart(props) {
         <Links />
         <Bars readonly={readonly} taskTemplate={taskTemplate} colorRules={colorRules} />
       </div>
+
+      {/* Off-screen arrows - placed at chart level to avoid overflow clipping */}
+      <OffscreenArrows
+        scrollLeft={rScrollLeft}
+        viewportWidth={chartWidth}
+        cellHeight={cellHeight}
+        chartRef={chartRef}
+      />
+
+      {/* Row hover overlay - placed at chart level to avoid overflow clipping */}
+      <RowHoverOverlay
+        tasks={rTasksValue}
+        cellHeight={cellHeight}
+        cellWidth={cellWidth}
+        scrollLeft={rScrollLeft}
+        scrollTop={rScrollTop}
+        readonly={readonly}
+        api={api}
+        scales={scales}
+        areaRef={areaRef}
+        chartRef={chartRef}
+      />
     </div>
   );
 }

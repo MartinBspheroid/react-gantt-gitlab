@@ -1,0 +1,49 @@
+/**
+ * Styles for RowHoverOverlay component
+ *
+ * Provides visual feedback for:
+ * 1. Draw mode - when hovering over tasks without bars
+ * 2. Draw preview - while dragging to create a new bar
+ *
+ * Note: Off-screen arrows are styled in OffscreenArrows.css
+ */
+
+/* Row highlight background when in draw mode */
+.wx-row-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(57, 131, 235, 0.08);
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+/* Vertical cursor line for draw mode indicator */
+.wx-draw-cursor-line {
+  position: absolute;
+  width: 2px;
+  background: var(--wx-color-primary, #3983eb);
+  opacity: 0.7;
+  pointer-events: none;
+  border-radius: 1px;
+  /* Add subtle glow effect */
+  box-shadow: 0 0 4px rgba(57, 131, 235, 0.4);
+}
+
+/* Draw preview rectangle while dragging */
+.wx-draw-preview {
+  position: absolute;
+  background: rgba(57, 131, 235, 0.3);
+  border: 2px solid rgba(57, 131, 235, 0.6);
+  border-radius: var(--wx-gantt-bar-border-radius, 4px);
+  pointer-events: none;
+  /* Match the bar's appearance */
+  box-sizing: border-box;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .wx-row-highlight {
+    background: rgba(57, 131, 235, 0.12);
+  }
+}

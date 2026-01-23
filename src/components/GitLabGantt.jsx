@@ -3320,19 +3320,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           color: var(--wx-gitlab-button-hover-text);
         }
 
-        /* Today marker styling - MUCH more prominent */
-        .today-marker {
-          position: relative;
-          border-left: 6px solid #ff4d4d41 !important;
-          background: transparent !important;
-          z-index: 100 !important;
-          box-shadow: none !important;
-          min-height: 100% !important;
-        }
-
-        .today-marker .wx-marker-label {
-          display: none !important;
-        }
+        /* Today marker styling - see shared/TodayMarker.css */
 
         .stats-panel {
           display: flex;

@@ -1,0 +1,205 @@
+/**
+ * DrawBarConfirmDialog Styles
+ * Dialog for confirming date assignment after drawing a bar
+ */
+
+/* Dialog Overlay */
+.draw-bar-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wx-gitlab-modal-overlay, rgba(0, 0, 0, 0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Dialog Container */
+.draw-bar-dialog {
+  background: var(--wx-gitlab-modal-background, #fff);
+  border-radius: 8px;
+  width: 360px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dialog Header */
+.draw-bar-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--wx-gitlab-modal-header-background, #f8f9fa);
+  border-bottom: 1px solid var(--wx-gitlab-modal-border, #ddd);
+  border-radius: 8px 8px 0 0;
+}
+
+.draw-bar-dialog-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text, #333);
+}
+
+.draw-bar-dialog-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--wx-gitlab-button-text, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.draw-bar-dialog-close:hover {
+  background: var(--wx-gitlab-button-hover-background, #f0f0f0);
+}
+
+/* Dialog Body */
+.draw-bar-dialog-body {
+  padding: 16px;
+}
+
+/* Date Preview */
+.draw-bar-date-preview {
+  background: var(--wx-gitlab-filter-hover-background, #f9f9f9);
+  border: 1px solid var(--wx-gitlab-filter-input-border, #e0e0e0);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.date-range-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.date-range-row.duration {
+  border-top: 1px solid var(--wx-gitlab-filter-input-border, #e0e0e0);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.date-label {
+  color: var(--wx-gitlab-control-text, #666);
+}
+
+.date-value {
+  color: var(--wx-gitlab-filter-text, #333);
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.date-range-row.duration .date-value {
+  color: var(--wx-color-primary, #1f75cb);
+}
+
+/* Description */
+.draw-bar-description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--wx-gitlab-control-text, #666);
+  text-align: center;
+}
+
+/* Dialog Footer */
+.draw-bar-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--wx-gitlab-modal-border, #ddd);
+  background: var(--wx-gitlab-modal-header-background, #f8f9fa);
+  border-radius: 0 0 8px 8px;
+}
+
+/* Buttons */
+.draw-bar-btn {
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.draw-bar-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.3);
+}
+
+.draw-bar-btn-secondary {
+  background: var(--wx-gitlab-filter-input-background, #fff);
+  border-color: var(--wx-gitlab-filter-input-border, #ddd);
+  color: var(--wx-gitlab-filter-text, #333);
+}
+
+.draw-bar-btn-secondary:hover {
+  background: var(--wx-gitlab-filter-hover-background, #f5f5f5);
+}
+
+.draw-bar-btn-outline {
+  background: transparent;
+  border-color: var(--wx-color-primary, #1f75cb);
+  color: var(--wx-color-primary, #1f75cb);
+}
+
+.draw-bar-btn-outline:hover {
+  background: rgba(31, 117, 203, 0.08);
+}
+
+.draw-bar-btn-primary {
+  background: var(--wx-color-primary, #1f75cb);
+  border-color: var(--wx-color-primary, #1f75cb);
+  color: white;
+}
+
+.draw-bar-btn-primary:hover {
+  background: #1a65b3;
+  border-color: #1a65b3;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .draw-bar-date-preview {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .date-range-row.duration {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}

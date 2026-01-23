@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useMiddleMouseDrag } from '../hooks/useMiddleMouseDrag';
 import './WorkloadChart.css';
+import './shared/TodayMarker.css';
 
 /**
  * Calculate task position and width based on dates and scale

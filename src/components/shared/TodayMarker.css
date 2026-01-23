@@ -1,0 +1,27 @@
+/**
+ * Shared Today Marker Styles
+ * Used by both GitLabGantt and WorkloadChart
+ */
+
+.today-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #ff4d4d;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* For wx-gantt marker: override default width and transform */
+.wx-marker.today-marker {
+  width: 2px !important;
+  transform: none !important;
+}
+
+/* Hide marker label/content */
+.today-marker .wx-marker-label,
+.today-marker .wx-content {
+  display: none;
+}

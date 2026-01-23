@@ -292,27 +292,7 @@
   background: linear-gradient(to left, rgba(255, 255, 255, 0.3), transparent);
 }
 
-/* Today marker */
-.today-marker {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #e53935;
-  z-index: 5;
-  pointer-events: none;
-}
-
-.today-marker::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -4px;
-  width: 10px;
-  height: 10px;
-  background: #e53935;
-  border-radius: 50%;
-}
+/* Today marker - see shared/TodayMarker.css */
 
 /* Empty state */
 .workload-chart-empty {
