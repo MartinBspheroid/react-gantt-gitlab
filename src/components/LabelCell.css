@@ -1,21 +1,75 @@
 /**
  * LabelCell styles for displaying GitLab labels with colors
+ *
+ * Features:
+ * - Dynamic collapsing with +N indicator when space is limited
+ * - Hover tooltip showing all labels via Portal
+ * - Compact design to maximize visible labels
+ *
+ * Style constants (sync with ColumnSettingsDropdown.jsx LABEL_STYLE):
+ * - GAP: 3px
+ * - PADDING: 1px 4px
+ * - FONT_SIZE: 10px
  */
+
+/* Container - single row layout */
 .label-cell-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  max-width: 100%;
+  gap: 3px;
+  align-items: center;
+  width: 100%;
   overflow: hidden;
+  cursor: pointer;
 }
 
+/* Label tag - compact style */
 .label-cell-tag {
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 1px 4px;
+  border-radius: 2px;
   font-size: 10px;
+  line-height: 1.3;
   color: #fff;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 80px;
+  flex-shrink: 0;
+}
+
+/* More indicator (+N) */
+.label-cell-more {
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 500;
+  background-color: #e5e7eb;
+  color: #374151;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.label-cell-more:hover {
+  background-color: #d1d5db;
+}
+
+/* Tooltip (Portal) - larger text for readability */
+.label-cell-tooltip-portal {
+  z-index: 99999;
+  padding: 8px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 320px;
+  min-width: 120px;
+}
+
+.label-cell-tooltip-tag {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
 }

@@ -2278,6 +2278,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       DateCell,
       WorkdaysCell,
       labelColorMap,
+      labelPriorityMap,
     });
 
     return [
@@ -2297,7 +2298,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         width: 50,
       },
     ];
-  }, [DateCell, TaskTitleCell, WorkdaysCell, columnSettings, labelColorMap]);
+  }, [DateCell, TaskTitleCell, WorkdaysCell, columnSettings, labelColorMap, labelPriorityMap]);
 
   // Editor items configuration - customized for GitLab
   const editorItems = useMemo(() => {

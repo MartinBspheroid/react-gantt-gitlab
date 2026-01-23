@@ -3,7 +3,8 @@
  * Provides a dropdown menu for toggling column visibility and reordering columns
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { getGitLabLinkInfo } from '../utils/GitLabLinkUtils';
 
 const STORAGE_KEY = 'gantt-column-settings';
@@ -313,32 +314,196 @@ export const EpicCell = ({ row }) => {
   return <span title={row.epic}>{row.epic}</span>;
 };
 
+// LabelCell style constants (must match LabelCell.css)
+const LABEL_STYLE = {
+  GAP: 3,
+  PADDING_X: 4,
+  PADDING_Y: 1,
+  FONT_SIZE: 10,
+  MORE_INDICATOR_WIDTH: 24,
+  CELL_PADDING: 16, // td padding to subtract from available width
+};
+
+/**
+ * Measure label tag widths using a hidden DOM element
+ * @param {string[]} labels - Array of label titles
+ * @returns {number[]} Array of measured widths
+ */
+const measureLabelWidths = (labels) => {
+  const measureDiv = document.createElement('div');
+  measureDiv.style.cssText = `position:absolute;visibility:hidden;display:flex;gap:${LABEL_STYLE.GAP}px;`;
+  document.body.appendChild(measureDiv);
+
+  const widths = labels.map((title) => {
+    const span = document.createElement('span');
+    span.style.cssText = `padding:${LABEL_STYLE.PADDING_Y}px ${LABEL_STYLE.PADDING_X}px;font-size:${LABEL_STYLE.FONT_SIZE}px;white-space:nowrap;`;
+    span.textContent = title;
+    measureDiv.appendChild(span);
+    const width = span.offsetWidth;
+    measureDiv.removeChild(span);
+    return width;
+  });
+
+  document.body.removeChild(measureDiv);
+  return widths;
+};
+
+/**
+ * Calculate how many labels fit within available width
+ * @param {number[]} widths - Array of label widths
+ * @param {number} availableWidth - Container width
+ * @returns {number} Number of labels that fit
+ */
+const calculateVisibleCount = (widths, availableWidth) => {
+  if (widths.length === 0 || availableWidth <= 0) return 1;
+
+  const { GAP, MORE_INDICATOR_WIDTH } = LABEL_STYLE;
+  let usedWidth = 0;
+  let count = 0;
+
+  for (let i = 0; i < widths.length; i++) {
+    const isLast = i === widths.length - 1;
+    // Reserve space for "+N" indicator if not showing all labels
+    const reservedWidth = isLast ? 0 : MORE_INDICATOR_WIDTH + GAP;
+
+    if (usedWidth + widths[i] + reservedWidth <= availableWidth) {
+      usedWidth += widths[i] + GAP;
+      count++;
+    } else {
+      break;
+    }
+  }
+
+  return Math.max(1, count);
+};
+
 /**
  * LabelCell - Renders labels with GitLab colors
+ * Supports dynamic collapsing based on available width and priority-based sorting.
  * @param {Object} row - Task row data with labels as comma-separated string
- * @param {Map} labelColorMap - Map of label title to color (injected via buildColumnsFromSettings)
+ * @param {Map} labelColorMap - Map of label title to color
+ * @param {Map} labelPriorityMap - Map of label title to priority number (lower = higher priority)
  */
-export const LabelCell = ({ row, labelColorMap }) => {
-  if (!row.labels) return null;
-  const labelTitles = row.labels.split(', ').filter(Boolean);
-  if (labelTitles.length === 0) return null;
+export const LabelCell = ({ row, labelColorMap, labelPriorityMap }) => {
+  const containerRef = useRef(null);
+  const [visibleCount, setVisibleCount] = useState(1);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tagWidthsRef = useRef([]);
+
+  // Parse and sort labels by priority (lower number = higher priority)
+  const labelTitles = useMemo(() => {
+    const titles = row.labels?.split(', ').filter(Boolean) || [];
+    return titles.sort((a, b) => {
+      const priorityA = labelPriorityMap?.get(a) ?? Number.MAX_SAFE_INTEGER;
+      const priorityB = labelPriorityMap?.get(b) ?? Number.MAX_SAFE_INTEGER;
+      return priorityA - priorityB;
+    });
+  }, [row.labels, labelPriorityMap]);
+
+  // Measure tag widths when labels change
+  useLayoutEffect(() => {
+    if (labelTitles.length === 0) return;
+    tagWidthsRef.current = measureLabelWidths(labelTitles);
+  }, [labelTitles]);
+
+  // Recalculate visible count on resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || labelTitles.length === 0) return;
+
+    const updateVisibleCount = () => {
+      const cell = container.closest('td') || container.parentElement;
+      const availableWidth = cell
+        ? cell.clientWidth - LABEL_STYLE.CELL_PADDING
+        : container.offsetWidth;
+
+      const count = calculateVisibleCount(tagWidthsRef.current, availableWidth);
+      setVisibleCount(count);
+    };
+
+    // Observe parent cell for resize
+    const cell = container.closest('td') || container.parentElement;
+    const observer = new ResizeObserver(updateVisibleCount);
+    if (cell) observer.observe(cell);
+
+    // Initial calculation with delay for layout stability
+    updateVisibleCount();
+    const timer = setTimeout(updateVisibleCount, 100);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
+  }, [labelTitles]);
+
+  if (!row.labels || labelTitles.length === 0) return null;
+
+  const displayLabels = labelTitles.slice(0, visibleCount);
+  const hiddenCount = labelTitles.length - visibleCount;
+  const defaultColor = '#6b7280';
 
   return (
-    <div className="label-cell-container">
-      {labelTitles.map((title, index) => {
-        const color = labelColorMap?.get(title) || '#6b7280';
-        return (
-          <span
-            key={index}
-            className="label-cell-tag"
-            style={{ backgroundColor: color }}
-            title={title}
-          >
-            {title}
-          </span>
-        );
-      })}
+    <div
+      className="label-cell-container"
+      ref={containerRef}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      {displayLabels.map((title, index) => (
+        <span
+          key={index}
+          className="label-cell-tag"
+          style={{ backgroundColor: labelColorMap?.get(title) || defaultColor }}
+        >
+          {title}
+        </span>
+      ))}
+
+      {hiddenCount > 0 && (
+        <span className="label-cell-more">+{hiddenCount}</span>
+      )}
+
+      {showTooltip && (
+        <LabelTooltip
+          anchorRef={containerRef}
+          labels={labelTitles}
+          colorMap={labelColorMap}
+        />
+      )}
     </div>
+  );
+};
+
+/**
+ * LabelTooltip - Portal-rendered tooltip showing all labels
+ */
+const LabelTooltip = ({ anchorRef, labels, colorMap }) => {
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  useLayoutEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPosition({ top: rect.bottom + 4, left: rect.left });
+  }, [anchorRef]);
+
+  const defaultColor = '#6b7280';
+
+  return ReactDOM.createPortal(
+    <div
+      className="label-cell-tooltip-portal"
+      style={{ position: 'fixed', top: position.top, left: position.left }}
+    >
+      {labels.map((title, index) => (
+        <span
+          key={index}
+          className="label-cell-tooltip-tag"
+          style={{ backgroundColor: colorMap?.get(title) || defaultColor }}
+        >
+          {title}
+        </span>
+      ))}
+    </div>,
+    document.body
   );
 };
 
@@ -409,11 +574,11 @@ export const COLUMN_CONFIGS = {
 /**
  * Build columns array based on settings and external cell components
  * @param {Object} columnSettings - Column settings from useColumnSettings
- * @param {Object} cellComponents - External cell components { DateCell, WorkdaysCell, labelColorMap }
+ * @param {Object} cellComponents - External cell components { DateCell, WorkdaysCell, labelColorMap, labelPriorityMap }
  * @returns {Array} Ordered array of visible column configs
  */
 export function buildColumnsFromSettings(columnSettings, cellComponents) {
-  const { DateCell, WorkdaysCell, labelColorMap } = cellComponents;
+  const { DateCell, WorkdaysCell, labelColorMap, labelPriorityMap } = cellComponents;
 
   return columnSettings.columns
     .filter(col => col.visible)
@@ -425,8 +590,10 @@ export function buildColumnsFromSettings(columnSettings, cellComponents) {
       } else if (col.key === 'workdays') {
         config.cell = WorkdaysCell;
       } else if (col.key === 'labels') {
-        // Inject LabelCell with labelColorMap for colored label tags
-        config.cell = (props) => <LabelCell {...props} labelColorMap={labelColorMap} />;
+        // Inject LabelCell with labelColorMap and labelPriorityMap for colored, priority-sorted label tags
+        config.cell = (props) => (
+          <LabelCell {...props} labelColorMap={labelColorMap} labelPriorityMap={labelPriorityMap} />
+        );
       }
       return config;
     });
