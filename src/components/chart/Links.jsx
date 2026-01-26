@@ -36,6 +36,13 @@ const LIBRARY_ARROW_HEIGHT = 3;
 const DETOUR_PADDING = 10;
 
 /**
+ * 判斷任務是否有「真正的 bar」的最小寬度閾值
+ * 沒有 dueDate 的任務可能有 fallback bar（用 created_at），但寬度很小
+ * 與 useRowHover.js 的 taskNeedsBar 使用相同閾值
+ */
+const MIN_VISIBLE_BAR_WIDTH = 20;
+
+/**
  * ====================================================================
  * Helper Functions
  * ====================================================================
@@ -43,6 +50,7 @@ const DETOUR_PADDING = 10;
 
 /**
  * 根據 link type 判斷起點/終點位置
+ * @param {string} linkType - 'e2s' | 's2s' | 'e2e' | 's2e'
  */
 function getLinkEndpoints(linkType) {
   const isFromStart = linkType === 's2s' || linkType === 's2e';
@@ -74,6 +82,40 @@ function generateArrowPoints(endX, endY, isToStart) {
  */
 function generatePathPoints(points) {
   return points.map(([x, y]) => `${x},${y}`).join(',');
+}
+
+/**
+ * 檢查任務是否有可見的 bar
+ *
+ * 判斷邏輯（與 useRowHover.js 的 taskNeedsBar 相反）：
+ * 1. 必須有座標資訊 ($x, $y, $w, $h)
+ * 2. 必須有真正的日期（$w > 閾值，或有 _gitlab.dueDate）
+ *    - 沒有 dueDate 的任務可能有 fallback bar（用 created_at），但寬度很小
+ *    - 這類 fallback bar 不應該顯示 link
+ */
+function hasVisibleBar(task) {
+  if (!task) return false;
+
+  // 基本座標檢查（$x, $y 可能為 0，所以用 != null）
+  if (task.$x == null || task.$y == null || task.$w == null || task.$h == null) {
+    return false;
+  }
+  if (task.$w <= 0 || task.$h <= 0) {
+    return false;
+  }
+
+  // Milestone 和 summary 類型特殊處理：如果有座標就算有 bar
+  if (task.type === 'milestone' || task.type === 'summary') {
+    return true;
+  }
+
+  // 一般任務：需要有真正的日期
+  // 1. 如果有 _gitlab.dueDate，表示有真正的結束日期
+  // 2. 或者 $w > 閾值，表示有足夠寬度的 bar（不是 fallback 的小 bar）
+  const hasRealDueDate = task._gitlab?.dueDate;
+  const hasVisibleWidth = task.$w > MIN_VISIBLE_BAR_WIDTH;
+
+  return hasRealDueDate || hasVisibleWidth;
 }
 
 /**
@@ -170,24 +212,29 @@ export default function Links() {
   }, [tasks]);
 
   // 重新計算所有 link 路徑，使用動態水平偏移量
+  // 只處理兩端任務都有可見 bar 的 link
   const processedLinks = useMemo(() => {
-    return (links || []).map(link => {
-      const sourceTask = taskMap.get(link.source);
-      const targetTask = taskMap.get(link.target);
+    return (links || [])
+      .map(link => {
+        const sourceTask = taskMap.get(link.source);
+        const targetTask = taskMap.get(link.target);
 
-      if (sourceTask?.$y !== undefined && targetTask?.$y !== undefined) {
-        return {
-          ...link,
-          $p: calculateLinkPath(link, sourceTask, targetTask, cellHeight, cellWidth, baselines)
-        };
-      }
-      return link;
-    });
+        // 只有當兩端任務都有可見的 bar 時才計算路徑
+        if (hasVisibleBar(sourceTask) && hasVisibleBar(targetTask)) {
+          return {
+            ...link,
+            $p: calculateLinkPath(link, sourceTask, targetTask, cellHeight, cellWidth, baselines)
+          };
+        }
+        // 任一端沒有可見 bar，不顯示此 link
+        return null;
+      })
+      .filter(Boolean);
   }, [links, taskMap, cellHeight, cellWidth, baselines]);
 
   return (
     <svg className="wx-dkx3NwEn wx-links">
-      {processedLinks.map((link) => (
+      {processedLinks.map(link => (
         <polyline
           className="wx-dkx3NwEn wx-line"
           points={link.$p}
