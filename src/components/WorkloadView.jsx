@@ -628,16 +628,18 @@ export function WorkloadView({ initialConfigId }) {
               </button>
             </div>
 
-            <div className="settings-section">
-              <h4>GitLab Project</h4>
-              <ProjectSelector
-                onProjectChange={(config) => {
-                  handleConfigChange(config);
-                  setShowSettings(false);
-                }}
-                currentConfigId={currentConfig?.id}
-                onConfigsChange={reloadConfigs}
-              />
+            <div className="settings-modal-body">
+              <div className="settings-section">
+                <h4>GitLab Project</h4>
+                <ProjectSelector
+                  onProjectChange={(config) => {
+                    handleConfigChange(config);
+                    setShowSettings(false);
+                  }}
+                  currentConfigId={currentConfig?.id}
+                  onConfigsChange={reloadConfigs}
+                />
+              </div>
             </div>
           </div>
         </div>

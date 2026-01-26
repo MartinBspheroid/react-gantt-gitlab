@@ -180,7 +180,9 @@
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content from breaking border-radius */
 }
 
 .settings-modal-header {
@@ -189,6 +191,7 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--wx-border-color, #e1e4e8);
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .settings-modal-header h3 {
@@ -211,8 +214,19 @@
   color: var(--wx-color-primary, #24292e);
 }
 
+/* Scrollable body container */
+.settings-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Allow flex item to shrink */
+}
+
 .settings-section {
-  padding: 20px;
+  padding: 16px 20px;
+}
+
+.settings-section + .settings-section {
+  padding-top: 0; /* Reduce spacing between sections */
 }
 
 .settings-section h4 {

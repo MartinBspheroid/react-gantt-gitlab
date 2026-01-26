@@ -2510,6 +2510,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
               </button>
             </div>
 
+            <div className="settings-modal-body">
             <div className="settings-section">
               <h4>GitLab Project</h4>
               <ProjectSelector
@@ -2626,6 +2627,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
                 canEdit={canEditHolidays}
                 saving={holidaysSaving}
               />
+            </div>
             </div>
           </div>
         </div>
