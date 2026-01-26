@@ -3,9 +3,13 @@ import storeContext from '../../context';
 import { useStore } from '@svar-ui/lib-react';
 import './OffscreenArrows.css';
 
-// Constants for label width estimation
-const LABEL_CHAR_WIDTH = 7; // Approximate pixels per character
-const LABEL_PADDING = 8; // Additional padding for label
+/**
+ * 標題寬度估算常數
+ * 注意：LABEL_LINK_GAP 必須與 Bars.css 中 .wx-text-out 的 left 值保持一致
+ */
+const LABEL_CHAR_WIDTH = 7;   // 每個字元約 7px
+const LABEL_PADDING = 8;      // 標題額外 padding
+const LABEL_LINK_GAP = 24;    // bar 結束到標題開始的間距（避開 link 轉折區域，對應 CSS: left: calc(100% + 24px)）
 const ARROW_EDGE_PADDING = 4; // Padding from viewport edge
 const SCROLL_PADDING = 50; // Padding when scrolling to bar
 const DISPLAY_NAME_MAX_LENGTH = 12;
@@ -177,11 +181,12 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
 }
 
 /**
- * Estimate the pixel width of a label text
+ * Estimate the pixel width of a label text (including the gap from bar end)
+ * Label is positioned at bar end + LABEL_LINK_GAP to avoid link turn overlap
  */
 function estimateLabelWidth(text) {
-  if (!text) return 0;
-  return text.length * LABEL_CHAR_WIDTH + LABEL_PADDING;
+  if (!text) return LABEL_LINK_GAP;
+  return LABEL_LINK_GAP + text.length * LABEL_CHAR_WIDTH + LABEL_PADDING;
 }
 
 /**

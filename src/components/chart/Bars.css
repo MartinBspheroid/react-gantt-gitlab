@@ -100,6 +100,8 @@
   display: block;
   color: var(--wx-color-font);
   pointer-events: none;
+  /* 標題向右偏移，避開 link 轉折區域（link 轉折在 bar 右邊約 20px 處） */
+  left: calc(100% + 24px);
 }
 
 .wx-milestone.wx-GKbcLEGA {
@@ -108,7 +110,7 @@
 
 .wx-milestone .wx-text-out.wx-GKbcLEGA {
   padding: 0 2px;
-  left: 100%;
+  /* 繼承 .wx-bar .wx-text-out 的 left: calc(100% + 24px) */
 }
 
 .wx-milestone .wx-content.wx-GKbcLEGA {
