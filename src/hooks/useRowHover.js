@@ -166,20 +166,9 @@ export function useRowHover({
     // Calculate the range
     const minX = Math.min(drawStartX, drawEndX);
     const maxX = Math.max(drawStartX, drawEndX);
-    const width = maxX - minX;
-
-    // Minimum width threshold (10px)
-    if (width < 10) {
-      setHoverState((prev) => ({
-        ...prev,
-        isDrawing: false,
-        drawStartX: null,
-        drawEndX: null,
-      }));
-      return null;
-    }
 
     // Return draw info for the confirmation dialog
+    // Even tiny drags should work - the snap logic in RowHoverOverlay will ensure at least 1 cell
     return {
       taskId,
       startX: minX,

@@ -123,13 +123,20 @@ function RowHoverOverlay({
   /**
    * Snap pixel X to the nearest cell boundary
    */
+  const getLengthUnitWidth = useCallback(() => {
+    return scales?.lengthUnitWidth || cellWidth;
+  }, [scales, cellWidth]);
+
+  /**
+   * Snap pixel X to the nearest cell boundary (left edge)
+   */
   const snapToCell = useCallback(
     (pixelX) => {
       if (!scales) return pixelX;
-      const lengthUnitWidth = scales.lengthUnitWidth || cellWidth;
+      const lengthUnitWidth = getLengthUnitWidth();
       return Math.floor(pixelX / lengthUnitWidth) * lengthUnitWidth;
     },
-    [scales, cellWidth],
+    [scales, getLengthUnitWidth],
   );
 
   /**
@@ -138,10 +145,10 @@ function RowHoverOverlay({
   const snapToCellEnd = useCallback(
     (pixelX) => {
       if (!scales) return pixelX;
-      const lengthUnitWidth = scales.lengthUnitWidth || cellWidth;
+      const lengthUnitWidth = getLengthUnitWidth();
       return (Math.floor(pixelX / lengthUnitWidth) + 1) * lengthUnitWidth;
     },
-    [scales, cellWidth],
+    [scales, getLengthUnitWidth],
   );
 
   /**
@@ -180,7 +187,12 @@ function RowHoverOverlay({
     if (drawInfo) {
       // Snap positions to cell boundaries before converting to dates
       const snappedStartX = snapToCell(Math.min(drawInfo.startX, drawInfo.endX));
-      const snappedEndX = snapToCellEnd(Math.max(drawInfo.startX, drawInfo.endX));
+      let snappedEndX = snapToCellEnd(Math.max(drawInfo.startX, drawInfo.endX));
+
+      // Ensure at least 1 cell width (for clicks without dragging)
+      if (snappedEndX <= snappedStartX) {
+        snappedEndX = snappedStartX + getLengthUnitWidth();
+      }
 
       // Convert snapped pixel positions to dates
       // Note: endDate is the position AFTER the last cell (exclusive)
@@ -202,7 +214,7 @@ function RowHoverOverlay({
         });
       }
     }
-  }, [handleMouseUp, pixelToDate, snapToCell, snapToCellEnd, hoverState.rowIndex]);
+  }, [handleMouseUp, pixelToDate, snapToCell, snapToCellEnd, getLengthUnitWidth, hoverState.rowIndex]);
 
   // Refs to hold the latest callback functions
   const onMouseMoveRef = useRef(onMouseMove);
@@ -251,13 +263,19 @@ function RowHoverOverlay({
   }, [hoverState.isDrawing, onMouseUp]);
 
   /**
-   * Set end date time to 23:59:59 to make the date inclusive in Gantt display.
-   * Without this, the Gantt bar would visually end on the previous day.
+   * Convert exclusive end date to inclusive end date for Gantt storage.
+   * - Input: exclusive endDate (the day AFTER the last selected day, at 00:00:00)
+   * - Output: inclusive endDate (the actual last day, at 23:59:59)
+   *
+   * This conversion is needed because:
+   * 1. Drawing uses half-open interval [start, end) for easier calculations
+   * 2. Gantt storage uses inclusive end date with time set to end of day
    */
-  const setEndOfDay = useCallback((date) => {
-    if (!date) return date;
-    const result = new Date(date);
-    result.setHours(23, 59, 59, 999);
+  const toInclusiveEndDate = useCallback((exclusiveEndDate) => {
+    if (!exclusiveEndDate) return exclusiveEndDate;
+    const result = new Date(exclusiveEndDate);
+    result.setDate(result.getDate() - 1); // Convert exclusive to inclusive
+    result.setHours(23, 59, 59, 999); // Set to end of day for proper Gantt display
     return result;
   }, []);
 
@@ -269,16 +287,12 @@ function RowHoverOverlay({
       if (!dialogInfo || !api) return;
 
       const { taskId, startDate, endDate } = dialogInfo;
+      const adjustedEndDate = toInclusiveEndDate(endDate);
       let taskUpdate = {};
 
-      // Set end date to end of day (23:59:59) for proper Gantt display
-      const adjustedEndDate = setEndOfDay(endDate);
-
       if (mode === 'overwrite') {
-        // Overwrite both start and end
         taskUpdate = { start: startDate, end: adjustedEndDate };
       } else if (mode === 'end-only') {
-        // Only set end date
         taskUpdate = { end: adjustedEndDate };
       }
 
@@ -293,7 +307,7 @@ function RowHoverOverlay({
       setConfirmedPreview(null);
       cancelDrawing();
     },
-    [dialogInfo, api, cancelDrawing, setEndOfDay],
+    [dialogInfo, api, cancelDrawing, toInclusiveEndDate],
   );
 
   /**
