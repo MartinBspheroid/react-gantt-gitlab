@@ -48,6 +48,7 @@ import { defaultMenuOptions } from '@svar-ui/gantt-store';
 import { ConfirmDialog } from './shared/dialogs/ConfirmDialog';
 import { CreateItemDialog } from './shared/dialogs/CreateItemDialog';
 import { DeleteDialog } from './shared/dialogs/DeleteDialog';
+import { isLegacyMilestoneId, migrateLegacyMilestoneId } from '../utils/MilestoneIdUtils.ts';
 import {
   findLinkBySourceTarget,
   validateLinkGitLabMetadata,
@@ -617,6 +618,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   }, [currentConfig]);
 
   // Load fold state from localStorage when config changes
+  // Includes migration from legacy milestone IDs (10000+) to new format (m-{iid})
   useEffect(() => {
     if (!currentConfig) return;
 
@@ -625,7 +627,24 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       const savedState = localStorage.getItem(storageKey);
       if (savedState) {
         const parsed = JSON.parse(savedState);
-        openStateRef.current = new Map(Object.entries(parsed));
+
+        // Migrate legacy milestone IDs (10000+) to new format (m-{iid})
+        let needsMigration = false;
+        const migratedEntries = Object.entries(parsed).map(([key, value]) => {
+          if (isLegacyMilestoneId(key)) {
+            needsMigration = true;
+            return [migrateLegacyMilestoneId(key), value];
+          }
+          return [key, value];
+        });
+
+        openStateRef.current = new Map(migratedEntries);
+
+        // Save migrated state back to localStorage if migration occurred
+        if (needsMigration) {
+          const migratedState = Object.fromEntries(migratedEntries);
+          localStorage.setItem(storageKey, JSON.stringify(migratedState));
+        }
       } else {
         openStateRef.current = new Map();
       }
@@ -890,7 +909,7 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           }
 
           // Check both string and number versions of the ID
-          // localStorage keys are always strings, but Gantt task IDs can be numbers
+          // localStorage keys are always strings, but Gantt task IDs can be numbers or strings (e.g., "m-1")
           const taskIdStr = String(task.id);
           const taskIdNum = Number(task.id);
 
@@ -1409,7 +1428,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
       ganttApi.on('open-task', (ev) => {
         // Update openStateRef with the new state
         if (ev.id && ev.mode !== undefined) {
-          openStateRef.current.set(ev.id, ev.mode);
+          // Always use string keys to match localStorage (which serializes keys as strings)
+          // This ensures consistency between numeric IDs (issues) and string IDs (milestones like "m-1")
+          const idKey = String(ev.id);
+          openStateRef.current.set(idKey, ev.mode);
           // Save to localStorage using ref
           saveFoldStateRef.current();
         }
@@ -2033,7 +2055,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
           if (orderA !== undefined) return -1;
           if (orderB !== undefined) return 1;
-          return a.id - b.id;
+          // Fallback: compare IDs as strings to handle both numeric and string IDs (e.g., "m-1")
+          return String(a.id).localeCompare(String(b.id));
         });
 
         // Special case: When dragging to first position, Gantt sets ev.id === ev.target

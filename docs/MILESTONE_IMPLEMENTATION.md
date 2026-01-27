@@ -83,12 +83,15 @@ const milestonesQuery = `
 `;
 ```
 
-#### 轉換 Milestone 為 Task（GitLabGraphQLProvider.ts:453-500）
+#### 轉換 Milestone 為 Task（GitLabGraphQLProvider.ts）
 
 ```typescript
+import { createMilestoneTaskId } from '../utils/MilestoneIdUtils';
+
 private convertMilestoneToTask(milestone: any): ITask {
-  // 使用 ID offset 避免與 work item IID 衝突
-  const milestoneTaskId = 10000 + Number(milestone.iid);
+  // 使用字串 ID 格式避免與 work item IID 衝突
+  // 格式："m-{iid}"（例如 "m-1", "m-8"）
+  const milestoneTaskId = createMilestoneTaskId(milestone.iid);
 
   // 時區處理：確保使用本地時區
   const startDate = milestone.startDate
@@ -103,8 +106,8 @@ private convertMilestoneToTask(milestone: any): ITask {
     : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   return {
-    id: milestoneTaskId,
-    text: `[Milestone] ${milestone.title}`,
+    id: milestoneTaskId,  // 字串格式："m-1"
+    text: milestone.title,
     start: startDate,
     end: endDate,
     duration: Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))),
@@ -124,7 +127,9 @@ private convertMilestoneToTask(milestone: any): ITask {
 
 **關鍵決策**：
 
-- **ID Offset**：Milestone task ID = `10000 + iid`，避免與 work item IID 衝突
+- **ID 格式**：Milestone task ID = `"m-{iid}"`（字串格式），避免與 work item IID 衝突
+  - 舊格式 `10000 + iid` 已棄用，因為當專案有超過 10000 個 issue 時會產生衝突
+  - 工具函數在 `src/utils/MilestoneIdUtils.ts`
 - **Type**：使用 `'task'` 而非 `'summary'`，因為需要支援 baseline 功能
 - **時區**：加上 `T00:00:00` 和 `T23:59:59` 確保本地時區解析
 - **Global ID**：儲存完整的 `gid://gitlab/Milestone/1130` 供 REST API 使用
@@ -138,12 +143,15 @@ GitLab REST API 的 `milestone_id` 參數需要使用**內部 ID**（從 globalI
 - ❌ **錯誤**：使用 iid（例如：1）→ 404 Not Found
 - ✅ **正確**：使用內部 ID（例如：1130，從 `gid://gitlab/Milestone/1130` 提取）
 
-#### 更新 Milestone（GitLabGraphQLProvider.ts:1341-1404）
+#### 更新 Milestone（GitLabGraphQLProvider.ts）
 
 ```typescript
+import { extractMilestoneIid } from '../utils/MilestoneIdUtils';
+
 async updateMilestone(id: TID, milestone: Partial<ITask>): Promise<void> {
-  // 從 globalId 提取內部 ID
+  // 從 globalId 或 task ID 提取內部 ID
   // globalId 格式: "gid://gitlab/Milestone/1130"
+  // task ID 格式: "m-{iid}"（例如 "m-1"）
   let milestoneId: string;
 
   if (milestone._gitlab?.globalId) {
@@ -151,13 +159,20 @@ async updateMilestone(id: TID, milestone: Partial<ITask>): Promise<void> {
     if (match) {
       milestoneId = match[1]; // 提取 "1130"
     } else {
-      // Fallback to iid
-      milestoneId = String(milestone._gitlab.id || Number(id) - 10000);
+      // Fallback: 從 task ID 提取 iid
+      const extractedIid = extractMilestoneIid(id);
+      milestoneId = String(milestone._gitlab.id || extractedIid);
     }
   } else if (milestone._gitlab?.id) {
     milestoneId = String(milestone._gitlab.id);
   } else {
-    milestoneId = String(Number(id) - 10000);
+    // 從 task ID 提取 iid（格式："m-{iid}"）
+    const extractedIid = extractMilestoneIid(id);
+    if (extractedIid !== null) {
+      milestoneId = String(extractedIid);
+    } else {
+      throw new Error(`Cannot determine milestone ID from task ID: ${id}`);
+    }
   }
 
   // 建立 payload
@@ -187,12 +202,13 @@ async updateMilestone(id: TID, milestone: Partial<ITask>): Promise<void> {
 }
 ```
 
-#### 路由邏輯（GitLabGraphQLProvider.ts:617-643）
+#### 路由邏輯（GitLabGraphQLProvider.ts）
 
 ```typescript
 async updateWorkItem(id: TID, task: Partial<ITask>): Promise<void> {
-  // 檢查是否為 milestone（ID >= 10000）
-  if (Number(id) >= 10000) {
+  // 使用 _gitlab.type 檢查是否為 milestone
+  // 不再使用 ID >= 10000 的方式（已棄用）
+  if (task._gitlab?.type === 'milestone') {
     console.log('[GitLabGraphQL] Detected milestone update, routing to updateMilestone');
     return this.updateMilestone(id, task);
   }

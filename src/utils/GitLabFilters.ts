@@ -66,8 +66,8 @@ export class GitLabFilters {
    * Filter tasks by milestone using _gitlab.milestoneIid
    * Supports "NONE" (as 0) to filter tasks without milestone
    *
-   * Note: We no longer use the parent field (10000 + iid) for filtering.
-   * Instead, we use _gitlab.milestoneIid which is set when transforming work items.
+   * Note: We use _gitlab.milestoneIid for filtering (not the parent field).
+   * Milestone task IDs use string format "m-{iid}" to avoid collision with work item IIDs.
    */
   static filterByMilestone(tasks: ITask[], milestoneIids: number[]): ITask[] {
     if (milestoneIids.length === 0) {
@@ -304,11 +304,13 @@ export class GitLabFilters {
    * IMPORTANT: Parent field has different meanings:
    *
    * For GitLab Issues:
-   *   - parent >= 10000: Milestone (we use parent field to display Issues under Milestones in Gantt)
-   *   - parent < 10000: Epic ID from GitLab (Issues can have Epic parents, but we don't support Epic display)
+   *   - parent = "m-{iid}": Milestone (string format, e.g., "m-1", "m-8")
+   *   - parent = number: Epic ID from GitLab (Issues can have Epic parents, but we don't support Epic display)
    *
    * For GitLab Tasks:
    *   - parent = another work item's IID (hierarchical relationship)
+   *
+   * Note: Milestone IDs use string format to avoid collision with Issue IIDs > 10000
    */
   static ensureParentChildIntegrity(
     filteredTasks: ITask[],

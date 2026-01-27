@@ -50,6 +50,10 @@ import {
   gitlabRestRequest,
   gitlabRestRequestPaginated,
 } from './GitLabApiUtils';
+import {
+  createMilestoneTaskId,
+  extractMilestoneIid,
+} from '../utils/MilestoneIdUtils';
 
 /**
  * Format iteration title for display
@@ -1645,9 +1649,9 @@ export class GitLabGraphQLProvider {
       ? `${this.config.gitlabUrl}${milestone.webPath}`
       : milestone.web_url || undefined;
 
-    // Use numeric ID with offset to avoid conflicts with work item IIDs
-    // Offset: 10000 (e.g., milestone iid=1 becomes 10001)
-    const milestoneTaskId = 10000 + Number(milestone.iid);
+    // Use string ID with prefix to avoid conflicts with work item IIDs
+    // Format: "m-{iid}" (e.g., milestone iid=1 becomes "m-1")
+    const milestoneTaskId = createMilestoneTaskId(milestone.iid);
 
     // Ensure milestones have valid dates with proper timezone handling
     // Handle both GraphQL (startDate/dueDate) and REST API (start_date/due_date) field names
@@ -1822,19 +1826,19 @@ export class GitLabGraphQLProvider {
     // For GitLab Issues:
     //   - In GitLab API: Issues can have a parent Epic (through Epic relationship)
     //   - In GitLab API: Issues can belong to a Milestone (through milestone field)
-    //   - In our Gantt: We use 'parent' field to show Issues under Milestones (parent = 10000 + milestone.iid)
+    //   - In our Gantt: We use 'parent' field to show Issues under Milestones (parent = "m-{iid}")
     //   - In our Gantt: Epic parents are NOT supported, Issues with Epic parents appear at root with [Epic #] notation
     //
     // For GitLab Tasks:
     //   - In GitLab API: Tasks have hierarchical parent (another Issue or Task)
     //   - In our Gantt: We use 'parent' field to maintain this hierarchy (parent = parent.iid)
     //
-    // Parent ID ranges:
+    // Parent ID types:
     //   - 0: Root level (no parent)
-    //   - 1-9999: Regular work item IDs (Issues/Tasks) or Epic IDs (not displayed)
-    //   - 10000+: Milestone IDs (offset by 10000 to avoid conflicts)
+    //   - number: Regular work item IID (Issues/Tasks)
+    //   - string "m-{iid}": Milestone ID (e.g., "m-1", "m-8")
 
-    let parent: number = 0;
+    let parent: number | string = 0;
     let parentIid: number | null = null;
     let epicParentId: number | null = null;
     let epicTitle: string | null = null;
@@ -1869,7 +1873,8 @@ export class GitLabGraphQLProvider {
     } else if (milestoneWidget?.milestone) {
       // Issue or Task belongs to a milestone - display under milestone
       // Note: epicParentId is already set above if Epic parent exists
-      parent = 10000 + Number(milestoneWidget.milestone.iid);
+      // Use string ID format "m-{iid}" to match milestone task IDs
+      parent = createMilestoneTaskId(milestoneWidget.milestone.iid);
     } else if (isIssue && hierarchyWidget?.parent) {
       // Issue with parent but no Milestone
       const parentType = (hierarchyWidget.parent as any).workItemType?.name;
@@ -3500,7 +3505,9 @@ export class GitLabGraphQLProvider {
           '[GitLabGraphQL] Invalid globalId format, falling back to iid:',
           milestone._gitlab.globalId,
         );
-        milestoneId = String(milestone._gitlab.id || Number(id) - 10000);
+        // Try to extract iid from task ID (format: "m-{iid}")
+        const extractedIid = extractMilestoneIid(id);
+        milestoneId = String(milestone._gitlab.id || extractedIid);
       }
     } else if (milestone._gitlab?.id) {
       // Fallback: use iid (may cause 404 if iid !== internal ID)
@@ -3509,11 +3516,16 @@ export class GitLabGraphQLProvider {
       );
       milestoneId = String(milestone._gitlab.id);
     } else {
-      // Last resort: calculate from task ID (may cause 404)
-      console.warn(
-        '[GitLabGraphQL] No milestone ID info, using calculated iid',
-      );
-      milestoneId = String(Number(id) - 10000);
+      // Last resort: extract iid from task ID (format: "m-{iid}")
+      const extractedIid = extractMilestoneIid(id);
+      if (extractedIid !== null) {
+        console.warn(
+          '[GitLabGraphQL] No milestone ID info, using extracted iid from task ID',
+        );
+        milestoneId = String(extractedIid);
+      } else {
+        throw new Error(`Cannot determine milestone ID from task ID: ${id}`);
+      }
     }
 
     // Build payload for REST API
