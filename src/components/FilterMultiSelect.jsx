@@ -101,6 +101,28 @@ export function FilterMultiSelect({
     }
   };
 
+  // Invert selection (only for multi-select)
+  const handleInvert = () => {
+    if (singleSelect) return;
+    if (search.trim()) {
+      // Only invert visible options, keep non-visible selections unchanged
+      const visibleValues = new Set(filteredOptions.map(opt => opt.value));
+      const newSelected = selected.filter(v => !visibleValues.has(v));
+      // Add visible items that were NOT selected
+      filteredOptions.forEach(opt => {
+        if (!selected.includes(opt.value)) {
+          newSelected.push(opt.value);
+        }
+      });
+      onChange(newSelected);
+    } else {
+      // Invert all options
+      const allValues = options.map(opt => opt.value);
+      const newSelected = allValues.filter(v => !selected.includes(v));
+      onChange(newSelected);
+    }
+  };
+
   const selectedCount = selected.length;
   const visibleSelectedCount = filteredOptions.filter(opt => selected.includes(opt.value)).length;
 
@@ -185,6 +207,13 @@ export function FilterMultiSelect({
             disabled={visibleSelectedCount === 0}
           >
             None
+          </button>
+          <button
+            className="fms-action-btn"
+            onClick={handleInvert}
+            disabled={singleSelect || filteredOptions.length === 0}
+          >
+            Invert
           </button>
         </div>
       )}
