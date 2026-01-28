@@ -476,22 +476,53 @@ export const LabelCell = ({ row, labelColorMap, labelPriorityMap }) => {
 
 /**
  * LabelTooltip - Portal-rendered tooltip showing all labels
+ * Uses position:fixed with viewport-based flip logic (same approach as DateEditCell)
  */
 const LabelTooltip = ({ anchorRef, labels, colorMap }) => {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-
-  useLayoutEffect(() => {
-    if (!anchorRef.current) return;
-    const rect = anchorRef.current.getBoundingClientRect();
-    setPosition({ top: rect.bottom + 4, left: rect.left });
-  }, [anchorRef]);
-
+  const tooltipRef = useRef(null);
   const defaultColor = '#6b7280';
+
+  // Position the tooltip after render using requestAnimationFrame
+  // to ensure accurate height measurement for flip logic
+  useLayoutEffect(() => {
+    if (!anchorRef.current || !tooltipRef.current) return;
+
+    const positionTooltip = () => {
+      const el = tooltipRef.current;
+      const anchor = anchorRef.current;
+      if (!el || !anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const tooltipHeight = el.offsetHeight || el.getBoundingClientRect().height || 0;
+
+      // Viewport boundaries for flip calculation
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      let top;
+      // Flip to above if below space is insufficient AND above has enough space
+      if (spaceBelow < tooltipHeight + 4 && spaceAbove >= tooltipHeight + 4) {
+        // Show above - tooltip bottom aligns above cell top
+        top = rect.top - tooltipHeight - 4;
+      } else {
+        // Show below (default) - overlapping cell top
+        top = rect.top;
+      }
+
+      el.style.position = 'fixed';
+      el.style.top = `${top}px`;
+      el.style.left = `${rect.left}px`;
+      el.style.zIndex = '99999';
+    };
+
+    // Use requestAnimationFrame to wait for DOM to render
+    requestAnimationFrame(positionTooltip);
+  }, [anchorRef]);
 
   return ReactDOM.createPortal(
     <div
+      ref={tooltipRef}
       className="label-cell-tooltip-portal"
-      style={{ position: 'fixed', top: position.top, left: position.left }}
     >
       {labels.map((title, index) => (
         <span

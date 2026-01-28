@@ -51,9 +51,9 @@
   background-color: #d1d5db;
 }
 
-/* Tooltip (Portal) - larger text for readability */
+/* Tooltip (Portal) - positioned via JS with flip logic
+ * position/top/left/z-index set inline by LabelTooltip component */
 .label-cell-tooltip-portal {
-  z-index: 99999;
   padding: 8px;
   background: white;
   border: 1px solid #d1d5db;
