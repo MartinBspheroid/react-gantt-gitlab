@@ -1745,80 +1745,68 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           }
 
           // Date fields - support null values for clearing dates
-          // IMPORTANT: svar merges ev.task with the gantt store, so null values get overwritten
-          // We use _originalDateValues (from Editor) and _originalDateChange (from Grid) to preserve nulls
+          // Sources of date changes:
+          // 1. Editor: ev._originalDateValues contains user-set values (Date or null)
+          // 2. Grid: ev._originalDateChange contains the single changed field
+          // 3. Timeline drag: ev.task contains the new values directly
+          //
+          // For Editor/Grid, we use the _original* fields to preserve null values
+          // (svar merges ev.task with store, overwriting nulls with existing values)
 
-          // Determine which date fields were actually changed
-          // NOTE: ev.task contains the FULL merged task from svar, not just changed fields
-          // So we must rely on _originalDateValues (Editor) or _originalDateChange (Grid)
-          // to know what was actually changed by the user
           const isFromEditor = ev._originalDateValues && Object.keys(ev._originalDateValues).length > 0;
           const isFromGrid = !!ev._originalDateChange;
 
-          // Get actual values from the original sources (before svar merge)
-          let actualStartValue = ev.task.start;
-          let actualEndValue = ev.task.end;
+          // Determine actual values - prefer _original* sources for null preservation
+          let startValue, endValue;
+          let hasStartChange = false, hasEndChange = false;
 
           if (isFromEditor) {
-            // Editor: _originalDateValues contains the actual user-set values (Date or null)
+            // Editor provides explicit list of changed fields
             if (ev._originalDateValues.hasOwnProperty('start')) {
-              actualStartValue = ev._originalDateValues.start;
+              startValue = ev._originalDateValues.start;
+              hasStartChange = true;
             }
             if (ev._originalDateValues.hasOwnProperty('end')) {
-              actualEndValue = ev._originalDateValues.end;
+              endValue = ev._originalDateValues.end;
+              hasEndChange = true;
             }
           } else if (isFromGrid) {
-            // Grid: _originalDateChange contains the single changed field
+            // Grid changes one field at a time
             if (ev._originalDateChange.column === 'start') {
-              actualStartValue = ev._originalDateChange.value;
+              startValue = ev._originalDateChange.value;
+              hasStartChange = true;
             } else if (ev._originalDateChange.column === 'end') {
-              actualEndValue = ev._originalDateChange.value;
+              endValue = ev._originalDateChange.value;
+              hasEndChange = true;
+            }
+          } else {
+            // Timeline drag - use ev.task values directly (original behavior)
+            if (ev.task.start !== undefined) {
+              startValue = ev.task.start;
+              hasStartChange = true;
+            }
+            if (ev.task.end !== undefined) {
+              endValue = ev.task.end;
+              hasEndChange = true;
             }
           }
 
-          // Process start date - only if it was actually changed
-          // Start date uses 00:00:00 local time
-          const hasStartChange = (isFromEditor && ev._originalDateValues.hasOwnProperty('start')) ||
-                                  (isFromGrid && ev._originalDateChange.column === 'start');
+          // Process start date - normalize to 00:00:00 local time
           if (hasStartChange) {
-            const normalizedStart = createStartDate(actualStartValue);
+            const normalizedStart = createStartDate(startValue);
             taskChanges.start = normalizedStart;
-            // Also update ev.task so svar Gantt UI reflects the correct time
             if (normalizedStart) ev.task.start = normalizedStart;
             if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
-            taskChanges._gitlab.startDate = formatDateToLocalString(actualStartValue);
+            taskChanges._gitlab.startDate = formatDateToLocalString(startValue);
           }
 
-          // Process end date - only if it was actually changed
-          // End/due date uses 23:59:59 local time so tasks appear to end at end of day
-          const hasEndChange = (isFromEditor && ev._originalDateValues.hasOwnProperty('end')) ||
-                                (isFromGrid && ev._originalDateChange.column === 'end');
+          // Process end date - normalize to 23:59:59 local time
           if (hasEndChange) {
-            const normalizedEnd = createEndDate(actualEndValue);
+            const normalizedEnd = createEndDate(endValue);
             taskChanges.end = normalizedEnd;
-            // Also update ev.task so svar Gantt UI reflects the correct time (bar length)
             if (normalizedEnd) ev.task.end = normalizedEnd;
             if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
-            taskChanges._gitlab.dueDate = formatDateToLocalString(actualEndValue);
-          }
-
-          // If neither Editor nor Grid markers exist, this might be from timeline drag
-          // In that case, check if ev.task has date changes vs currentTask
-          if (!isFromEditor && !isFromGrid) {
-            if (ev.task.start !== undefined && ev.task.start?.getTime?.() !== currentTask.start?.getTime?.()) {
-              const normalizedStart = createStartDate(ev.task.start);
-              taskChanges.start = normalizedStart;
-              if (normalizedStart) ev.task.start = normalizedStart;
-              if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
-              taskChanges._gitlab.startDate = formatDateToLocalString(ev.task.start);
-            }
-            if (ev.task.end !== undefined && ev.task.end?.getTime?.() !== currentTask.end?.getTime?.()) {
-              const normalizedEnd = createEndDate(ev.task.end);
-              taskChanges.end = normalizedEnd;
-              if (normalizedEnd) ev.task.end = normalizedEnd;
-              if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
-              taskChanges._gitlab.dueDate = formatDateToLocalString(ev.task.end);
-            }
+            taskChanges._gitlab.dueDate = formatDateToLocalString(endValue);
           }
 
           if (ev.task.duration !== undefined) {

@@ -26,8 +26,8 @@ https://react-gantt-gitlab-8d7d33.pages.rayark.io/
 - 支援調整的時距
 - 使用 Server / Client Filter 用來對 Issues, Tasks 進行篩選
   - 使用 Server 篩選器可以大幅改善過多 Issues 讀取的狀況
-- Color Rule 色彩規則功能
-  - 用標題設定條件，來讓 time bar 顯示指定的顏色條紋（最多顯示三個顏色）
+- Color Rule 色彩規則
+  - 用標題或是 Label 設定條件，來讓 timeline bar 顯示指定的顏色條紋（最多顯示三個顏色）
   - 會儲存在專案 snippet (必須要有 Maintainer 權限)
 - Grid Column 可自訂需要的欄位和順序
   - 包含: Issue ID, Start, Due, Assignee, Weight, Workdays, Iteration, Epic, Labels, Order(手動排序)
