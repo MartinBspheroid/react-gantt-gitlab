@@ -1,10 +1,28 @@
 # React Gantt for GitLab
 
-https://react-gantt-gitlab-8d7d33.pages.rayark.io/
+- https://farl.github.io/react-gantt-gitlab/
+- https://react-gantt-gitlab-8d7d33.pages.rayark.io/
 
 ## GitLab Gantt
 
 ![GitLab Gantt Screenshot](./assets/gitlab-gantt.png)
+
+### How to start
+
+- 先到你的 GitLab 去取得 Access Token
+  - https://gitlab.com/-/user_settings/personal_access_tokens
+    - 必須要有 api 權限
+    - 可以設定較長的使用期限
+- 到 GitLab Gantt +Add 新增 Project
+  - 選擇 Type，推薦使用 Project 才有全部功能。
+  - 選擇 Credential，第一次需要先新增
+    - 填寫 GitLab URL, Access Token
+    - Test Connection 確認可以正確連接
+    - Save Credential
+  - 選擇 Project 或直接填寫 Project ID / Project Full Path (從網址可以看出例如: gitlab.com/group/subgroup/project = group/subgroup/project)
+  - 確認後就可以同步專案內容了。
+
+### Features
 
 - 設置 GitLab 專案
   - 需要 Base URL, Access Token
