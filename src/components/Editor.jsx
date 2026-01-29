@@ -372,10 +372,6 @@ function Editor({
   const handleSave = useCallback((ev) => {
     let { values } = ev;
 
-    console.log('[Editor handleSave] values.start:', values.start, 'type:', typeof values.start);
-    console.log('[Editor handleSave] values.end:', values.end, 'type:', typeof values.end);
-    console.log('[Editor handleSave] changedDateFields:', [...changedDateFieldsRef.current]);
-
     // Build originalDateValues based on what the user actually changed
     // This tells GitLabGantt which fields to sync to GitLab
     const originalDateValues = {};
@@ -385,7 +381,6 @@ function Editor({
     if (changedDateFieldsRef.current.has('end')) {
       originalDateValues.end = values.end; // can be null or Date
     }
-    console.log('[Editor handleSave] originalDateValues:', originalDateValues);
 
     // Clear the tracking for next edit session
     changedDateFieldsRef.current.clear();

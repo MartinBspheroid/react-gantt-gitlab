@@ -1794,8 +1794,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           // Process start date - normalize to 00:00:00 local time
           if (hasStartChange) {
             const normalizedStart = createStartDate(startValue);
-            taskChanges.start = normalizedStart;
-            if (normalizedStart) ev.task.start = normalizedStart;
+            taskChanges.start = normalizedStart; // can be null
+            ev.task.start = normalizedStart;
             if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
             taskChanges._gitlab.startDate = formatDateToLocalString(startValue);
           }
@@ -1803,8 +1803,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           // Process end date - normalize to 23:59:59 local time
           if (hasEndChange) {
             const normalizedEnd = createEndDate(endValue);
-            taskChanges.end = normalizedEnd;
-            if (normalizedEnd) ev.task.end = normalizedEnd;
+            taskChanges.end = normalizedEnd; // can be null
+            ev.task.end = normalizedEnd;
             if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
             taskChanges._gitlab.dueDate = formatDateToLocalString(endValue);
           }
@@ -1813,11 +1813,24 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
             taskChanges.duration = ev.task.duration;
           }
 
+          // Update ev.task._gitlab so Grid cells (DateEditCell) show updated values
+          if (taskChanges._gitlab) {
+            ev.task._gitlab = taskChanges._gitlab;
+          }
+
+          // Check if any date was cleared (set to null)
+          const hasDateCleared = (hasStartChange && startValue === null) ||
+                                  (hasEndChange && endValue === null);
+
           (async () => {
             try {
               await syncTask(ev.id, taskChanges);
-              // NOTE: Removed syncWithFoldState() call - it was causing unnecessary full reload
-              // The UI should update based on _gitlab data directly via DateEditCell
+
+              // If a date was cleared, refresh from GitLab because svar Gantt
+              // doesn't properly handle null dates (auto-fills via normalizeDates)
+              if (hasDateCleared) {
+                syncWithFoldState();
+              }
             } catch (error) {
               console.error('Failed to sync task update:', error);
               showToast(`Failed to sync task: ${error.message}`, 'error');
