@@ -12,8 +12,7 @@ import Toolbar from './Toolbar.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import SmartTaskContent from './SmartTaskContent.jsx';
 import { ToastContainer, useToast } from './Toast.jsx';
-import { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider.ts';
-import { gitlabConfigManager } from '../config/GitLabConfigManager.ts';
+import { useProjectConfig } from '../hooks/useProjectConfig.ts';
 import { useGitLabSync } from '../hooks/useGitLabSync.ts';
 import { useGitLabHolidays } from '../hooks/useGitLabHolidays.ts';
 import { useFilterPresets } from '../hooks/useFilterPresets.ts';
@@ -147,8 +146,21 @@ function sortByDeletionOrder(taskIds, allTasks) {
 
 export function GitLabGantt({ initialConfigId, autoSync = false }) {
   const [api, setApi] = useState(null);
-  const [currentConfig, setCurrentConfig] = useState(null);
-  const [provider, setProvider] = useState(null);
+
+  // Use shared project config hook for credential resolution and provider creation
+  // This hook properly resolves credentialId to gitlabUrl/token
+  const {
+    currentConfig,
+    provider,
+    configs,
+    reloadConfigs,
+    handleConfigChange: baseHandleConfigChange,
+    handleQuickSwitch,
+    projectPath,
+    proxyConfig,
+    configVersion,
+  } = useProjectConfig(initialConfigId);
+
   const [filterOptions, setFilterOptions] = useState({});
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
@@ -156,7 +168,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   // MoveInModal state
   const [showMoveInModal, setShowMoveInModal] = useState(false);
   const [moveInProcessing, setMoveInProcessing] = useState(false);
-  const [configs, setConfigs] = useState([]);
 
   // Blueprint state
   const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
@@ -293,20 +304,10 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     localStorage.setItem('gantt-length-unit', lengthUnit);
   }, [lengthUnit]);
 
-  // Reload configs list (used on mount and after add/update/delete)
-  const reloadConfigs = useCallback(() => {
-    setConfigs(gitlabConfigManager.getAllConfigs());
-  }, []);
-
-  // Load configs on mount
-  useEffect(() => {
-    reloadConfigs();
-  }, []);
-
-  // Initialize provider when config changes
+  // Wrap handleConfigChange to add local state cleanup
+  // NOTE: baseHandleConfigChange from useProjectConfig handles credential resolution
+  // and provider creation. This wrapper adds component-specific state cleanup.
   const handleConfigChange = useCallback((config) => {
-    setCurrentConfig(config);
-
     // Clear filter options when switching project/group
     // These will be restored from project settings after presets are loaded
     setFilterOptions({});
@@ -315,44 +316,9 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
     setServerFilterOptions(null);
     setActiveServerFilters(null);
 
-    // Clear preset state - will be loaded from project settings
-    // Note: We don't clear lastUsedPresetId and filterDirty here
-    // They will be set by the effect that watches getConfigIdentifier
-
-    // Increment config version to signal that presets need to reload
-    // This prevents the initial sync from running with stale preset data
-    setConfigVersion(v => v + 1);
-
-    const newProvider = new GitLabGraphQLProvider({
-      gitlabUrl: config.gitlabUrl,
-      token: config.token,
-      projectId: config.projectId,
-      groupId: config.groupId,
-      type: config.type,
-    });
-
-    setProvider(newProvider);
-  }, []);
-
-  // Quick switch between projects
-  const handleQuickSwitch = useCallback((configId) => {
-    gitlabConfigManager.setActiveConfig(configId);
-    const config = gitlabConfigManager.getConfig(configId);
-    if (config) {
-      handleConfigChange(config);
-    }
-  }, [handleConfigChange]);
-
-  // Initialize with active config on mount
-  useEffect(() => {
-    const activeConfig =
-      gitlabConfigManager.getConfig(initialConfigId) ||
-      gitlabConfigManager.getActiveConfig();
-
-    if (activeConfig) {
-      handleConfigChange(activeConfig);
-    }
-  }, [initialConfigId, handleConfigChange]);
+    // Call the base handler which resolves credentials and creates provider
+    baseHandleConfigChange(config);
+  }, [baseHandleConfigChange]);
 
   // Use sync hook (no auto-sync on provider change - we control initial sync timing)
   const {
@@ -371,28 +337,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   } = useGitLabSync(provider, autoSync, 60000, {
     onWarning: (message) => showToast(message, 'warning'),
   });
-
-  // Get project path for holidays hook
-  const projectPath = useMemo(() => {
-    if (!currentConfig) return null;
-    if (currentConfig.type === 'project' && currentConfig.projectId) {
-      return String(currentConfig.projectId);
-    } else if (currentConfig.type === 'group' && currentConfig.groupId) {
-      return String(currentConfig.groupId);
-    }
-    return null;
-  }, [currentConfig]);
-
-  // Get proxy config for REST API calls (for holidays)
-  // Memoize based on actual config values to prevent unnecessary re-renders
-  const proxyConfig = useMemo(() => {
-    if (!currentConfig) return null;
-    return {
-      gitlabUrl: currentConfig.gitlabUrl,
-      token: currentConfig.token,
-      isDev: import.meta.env.DEV,
-    };
-  }, [currentConfig?.gitlabUrl, currentConfig?.token]);
 
   // Check permissions when provider changes
   useEffect(() => {
@@ -676,8 +620,8 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
   }, [saveFoldStateToStorage]);
 
   // Initial sync state tracking
+  // NOTE: configVersion comes from useProjectConfig hook
   const initialSyncDoneRef = useRef(false);
-  const [configVersion, setConfigVersion] = useState(0);
   const presetsLoadedForVersionRef = useRef(-1);
   const prevPresetsLoadingRef = useRef(true);
 

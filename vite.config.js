@@ -72,6 +72,7 @@ export default defineConfig(({ command, mode }) => {
     server: {
       proxy: {
         '/api/gitlab-proxy': {
+          // Default target - will be dynamically changed per-request
           target: 'https://gitlab.rayark.com',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/gitlab-proxy/, ''),

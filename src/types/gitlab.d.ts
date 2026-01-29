@@ -3,6 +3,8 @@
  * Based on GitLab API v4
  */
 
+import type { GitLabConfigV2, GitLabCredential } from './credential';
+
 export type GitLabIssueState = 'opened' | 'closed';
 export type GitLabIssueLinkType = 'relates_to' | 'blocks' | 'is_blocked_by';
 
@@ -112,7 +114,24 @@ export interface GitLabGroup {
   avatar_url: string | null;
 }
 
-export interface GitLabConfig {
+/**
+ * GitLab Config - now extends GitLabConfigV2 with credentialId
+ */
+export interface GitLabConfig extends GitLabConfigV2 {}
+
+/**
+ * Resolved config type with credential info
+ * Use this when you need both config and its associated credential data
+ */
+export interface GitLabConfigResolved extends GitLabConfigV2 {
+  credential: GitLabCredential;
+}
+
+/**
+ * @deprecated Use GitLabConfigV2 from credential.ts instead
+ * Legacy config format with inline gitlabUrl/token
+ */
+export interface GitLabConfigLegacy {
   id: string;
   name: string;
   gitlabUrl: string;

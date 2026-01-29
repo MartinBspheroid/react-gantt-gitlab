@@ -36,3 +36,11 @@ export {
   Willow,
   WillowDark,
 };
+
+// Credential management (shared-credentials feature)
+export {
+  gitlabCredentialManager,
+  GitLabCredentialManager,
+} from './config/GitLabCredentialManager';
+export { CredentialManager } from './components/CredentialManager';
+export { ProjectBrowser } from './components/ProjectBrowser';
