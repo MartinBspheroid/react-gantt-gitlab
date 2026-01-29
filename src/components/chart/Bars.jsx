@@ -11,7 +11,7 @@ import { locate, locateID } from '@svar-ui/lib-dom';
 import { getID } from '../../helpers/locate';
 import storeContext from '../../context';
 import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
-import { getMatchingRules } from '../../types/colorRule';
+import { getMatchingRules, parseLabelsString } from '../../types/colorRule';
 import './Bars.css';
 
 // Parent task baseline 括號樣式常數（9-slice 設計：斜邊固定，中間伸縮）
@@ -543,7 +543,7 @@ function Bars(props) {
         if (task.$skip) return null;
 
         // Color rules matching
-        const matchedRules = getMatchingRules(task.text, colorRules);
+        const matchedRules = getMatchingRules(task.text, parseLabelsString(task.labels), colorRules);
         const hasColorRules = matchedRules.length > 0;
 
         // Build stripe class based on number of matches

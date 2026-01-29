@@ -1,6 +1,6 @@
 /**
  * Color Rule Types
- * 自訂顏色規則的類型定義，用於根據 issue title 條件匹配顯示不同顏色條紋
+ * 自訂顏色規則的類型定義，用於根據 issue title 或 label 條件匹配顯示不同顏色條紋
  */
 
 /**
@@ -9,6 +9,13 @@
  * - 'regex': 正則表達式匹配
  */
 export type ColorRuleMatchType = 'contains' | 'regex';
+
+/**
+ * 條件類型
+ * - 'title': 根據 issue title 匹配
+ * - 'label': 根據 issue labels 匹配 (任一 label 符合即可)
+ */
+export type ColorRuleConditionType = 'title' | 'label';
 
 /**
  * 顏色規則
@@ -22,6 +29,8 @@ export interface ColorRule {
   pattern: string;
   /** 匹配類型 */
   matchType: ColorRuleMatchType;
+  /** 條件類型 (title 或 label)，預設為 title */
+  conditionType?: ColorRuleConditionType;
   /** 條紋顏色 (hex 格式，如 '#FF0000') */
   color: string;
   /** 顏色透明度 (0-1，預設為 1) */
@@ -33,17 +42,32 @@ export interface ColorRule {
 }
 
 /**
- * 檢查 issue title 是否符合規則
+ * 將 labels 字串 (逗號分隔) 轉換為陣列
+ * @param labelsString - 以 ', ' 分隔的 labels 字串
  */
-export function matchesRule(title: string, rule: ColorRule): boolean {
-  if (!rule.enabled || !title || !rule.pattern) return false;
+export function parseLabelsString(
+  labelsString: string | undefined | null,
+): string[] {
+  if (!labelsString) return [];
+  return labelsString.split(', ').filter(Boolean);
+}
 
-  if (rule.matchType === 'contains') {
-    return title.toLowerCase().includes(rule.pattern.toLowerCase());
-  } else if (rule.matchType === 'regex') {
+/**
+ * 匹配文字與 pattern (共用邏輯)
+ */
+export function matchPattern(
+  text: string,
+  pattern: string,
+  matchType: ColorRuleMatchType,
+): boolean {
+  if (!text) return false;
+
+  if (matchType === 'contains') {
+    return text.toLowerCase().includes(pattern.toLowerCase());
+  } else if (matchType === 'regex') {
     try {
-      const regex = new RegExp(rule.pattern, 'i');
-      return regex.test(title);
+      const regex = new RegExp(pattern, 'i');
+      return regex.test(text);
     } catch {
       // Invalid regex pattern, silently skip
       return false;
@@ -53,16 +77,45 @@ export function matchesRule(title: string, rule: ColorRule): boolean {
 }
 
 /**
+ * 檢查 issue 是否符合規則
+ * @param title - issue title
+ * @param labels - issue labels 陣列
+ * @param rule - 顏色規則
+ */
+export function matchesRule(
+  title: string,
+  labels: string[],
+  rule: ColorRule,
+): boolean {
+  if (!rule.enabled || !rule.pattern) return false;
+
+  const conditionType = rule.conditionType || 'title'; // 向下相容
+
+  if (conditionType === 'title') {
+    return matchPattern(title, rule.pattern, rule.matchType);
+  } else {
+    // label 條件：任一 label 符合即可
+    return (labels || []).some((label) =>
+      matchPattern(label, rule.pattern, rule.matchType),
+    );
+  }
+}
+
+/**
  * 取得符合的規則列表 (依優先度排序，最多 3 個)
+ * @param title - issue title
+ * @param labels - issue labels 陣列
+ * @param rules - 所有顏色規則
  */
 export function getMatchingRules(
   title: string,
+  labels: string[],
   rules: ColorRule[],
 ): ColorRule[] {
-  if (!title || !rules?.length) return [];
+  if (!rules?.length) return [];
 
   return rules
-    .filter((rule) => matchesRule(title, rule))
+    .filter((rule) => matchesRule(title, labels, rule))
     .sort((a, b) => a.priority - b.priority)
     .slice(0, 3);
 }

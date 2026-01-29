@@ -1,4 +1,4 @@
-import { getMatchingRules } from '../../types/colorRule';
+import { getMatchingRules, parseLabelsString } from '../../types/colorRule';
 import './TextCell.css';
 
 /**
@@ -25,7 +25,9 @@ function TextCell({ row, column }) {
 
   const CellComponent = column && column._cell;
   const colorRules = column?.colorRules;
-  const matchedRules = colorRules ? getMatchingRules(row.text, colorRules) : [];
+  const matchedRules = colorRules
+    ? getMatchingRules(row.text, parseLabelsString(row.labels), colorRules)
+    : [];
 
   return (
     <div className="wx-pqc08MHU wx-content" style={getStyle(row, column)}>

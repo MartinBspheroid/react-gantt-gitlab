@@ -1,9 +1,10 @@
 /**
  * Color Rules Editor Component
- * UI for managing color rules that highlight tasks based on title patterns
+ * UI for managing color rules that highlight tasks based on title or label patterns
  */
 
 import { useState, useCallback } from 'react';
+import { matchPattern } from '../types/colorRule';
 import './ColorRulesEditor.css';
 
 // Predefined color palette (without alpha, will be combined with opacity)
@@ -65,35 +66,19 @@ function hexToRgba(hex, opacity) {
 }
 
 /**
- * Extract opacity from rgba or return default
+ * Test if a rule matches given title and labels (for test area)
  */
-function extractOpacity(color) {
-  if (!color) return 1;
-  if (color.startsWith('#')) return 1;
-  const match = color.match(/rgba?\([^)]+,\s*([\d.]+)\)/);
-  if (match) {
-    return parseFloat(match[1]);
-  }
-  return 1;
-}
+function testRuleMatch(rule, testTitle, testLabels) {
+  if (!rule.enabled || !rule.pattern) return false;
 
-/**
- * Test if a pattern matches a sample text
- */
-function testPattern(text, pattern, matchType) {
-  if (!text || !pattern) return false;
+  const conditionType = rule.conditionType || 'title';
 
-  if (matchType === 'contains') {
-    return text.toLowerCase().includes(pattern.toLowerCase());
-  } else if (matchType === 'regex') {
-    try {
-      const regex = new RegExp(pattern, 'i');
-      return regex.test(text);
-    } catch {
-      return false;
-    }
+  if (conditionType === 'title') {
+    return matchPattern(testTitle, rule.pattern, rule.matchType);
+  } else {
+    // label: 任一 label 符合即可
+    return testLabels.some(label => matchPattern(label, rule.pattern, rule.matchType));
   }
-  return false;
 }
 
 export function ColorRulesEditor({
@@ -103,15 +88,22 @@ export function ColorRulesEditor({
   saving = false,
 }) {
   const [editingRule, setEditingRule] = useState(null);
-  const [testText, setTestText] = useState('');
+  const [testTitle, setTestTitle] = useState('');
+  const [testLabels, setTestLabels] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newRule, setNewRule] = useState({
     name: '',
     pattern: '',
     matchType: 'contains',
+    conditionType: 'title',
     color: PREDEFINED_COLORS[0],
     opacity: 1,
   });
+
+  // Parse test labels string to array
+  const testLabelsArray = testLabels
+    ? testLabels.split(',').map(l => l.trim()).filter(Boolean)
+    : [];
 
   // Add a new rule
   const handleAddRule = useCallback(() => {
@@ -122,6 +114,7 @@ export function ColorRulesEditor({
       name: newRule.name.trim(),
       pattern: newRule.pattern.trim(),
       matchType: newRule.matchType,
+      conditionType: newRule.conditionType,
       color: newRule.color,
       opacity: newRule.opacity,
       priority: rules.length,
@@ -133,6 +126,7 @@ export function ColorRulesEditor({
       name: '',
       pattern: '',
       matchType: 'contains',
+      conditionType: 'title',
       color: PREDEFINED_COLORS[0],
       opacity: 1,
     });
@@ -154,7 +148,7 @@ export function ColorRulesEditor({
   // Update a rule
   const handleUpdateRule = useCallback((id, updates) => {
     onRulesChange(rules.map(r =>
-      r.id === id ? { ...r, name: updates.name, pattern: updates.pattern, matchType: updates.matchType, color: updates.color, opacity: updates.opacity } : r
+      r.id === id ? { ...r, name: updates.name, pattern: updates.pattern, matchType: updates.matchType, conditionType: updates.conditionType, color: updates.color, opacity: updates.opacity } : r
     ));
     setEditingRule(null);
   }, [rules, onRulesChange]);
@@ -186,6 +180,7 @@ export function ColorRulesEditor({
       ...rule,
       color: color.startsWith('#') ? color : extractHexColor(color),
       opacity: rule.opacity ?? 1,
+      conditionType: rule.conditionType || 'title',
     });
   }, []);
 
@@ -193,17 +188,30 @@ export function ColorRulesEditor({
     <div className="color-rules-editor">
       {/* Test Area - moved to top */}
       <div className="color-rules-test">
-        <label>Test Pattern:</label>
-        <input
-          type="text"
-          value={testText}
-          onChange={(e) => setTestText(e.target.value)}
-          placeholder="Enter issue title to test matching..."
-        />
-        {testText && (
+        <div className="color-rules-test-inputs">
+          <div className="test-input-group">
+            <label>Test Title:</label>
+            <input
+              type="text"
+              value={testTitle}
+              onChange={(e) => setTestTitle(e.target.value)}
+              placeholder="Enter issue title..."
+            />
+          </div>
+          <div className="test-input-group">
+            <label>Test Labels:</label>
+            <input
+              type="text"
+              value={testLabels}
+              onChange={(e) => setTestLabels(e.target.value)}
+              placeholder="bug, urgent, feature (comma separated)"
+            />
+          </div>
+        </div>
+        {(testTitle || testLabels) && (
           <div className="color-rules-test-results">
             Matched rules:
-            {rules.filter(r => r.enabled && testPattern(testText, r.pattern, r.matchType)).map(r => (
+            {rules.filter(r => testRuleMatch(r, testTitle, testLabelsArray)).map(r => (
               <span
                 key={r.id}
                 className="matched-rule-tag"
@@ -212,7 +220,7 @@ export function ColorRulesEditor({
                 {r.name}
               </span>
             ))}
-            {rules.filter(r => r.enabled && testPattern(testText, r.pattern, r.matchType)).length === 0 && (
+            {rules.filter(r => testRuleMatch(r, testTitle, testLabelsArray)).length === 0 && (
               <span className="no-match">No match</span>
             )}
           </div>
@@ -238,6 +246,7 @@ export function ColorRulesEditor({
               <div className="color-rule-info">
                 <div className="color-rule-name">{rule.name}</div>
                 <div className="color-rule-pattern">
+                  <span className="condition-type">[{(rule.conditionType || 'title') === 'title' ? 'Title' : 'Label'}]</span>
                   {rule.matchType === 'regex' ? (
                     <span className="pattern-type">regex:</span>
                   ) : (
@@ -308,6 +317,16 @@ export function ColorRulesEditor({
                 />
               </div>
               <div className="form-row">
+                <label>Condition</label>
+                <select
+                  value={newRule.conditionType}
+                  onChange={(e) => setNewRule({ ...newRule, conditionType: e.target.value })}
+                >
+                  <option value="title">Title</option>
+                  <option value="label">Label</option>
+                </select>
+              </div>
+              <div className="form-row">
                 <label>Match Type</label>
                 <select
                   value={newRule.matchType}
@@ -323,7 +342,10 @@ export function ColorRulesEditor({
                   type="text"
                   value={newRule.pattern}
                   onChange={(e) => setNewRule({ ...newRule, pattern: e.target.value })}
-                  placeholder={newRule.matchType === 'regex' ? 'e.g., \\[urgent\\]' : 'e.g., [urgent]'}
+                  placeholder={newRule.conditionType === 'label'
+                    ? (newRule.matchType === 'regex' ? 'e.g., ^bug.*' : 'e.g., bug')
+                    : (newRule.matchType === 'regex' ? 'e.g., \\[urgent\\]' : 'e.g., [urgent]')
+                  }
                 />
               </div>
               <div className="form-row">
@@ -408,6 +430,16 @@ export function ColorRulesEditor({
                   value={editingRule.name}
                   onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })}
                 />
+              </div>
+              <div className="form-row">
+                <label>Condition</label>
+                <select
+                  value={editingRule.conditionType}
+                  onChange={(e) => setEditingRule({ ...editingRule, conditionType: e.target.value })}
+                >
+                  <option value="title">Title</option>
+                  <option value="label">Label</option>
+                </select>
               </div>
               <div className="form-row">
                 <label>Match Type</label>
