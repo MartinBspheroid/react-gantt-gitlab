@@ -1,24 +1,38 @@
 /**
  * GitLab Configuration Manager
  * Manages multiple GitLab project/group configurations with localStorage persistence
+ *
+ * NOTE: This manager now uses credentialId to reference credentials stored in
+ * GitLabCredentialManager, instead of storing gitlabUrl/token inline.
+ * Migration from legacy format happens automatically on first load.
  */
 
-import type { GitLabConfig } from '../types/gitlab';
+import type { GitLabConfigV2, GitLabCredential } from '../types/credential';
+import { gitlabCredentialManager } from './GitLabCredentialManager';
+import { runMigrationIfNeeded } from './configMigration';
 
 const STORAGE_KEY = 'gitlab_gantt_configs';
 const ACTIVE_CONFIG_KEY = 'gitlab_gantt_active_config';
 
+// Re-export for backwards compatibility
+export type GitLabConfig = GitLabConfigV2;
+
 export class GitLabConfigManager {
-  private configs: Map<string, GitLabConfig> = new Map();
+  private configs: Map<string, GitLabConfigV2> = new Map();
   private activeConfigId: string | null = null;
 
   constructor() {
+    // Run migration before loading configs
+    // NOTE: This ensures legacy configs with inline gitlabUrl/token are
+    // converted to use credentialId before we try to load them.
+    runMigrationIfNeeded();
     this.loadFromStorage();
   }
 
   /**
    * Normalize GitLab URL to remove project/group paths
    * Extracts only the base GitLab instance URL
+   * @deprecated Use GitLabCredentialManager.normalizeGitLabUrl instead
    */
   static normalizeGitLabUrl(url: string): string {
     try {
@@ -39,7 +53,7 @@ export class GitLabConfigManager {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const configs: GitLabConfig[] = JSON.parse(stored);
+        const configs: GitLabConfigV2[] = JSON.parse(stored);
         configs.forEach((config) => {
           this.configs.set(config.id, config);
         });
@@ -81,14 +95,20 @@ export class GitLabConfigManager {
   }
 
   /**
-   * Add or update a configuration
+   * Add a new configuration (requires valid credentialId)
    */
-  addConfig(config: Omit<GitLabConfig, 'id'>): GitLabConfig {
+  addConfig(config: Omit<GitLabConfigV2, 'id'>): GitLabConfigV2 {
+    // Validate credentialId exists
+    const credential = gitlabCredentialManager.getCredential(
+      config.credentialId,
+    );
+    if (!credential) {
+      throw new Error(`Credential not found: ${config.credentialId}`);
+    }
+
     const id = this.generateId();
-    const newConfig: GitLabConfig = {
+    const newConfig: GitLabConfigV2 = {
       ...config,
-      // Normalize GitLab URL to remove project/group paths
-      gitlabUrl: GitLabConfigManager.normalizeGitLabUrl(config.gitlabUrl),
       id,
     };
 
@@ -106,20 +126,26 @@ export class GitLabConfigManager {
   /**
    * Update existing configuration
    */
-  updateConfig(id: string, updates: Partial<GitLabConfig>): boolean {
+  updateConfig(id: string, updates: Partial<GitLabConfigV2>): boolean {
     const existing = this.configs.get(id);
     if (!existing) {
       return false;
     }
 
-    const updated: GitLabConfig = {
+    // If updating credentialId, validate it exists
+    if (updates.credentialId) {
+      const credential = gitlabCredentialManager.getCredential(
+        updates.credentialId,
+      );
+      if (!credential) {
+        throw new Error(`Credential not found: ${updates.credentialId}`);
+      }
+    }
+
+    const updated: GitLabConfigV2 = {
       ...existing,
       ...updates,
       id, // Preserve ID
-      // Normalize GitLab URL if it's being updated
-      gitlabUrl: updates.gitlabUrl
-        ? GitLabConfigManager.normalizeGitLabUrl(updates.gitlabUrl)
-        : existing.gitlabUrl,
     };
 
     this.configs.set(id, updated);
@@ -153,21 +179,21 @@ export class GitLabConfigManager {
   /**
    * Get a specific configuration
    */
-  getConfig(id: string): GitLabConfig | undefined {
+  getConfig(id: string): GitLabConfigV2 | undefined {
     return this.configs.get(id);
   }
 
   /**
    * Get all configurations
    */
-  getAllConfigs(): GitLabConfig[] {
+  getAllConfigs(): GitLabConfigV2[] {
     return Array.from(this.configs.values());
   }
 
   /**
    * Get active configuration
    */
-  getActiveConfig(): GitLabConfig | null {
+  getActiveConfig(): GitLabConfigV2 | null {
     if (!this.activeConfigId) {
       return null;
     }
@@ -219,7 +245,7 @@ export class GitLabConfigManager {
   /**
    * Validate configuration
    */
-  static validateConfig(config: Partial<GitLabConfig>): {
+  static validateConfig(config: Partial<GitLabConfigV2>): {
     valid: boolean;
     errors: string[];
   } {
@@ -229,15 +255,16 @@ export class GitLabConfigManager {
       errors.push('Configuration name is required');
     }
 
-    if (
-      !config.gitlabUrl ||
-      !GitLabConfigManager.validateUrl(config.gitlabUrl)
-    ) {
-      errors.push('Valid GitLab URL is required (http:// or https://)');
-    }
-
-    if (!config.token || config.token.trim() === '') {
-      errors.push('GitLab access token is required');
+    if (!config.credentialId) {
+      errors.push('Credential is required');
+    } else {
+      // Validate credential exists
+      const credential = gitlabCredentialManager.getCredential(
+        config.credentialId,
+      );
+      if (!credential) {
+        errors.push('Selected credential not found');
+      }
     }
 
     if (
@@ -263,50 +290,63 @@ export class GitLabConfigManager {
 
   /**
    * Test connection to GitLab instance
+   * @deprecated Use GitLabCredentialManager.testConnection instead
    */
   static async testConnection(config: {
     gitlabUrl: string;
     token: string;
   }): Promise<{ success: boolean; error?: string }> {
-    try {
-      // Use proxy in development or production to avoid CORS issues
-      const isDev = import.meta.env.DEV;
-      const corsProxy = import.meta.env.VITE_CORS_PROXY;
+    // Delegate to CredentialManager which has the canonical implementation
+    const { GitLabCredentialManager } = await import(
+      './GitLabCredentialManager'
+    );
+    return GitLabCredentialManager.testConnection(config);
+  }
 
-      let apiUrl: string;
-      let headers: HeadersInit;
+  /**
+   * Get config with resolved credential info
+   * Returns null if config or credential is missing
+   *
+   * NOTE: Use this when you need both the config and its associated
+   * credential information (e.g., for making API calls).
+   */
+  getConfigWithCredential(
+    id: string,
+  ): (GitLabConfigV2 & { credential: GitLabCredential }) | null {
+    const config = this.configs.get(id);
+    if (!config) return null;
 
-      if (isDev) {
-        // Development: use Vite proxy
-        apiUrl = `/api/gitlab-proxy/api/v4/user`;
-        headers = { 'X-GitLab-Token': config.token };
-      } else if (corsProxy) {
-        // Production with CORS proxy
-        apiUrl = `${corsProxy}/${config.gitlabUrl}/api/v4/user`;
-        headers = { 'PRIVATE-TOKEN': config.token };
-      } else {
-        // Production without CORS proxy (direct access)
-        apiUrl = `${config.gitlabUrl}/api/v4/user`;
-        headers = { 'PRIVATE-TOKEN': config.token };
-      }
+    const credential = gitlabCredentialManager.getCredential(
+      config.credentialId,
+    );
+    if (!credential) return null;
 
-      const response = await fetch(apiUrl, { headers });
+    return { ...config, credential };
+  }
 
-      if (response.ok) {
-        return { success: true };
-      } else {
-        const error = await response.text();
-        return {
-          success: false,
-          error: `HTTP ${response.status}: ${error}`,
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Connection failed',
-      };
-    }
+  /**
+   * Check if config has valid credential
+   *
+   * NOTE: Credentials can be deleted independently, so a config may become
+   * invalid if its referenced credential is removed. Use this method to
+   * check validity before attempting API operations.
+   */
+  hasValidCredential(id: string): boolean {
+    const config = this.configs.get(id);
+    if (!config) return false;
+    return !!gitlabCredentialManager.getCredential(config.credentialId);
+  }
+
+  /**
+   * Get configs using a specific credential
+   *
+   * NOTE: Useful for checking dependencies before deleting a credential.
+   * If any configs use the credential, user should be warned.
+   */
+  getConfigsByCredential(credentialId: string): GitLabConfigV2[] {
+    return Array.from(this.configs.values()).filter(
+      (config) => config.credentialId === credentialId,
+    );
   }
 }
 
