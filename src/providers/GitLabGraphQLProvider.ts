@@ -112,6 +112,12 @@ export interface GitLabGraphQLProviderConfig {
   projectId?: string | number;
   groupId?: string | number;
   type: 'project' | 'group';
+  /**
+   * Full path of the project or group (e.g., "namespace/project-name" or "group-name")
+   * Required for GitLab GraphQL API queries.
+   * If not provided, getFullPath() will use projectId/groupId (legacy behavior).
+   */
+  fullPath?: string;
 }
 
 interface WorkItem {
@@ -206,9 +212,20 @@ export class GitLabGraphQLProvider {
   }
 
   /**
-   * Get project/group full path
+   * Get project/group full path for GraphQL API queries
+   *
+   * NOTE: GitLab GraphQL API requires the full path (e.g., "namespace/project-name"),
+   * not a numeric ID. This method prioritizes config.fullPath if available,
+   * falling back to projectId/groupId for legacy configs that may have stored
+   * the path there instead of a numeric ID.
    */
   private getFullPath(): string {
+    // Prefer fullPath if available (new config format)
+    if (this.config.fullPath) {
+      return this.config.fullPath;
+    }
+    // Fallback for legacy configs: use projectId/groupId
+    // (These may contain path strings in older configs)
     if (this.config.type === 'group') {
       return String(this.config.groupId);
     }
@@ -4926,5 +4943,75 @@ export class GitLabGraphQLProvider {
     }
 
     return results;
+  }
+
+  /**
+   * Resolve fullPath from numeric project/group ID using GitLab GraphQL API
+   *
+   * This static method allows converting a numeric ID to fullPath before
+   * creating a provider instance. Useful when configs store numeric IDs
+   * but we need fullPath for GraphQL queries.
+   *
+   * @param config - Connection config with gitlabUrl, token, and type
+   * @param numericId - The numeric ID of the project or group
+   * @returns The fullPath (e.g., "namespace/project-name") or null if not found
+   */
+  static async resolveFullPathFromId(
+    config: { gitlabUrl: string; token: string },
+    type: 'project' | 'group',
+    numericId: string | number,
+  ): Promise<string | null> {
+    const client = new GitLabGraphQLClient({
+      gitlabUrl: config.gitlabUrl,
+      token: config.token,
+    });
+
+    try {
+      if (type === 'project') {
+        // Query project by Global ID
+        // Pass as array since the API expects [ID!]
+        const globalId = `gid://gitlab/Project/${numericId}`;
+        const query = `
+          query resolveProjectPath($ids: [ID!]!) {
+            projects(ids: $ids) {
+              nodes {
+                fullPath
+              }
+            }
+          }
+        `;
+
+        const result = await client.query<{
+          projects?: { nodes: Array<{ fullPath: string }> };
+        }>(query, { ids: [globalId] });
+
+        return result.projects?.nodes?.[0]?.fullPath ?? null;
+      } else {
+        // Query group by Global ID
+        // Pass as array since the API expects [ID!]
+        const globalId = `gid://gitlab/Group/${numericId}`;
+        const query = `
+          query resolveGroupPath($ids: [ID!]!) {
+            groups(ids: $ids) {
+              nodes {
+                fullPath
+              }
+            }
+          }
+        `;
+
+        const result = await client.query<{
+          groups?: { nodes: Array<{ fullPath: string }> };
+        }>(query, { ids: [globalId] });
+
+        return result.groups?.nodes?.[0]?.fullPath ?? null;
+      }
+    } catch (error) {
+      console.error(
+        '[GitLabGraphQL] Failed to resolve fullPath from ID:',
+        error,
+      );
+      return null;
+    }
   }
 }

@@ -15,6 +15,10 @@ export interface GitLabCredential {
 /**
  * GitLab Config with credential reference
  * New format using credentialId instead of inline gitlabUrl/token
+ *
+ * NOTE: fullPath is required for GitLab GraphQL API queries.
+ * projectId/groupId are kept for backwards compatibility but fullPath
+ * should be used preferentially by GitLabGraphQLProvider.
  */
 export interface GitLabConfigV2 {
   id: string;
@@ -23,6 +27,12 @@ export interface GitLabConfigV2 {
   type: 'project' | 'group';
   projectId?: string;
   groupId?: string;
+  /**
+   * Full path of the project or group (e.g., "namespace/project-name" or "group-name")
+   * Required for GitLab GraphQL API queries.
+   * Falls back to projectId/groupId if not set (for legacy configs).
+   */
+  fullPath?: string;
   isDefault?: boolean;
 }
 

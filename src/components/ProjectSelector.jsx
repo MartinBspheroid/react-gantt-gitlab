@@ -1,10 +1,23 @@
 /**
  * Project Selector Component
  * Allows switching between multiple GitLab projects/groups
+ *
+ * Features:
+ * - 4-step wizard for new configurations (Type → Credential → Browse → Confirm)
+ * - Legacy edit flow for existing configs
+ * - Credential selection with inline creation option
+ * - ProjectBrowser integration for browsing projects/groups
+ * - Warning indicator for configs with missing credentials
  */
 
 import { useState, useEffect } from 'react';
-import { gitlabConfigManager } from '../config/GitLabConfigManager';
+import { gitlabConfigManager, GitLabConfigManager } from '../config/GitLabConfigManager';
+import {
+  gitlabCredentialManager,
+  GitLabCredentialManager,
+} from '../config/GitLabCredentialManager';
+import { CredentialManager } from './CredentialManager';
+import { ProjectBrowser } from './ProjectBrowser';
 import { ConfirmDialog } from './shared/dialogs/ConfirmDialog';
 
 export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsChange }) {
@@ -13,11 +26,14 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
   const [editingConfig, setEditingConfig] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    gitlabUrl: '',
-    token: '',
     type: 'project',
     projectId: '',
     groupId: '',
+    // fullPath for GitLab GraphQL API queries
+    fullPath: '',
+    // Legacy fields for editing existing configs
+    gitlabUrl: '',
+    token: '',
   });
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState(null);
@@ -28,14 +44,56 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
   const [validationErrorOpen, setValidationErrorOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
 
+  // Credential manager modal
+  const [showCredentialManager, setShowCredentialManager] = useState(false);
+
+  // New wizard flow states
+  const [wizardStep, setWizardStep] = useState(1); // 1: type, 2: credential, 3: browse, 4: confirm
+  const [credentials, setCredentials] = useState([]);
+  const [selectedCredentialId, setSelectedCredentialId] = useState(null);
+  const [showNewCredentialForm, setShowNewCredentialForm] = useState(false);
+  const [newCredentialData, setNewCredentialData] = useState({
+    name: '',
+    gitlabUrl: 'https://gitlab.com',
+    token: '',
+  });
+  const [selectedProject, setSelectedProject] = useState(null);
+  // Manual input mode for step 3 (alternative to tree browsing)
+  const [useManualInput, setUseManualInput] = useState(false);
+  const [manualProjectInput, setManualProjectInput] = useState('');
+  // Show browser in edit mode
+  const [showEditBrowser, setShowEditBrowser] = useState(false);
+
+  // Check for missing credentials
+  const [configsWithMissingCredentials, setConfigsWithMissingCredentials] = useState(new Set());
+
+  const loadCredentials = () => {
+    setCredentials(gitlabCredentialManager.getAllCredentials());
+  };
+
+  // Check for missing credentials when configs change
   useEffect(() => {
-    loadConfigs();
-  }, []);
+    const missingSet = new Set();
+    configs.forEach((config) => {
+      if (!gitlabConfigManager.hasValidCredential(config.id)) {
+        missingSet.add(config.id);
+      }
+    });
+    setConfigsWithMissingCredentials(missingSet);
+  }, [configs]);
 
   const loadConfigs = () => {
     const allConfigs = gitlabConfigManager.getAllConfigs();
     setConfigs(allConfigs);
   };
+
+  useEffect(() => {
+    loadCredentials();
+  }, []);
+
+  useEffect(() => {
+    loadConfigs();
+  }, []);
 
   const handleSelectConfig = (configId) => {
     gitlabConfigManager.setActiveConfig(configId);
@@ -47,30 +105,49 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
 
   const handleAddNew = () => {
     setEditingConfig(null);
+    setWizardStep(1);
     setFormData({
       name: '',
-      gitlabUrl: 'https://gitlab.com',
-      token: '',
       type: 'project',
       projectId: '',
       groupId: '',
+      fullPath: '',
+      gitlabUrl: '',
+      token: '',
     });
+    setSelectedCredentialId(null);
+    setSelectedProject(null);
+    setShowNewCredentialForm(false);
+    setNewCredentialData({
+      name: '',
+      gitlabUrl: 'https://gitlab.com',
+      token: '',
+    });
+    setUseManualInput(false);
+    setManualProjectInput('');
     setConnectionStatus(null);
     setShowModal(true);
+    loadCredentials();
   };
 
   const handleEdit = (config) => {
     setEditingConfig(config);
+    // For editing, we'll get the credential info
+    const configWithCred = gitlabConfigManager.getConfigWithCredential(config.id);
     setFormData({
       name: config.name,
-      gitlabUrl: config.gitlabUrl,
-      token: config.token,
+      gitlabUrl: configWithCred?.credential?.gitlabUrl || '',
+      token: configWithCred?.credential?.token || '',
       type: config.type,
       projectId: config.projectId || '',
       groupId: config.groupId || '',
+      fullPath: config.fullPath || '',
     });
+    setSelectedCredentialId(config.credentialId);
+    setShowEditBrowser(false);
     setConnectionStatus(null);
     setShowModal(true);
+    loadCredentials();
   };
 
   const handleDelete = (configId) => {
@@ -97,17 +174,106 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
     setDeleteConfigId(null);
   };
 
-  const handleTestConnection = async () => {
+  // Wizard navigation functions
+  const handleWizardNext = () => {
+    if (wizardStep === 1) {
+      // Type selection - just move forward
+      setWizardStep(2);
+    } else if (wizardStep === 2) {
+      // Credential selection - validate credential is selected
+      if (!selectedCredentialId) {
+        setConnectionStatus({
+          success: false,
+          error: 'Please select or add a credential',
+        });
+        return;
+      }
+      setConnectionStatus(null);
+      setWizardStep(3);
+    } else if (wizardStep === 3) {
+      // Project/Group selection - validate selection (either from browser or manual input)
+      if (useManualInput) {
+        // Manual input mode - validate input
+        const trimmedInput = manualProjectInput.trim();
+        if (!trimmedInput) {
+          setConnectionStatus({
+            success: false,
+            error: formData.type === 'project'
+              ? 'Please enter project ID or path'
+              : 'Please enter group ID or path',
+          });
+          return;
+        }
+        // Set the ID directly from manual input
+        // Manual input is assumed to be a fullPath (e.g., "namespace/project-name")
+        setFormData((prev) => ({
+          ...prev,
+          projectId: formData.type === 'project' ? trimmedInput : '',
+          groupId: formData.type === 'group' ? trimmedInput : '',
+          // Store fullPath for GitLab GraphQL API queries
+          fullPath: trimmedInput,
+          // Use the input as name if name is empty
+          name: prev.name || trimmedInput.split('/').pop() || trimmedInput,
+        }));
+        // Create a fake selectedProject for the confirmation screen
+        setSelectedProject({
+          id: trimmedInput,
+          name: trimmedInput.split('/').pop() || trimmedInput,
+          fullPath: trimmedInput,
+          type: formData.type,
+        });
+      } else {
+        // Browser mode - validate selection
+        if (!selectedProject) {
+          setConnectionStatus({
+            success: false,
+            error: formData.type === 'project' ? 'Please select a project' : 'Please select a group',
+          });
+          return;
+        }
+        // Auto-fill name from selected project/group
+        if (!formData.name) {
+          setFormData((prev) => ({
+            ...prev,
+            name: selectedProject.name,
+          }));
+        }
+      }
+      setConnectionStatus(null);
+      setWizardStep(4);
+    }
+  };
+
+  const handleWizardBack = () => {
+    if (wizardStep > 1) {
+      setWizardStep(wizardStep - 1);
+      setConnectionStatus(null);
+    }
+  };
+
+  // Test connection for new credential form
+  const handleTestNewCredential = async () => {
     setTestingConnection(true);
     setConnectionStatus(null);
 
     try {
-      const result = await gitlabConfigManager.constructor.testConnection({
-        gitlabUrl: formData.gitlabUrl,
-        token: formData.token,
+      const result = await GitLabCredentialManager.testConnection({
+        gitlabUrl: newCredentialData.gitlabUrl,
+        token: newCredentialData.token,
       });
 
       setConnectionStatus(result);
+
+      // Auto-fill name from domain if successful and name is empty
+      if (result.success && !newCredentialData.name.trim()) {
+        const domainName = GitLabCredentialManager.extractDomainName(
+          newCredentialData.gitlabUrl
+        );
+        setNewCredentialData((prev) => ({
+          ...prev,
+          name: domainName,
+        }));
+      }
     } catch (error) {
       setConnectionStatus({
         success: false,
@@ -118,21 +284,111 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
     }
   };
 
-  const handleSave = () => {
-    const validation = gitlabConfigManager.constructor.validateConfig(formData);
-
-    if (!validation.valid) {
-      setValidationErrors(validation.errors);
-      setValidationErrorOpen(true);
+  // Save inline new credential
+  const handleNewCredentialSave = () => {
+    if (!newCredentialData.name.trim()) {
+      setConnectionStatus({
+        success: false,
+        error: 'Please enter a name',
+      });
       return;
     }
 
+    if (!newCredentialData.gitlabUrl.trim()) {
+      setConnectionStatus({
+        success: false,
+        error: 'Please enter GitLab URL',
+      });
+      return;
+    }
+
+    if (!newCredentialData.token.trim()) {
+      setConnectionStatus({
+        success: false,
+        error: 'Please enter Access Token',
+      });
+      return;
+    }
+
+    // Add the new credential
+    const newCred = gitlabCredentialManager.addCredential(newCredentialData);
+
+    // Refresh credentials list and select the new one
+    loadCredentials();
+    setSelectedCredentialId(newCred.id);
+    setShowNewCredentialForm(false);
+    setNewCredentialData({
+      name: '',
+      gitlabUrl: 'https://gitlab.com',
+      token: '',
+    });
+    setConnectionStatus(null);
+  };
+
+  // Handle project/group selection from ProjectBrowser
+  const handleProjectSelect = (project) => {
+    setSelectedProject(project);
+    setFormData((prev) => ({
+      ...prev,
+      projectId: project.type === 'project' ? String(project.id) : '',
+      groupId: project.type === 'group' ? String(project.id) : '',
+      // Store fullPath for GitLab GraphQL API queries
+      fullPath: project.fullPath,
+    }));
+  };
+
+  // Get proxy config for ProjectBrowser
+  const getProxyConfigForCredential = (credentialId) => {
+    const credential = gitlabCredentialManager.getCredential(credentialId);
+    if (!credential) return null;
+    return {
+      gitlabUrl: credential.gitlabUrl,
+      token: credential.token,
+    };
+  };
+
+  const handleSave = () => {
     if (editingConfig) {
-      // Update existing
-      gitlabConfigManager.updateConfig(editingConfig.id, formData);
+      // Legacy edit flow - update existing config
+      // NOTE: For editing, we still need to handle both legacy and new configs
+      // Legacy configs may have inline gitlabUrl/token, new configs use credentialId
+      const updates = {
+        name: formData.name,
+        type: formData.type,
+        projectId: formData.type === 'project' ? formData.projectId : undefined,
+        groupId: formData.type === 'group' ? formData.groupId : undefined,
+        // Include fullPath for GitLab GraphQL API queries
+        fullPath: formData.fullPath || undefined,
+      };
+
+      // If a credential is selected, update it
+      if (selectedCredentialId) {
+        updates.credentialId = selectedCredentialId;
+      }
+
+      gitlabConfigManager.updateConfig(editingConfig.id, updates);
     } else {
+      // New config flow with wizard - use credentialId
+      const newConfigData = {
+        name: formData.name,
+        type: formData.type,
+        credentialId: selectedCredentialId,
+        projectId: formData.type === 'project' ? formData.projectId : undefined,
+        groupId: formData.type === 'group' ? formData.groupId : undefined,
+        // Include fullPath for GitLab GraphQL API queries
+        fullPath: formData.fullPath || undefined,
+      };
+
+      const validation = GitLabConfigManager.validateConfig(newConfigData);
+
+      if (!validation.valid) {
+        setValidationErrors(validation.errors);
+        setValidationErrorOpen(true);
+        return;
+      }
+
       // Add new and set as active
-      const newConfig = gitlabConfigManager.addConfig(formData);
+      const newConfig = gitlabConfigManager.addConfig(newConfigData);
       gitlabConfigManager.setActiveConfig(newConfig.id);
       if (onProjectChange) {
         onProjectChange(newConfig);
@@ -154,9 +410,455 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
     }));
   };
 
+  // Handle credential manager close
+  const handleCredentialManagerClose = () => {
+    setShowCredentialManager(false);
+    // Refresh credentials list in case changes were made
+    loadCredentials();
+  };
+
+  // Render wizard step indicator
+  const renderWizardSteps = () => {
+    const steps = [
+      { num: 1, label: 'Type' },
+      { num: 2, label: 'Credential' },
+      { num: 3, label: 'Select' },
+      { num: 4, label: 'Confirm' },
+    ];
+
+    return (
+      <div className="wizard-steps">
+        {steps.map((step, idx) => (
+          <div key={step.num} className={`step ${wizardStep === step.num ? 'active' : ''} ${wizardStep > step.num ? 'completed' : ''}`}>
+            <span className="step-number">{step.num}</span>
+            <span className="step-label">{step.label}</span>
+            {idx < steps.length - 1 && <span className="step-connector" />}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Render wizard step content
+  const renderWizardContent = () => {
+    switch (wizardStep) {
+      case 1:
+        // Type selection
+        return (
+          <div className="wizard-content">
+            <div className="form-group">
+              <label>Select Type *</label>
+              <div className="radio-group">
+                <label className={`radio-option ${formData.type === 'project' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="project"
+                    checked={formData.type === 'project'}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
+                  />
+                  <span className="radio-label">
+                    <span className="radio-title">Project</span>
+                    <span className="radio-desc">A single GitLab project (gitlab.com/namespace/project-name)</span>
+                  </span>
+                </label>
+                <label className={`radio-option ${formData.type === 'group' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="group"
+                    checked={formData.type === 'group'}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
+                  />
+                  <span className="radio-label">
+                    <span className="radio-title">Group</span>
+                    <span className="radio-desc">All projects within a GitLab group (gitlab.com/group-name)</span>
+                  </span>
+                </label>
+              </div>
+              {formData.type === 'group' && (
+                <small className="type-warning">
+                  <i className="fas fa-exclamation-triangle"></i>
+                  <span>
+                    Group mode has limited functionality: Holidays, Color Rules, and Filter Presets
+                    are not available because GitLab does not support Group Snippets.
+                  </span>
+                </small>
+              )}
+            </div>
+          </div>
+        );
+
+      case 2:
+        // Credential selection
+        return (
+          <div className="wizard-content">
+            <div className="form-group">
+              <div className="credential-header">
+                <label>Select Credential *</label>
+              </div>
+              {!showNewCredentialForm ? (
+                <>
+                  <select
+                    value={selectedCredentialId || ''}
+                    onChange={(e) => {
+                      if (e.target.value === '__new__') {
+                        setShowNewCredentialForm(true);
+                        setSelectedCredentialId(null);
+                      } else {
+                        setSelectedCredentialId(e.target.value);
+                      }
+                    }}
+                    className="credential-select"
+                  >
+                    <option value="">Select Credential...</option>
+                    {credentials.map((cred) => (
+                      <option key={cred.id} value={cred.id}>
+                        {cred.name} ({cred.gitlabUrl})
+                      </option>
+                    ))}
+                    <option value="__new__">+ Add New Credential</option>
+                  </select>
+                  {selectedCredentialId && (
+                    <div className="selected-info">
+                      {(() => {
+                        const cred = credentials.find((c) => c.id === selectedCredentialId);
+                        return cred ? `Selected: ${cred.name} (${cred.gitlabUrl})` : '';
+                      })()}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="new-credential-form">
+                  <div className="form-group">
+                    <label>Name *</label>
+                    <input
+                      type="text"
+                      value={newCredentialData.name}
+                      onChange={(e) =>
+                        setNewCredentialData((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      placeholder="e.g., Company GitLab"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>GitLab URL *</label>
+                    <input
+                      type="text"
+                      value={newCredentialData.gitlabUrl}
+                      onChange={(e) =>
+                        setNewCredentialData((prev) => ({ ...prev, gitlabUrl: e.target.value }))
+                      }
+                      placeholder="https://gitlab.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Access Token *</label>
+                    <input
+                      type="password"
+                      value={newCredentialData.token}
+                      onChange={(e) =>
+                        setNewCredentialData((prev) => ({ ...prev, token: e.target.value }))
+                      }
+                      placeholder="glpat-xxxxxxxxxxxxxxxxxxxx"
+                    />
+                    <small>Requires a Personal Access Token with api scope</small>
+                  </div>
+
+                  <div className="form-group">
+                    <button
+                      onClick={handleTestNewCredential}
+                      disabled={
+                        testingConnection ||
+                        !newCredentialData.gitlabUrl ||
+                        !newCredentialData.token
+                      }
+                      className="btn-test"
+                    >
+                      {testingConnection ? 'Testing...' : 'Test Connection'}
+                    </button>
+                  </div>
+
+                  <div className="new-credential-actions">
+                    <button
+                      onClick={() => {
+                        setShowNewCredentialForm(false);
+                        setConnectionStatus(null);
+                        setNewCredentialData({
+                          name: '',
+                          gitlabUrl: 'https://gitlab.com',
+                          token: '',
+                        });
+                      }}
+                      className="btn-cancel-small"
+                    >
+                      Cancel
+                    </button>
+                    <button onClick={handleNewCredentialSave} className="btn-save-small">
+                      Save Credential
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {connectionStatus && (
+              <div
+                className={`connection-status ${
+                  connectionStatus.success ? 'success' : 'error'
+                }`}
+              >
+                {connectionStatus.success
+                  ? `Connection successful!${connectionStatus.username ? ` (${connectionStatus.username})` : ''}`
+                  : `Failed: ${connectionStatus.error}`}
+              </div>
+            )}
+          </div>
+        );
+
+      case 3:
+        // Project/Group browser with manual input option
+        return (
+          <div className="wizard-content">
+            <div className="form-group">
+              <div className="select-mode-toggle">
+                <label>Select {formData.type === 'project' ? 'Project' : 'Group'} *</label>
+                <button
+                  type="button"
+                  className="btn-toggle-mode"
+                  onClick={() => {
+                    setUseManualInput(!useManualInput);
+                    setConnectionStatus(null);
+                  }}
+                >
+                  {useManualInput ? 'Browse List' : 'Enter Manually'}
+                </button>
+              </div>
+
+              {useManualInput ? (
+                // Manual input mode
+                <div className="manual-input-section">
+                  <input
+                    type="text"
+                    value={manualProjectInput}
+                    onChange={(e) => setManualProjectInput(e.target.value)}
+                    placeholder={
+                      formData.type === 'project'
+                        ? 'Enter project ID or path (e.g., 12345 or namespace/project-name)'
+                        : 'Enter group ID or path (e.g., 12345 or group-name)'
+                    }
+                    className="manual-input"
+                  />
+                  <small className="manual-input-hint">
+                    Enter the numeric ID or full path (namespace/project-name)
+                  </small>
+                </div>
+              ) : selectedCredentialId ? (
+                // Browser mode
+                <ProjectBrowser
+                  proxyConfig={getProxyConfigForCredential(selectedCredentialId)}
+                  type={formData.type}
+                  onSelect={handleProjectSelect}
+                  selectedId={
+                    selectedProject
+                      ? `${selectedProject.type}-${selectedProject.id}`
+                      : null
+                  }
+                />
+              ) : (
+                <div className="pb-status pb-error">Missing credential settings</div>
+              )}
+            </div>
+            {connectionStatus && (
+              <div
+                className={`connection-status ${
+                  connectionStatus.success ? 'success' : 'error'
+                }`}
+              >
+                {connectionStatus.error}
+              </div>
+            )}
+          </div>
+        );
+
+      case 4:
+        // Confirmation
+        return (
+          <div className="wizard-content">
+            <div className="form-group">
+              <label>Configuration Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="My GitLab Project"
+              />
+            </div>
+
+            <div className="confirm-summary">
+              <h4>Summary</h4>
+              <div className="summary-item">
+                <span className="summary-label">Type:</span>
+                <span className="summary-value">{formData.type === 'project' ? 'Project' : 'Group'}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Credential:</span>
+                <span className="summary-value">
+                  {(() => {
+                    const cred = credentials.find((c) => c.id === selectedCredentialId);
+                    return cred ? `${cred.name} (${cred.gitlabUrl})` : '-';
+                  })()}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">{formData.type === 'project' ? 'Project' : 'Group'}:</span>
+                <span className="summary-value">
+                  {selectedProject ? `${selectedProject.name} (${selectedProject.fullPath})` : '-'}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">ID:</span>
+                <span className="summary-value">
+                  {formData.type === 'project' ? formData.projectId : formData.groupId}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Render legacy edit form
+  const renderLegacyEditForm = () => (
+    <>
+      <div className="form-group">
+        <label>Configuration Name *</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => handleInputChange('name', e.target.value)}
+          placeholder="My GitLab Project"
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Credential *</label>
+        <select
+          value={selectedCredentialId || ''}
+          onChange={(e) => setSelectedCredentialId(e.target.value)}
+          className="credential-select"
+        >
+          <option value="">Select Credential...</option>
+          {credentials.map((cred) => (
+            <option key={cred.id} value={cred.id}>
+              {cred.name} ({cred.gitlabUrl})
+            </option>
+          ))}
+        </select>
+        {!selectedCredentialId && formData.gitlabUrl && (
+          <small className="type-warning">
+            <span>This configuration uses legacy format. Please select or add a credential to update.</span>
+          </small>
+        )}
+      </div>
+
+      <div className="form-group">
+        <label>Type *</label>
+        <select
+          value={formData.type}
+          onChange={(e) => handleInputChange('type', e.target.value)}
+        >
+          <option value="project">Project</option>
+          <option value="group">Group</option>
+        </select>
+        <small className="type-hint">
+          {formData.type === 'project'
+            ? 'Use "Project" for a single GitLab repository (gitlab.com/namespace/project-name)'
+            : 'Use "Group" to view issues from all projects within a GitLab group (gitlab.com/group-name)'}
+        </small>
+        {formData.type === 'group' && (
+          <small className="type-warning">
+            <i className="fas fa-exclamation-triangle"></i>
+            <span>
+              Group mode has limited functionality: Holidays, Color Rules, and Filter Presets
+              are not available because GitLab does not support Group Snippets.
+            </span>
+          </small>
+        )}
+      </div>
+
+      <div className="form-group">
+        <div className="select-mode-toggle">
+          <label>{formData.type === 'project' ? 'Project' : 'Group'} ID *</label>
+          {selectedCredentialId && (
+            <button
+              type="button"
+              className="btn-toggle-mode"
+              onClick={() => setShowEditBrowser(!showEditBrowser)}
+            >
+              {showEditBrowser ? 'Enter Manually' : 'Browse List'}
+            </button>
+          )}
+        </div>
+
+        {showEditBrowser && selectedCredentialId ? (
+          <ProjectBrowser
+            proxyConfig={getProxyConfigForCredential(selectedCredentialId)}
+            type={formData.type}
+            onSelect={(project) => {
+              handleProjectSelect(project);
+              setShowEditBrowser(false);
+            }}
+            selectedId={
+              formData.type === 'project' && formData.projectId
+                ? `project-${formData.projectId}`
+                : formData.type === 'group' && formData.groupId
+                  ? `group-${formData.groupId}`
+                  : null
+            }
+          />
+        ) : (
+          <>
+            <input
+              type="text"
+              value={formData.type === 'project' ? formData.projectId : formData.groupId}
+              onChange={(e) =>
+                handleInputChange(
+                  formData.type === 'project' ? 'projectId' : 'groupId',
+                  e.target.value
+                )
+              }
+              placeholder={
+                formData.type === 'project'
+                  ? '12345 or namespace/project-name'
+                  : '12345 or group-name'
+              }
+            />
+            <small>Numeric ID or URL-encoded path</small>
+          </>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="gitlab-project-selector">
       <div className="selector-header">
+        {/* Credential button - only show when a project is selected */}
+        {currentConfigId && (
+          <button
+            onClick={() => setShowCredentialManager(true)}
+            className="btn-credentials"
+            title="Manage Credentials"
+          >
+            <i className="fas fa-key"></i>
+          </button>
+        )}
+
         <select
           value={currentConfigId || ''}
           onChange={(e) => handleSelectConfig(e.target.value)}
@@ -165,6 +867,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           <option value="">Select GitLab Project/Group...</option>
           {configs.map((config) => (
             <option key={config.id} value={config.id}>
+              {configsWithMissingCredentials.has(config.id) ? '⚠️ ' : ''}
               {config.name} ({config.type})
             </option>
           ))}
@@ -181,6 +884,11 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
             (config) =>
               config.id === currentConfigId && (
                 <div key={config.id} className="config-actions">
+                  {configsWithMissingCredentials.has(config.id) && (
+                    <span className="missing-credential-warning" title="Credential for this configuration is missing">
+                      ⚠️
+                    </span>
+                  )}
                   <button
                     onClick={() => handleEdit(config)}
                     className="btn-edit"
@@ -211,127 +919,66 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
             }
           }}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content project-selector-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingConfig ? 'Edit Configuration' : 'Add New Configuration'}</h3>
+              <h3>{editingConfig ? 'Edit Configuration' : 'Add Configuration'}</h3>
               <button onClick={() => setShowModal(false)} className="btn-close">
                 &times;
               </button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group">
-                <label>Configuration Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="My GitLab Project"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>GitLab URL *</label>
-                <input
-                  type="text"
-                  value={formData.gitlabUrl}
-                  onChange={(e) => handleInputChange('gitlabUrl', e.target.value)}
-                  placeholder="https://gitlab.com or https://gitlab.example.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Access Token *</label>
-                <input
-                  type="password"
-                  value={formData.token}
-                  onChange={(e) => handleInputChange('token', e.target.value)}
-                  placeholder="glpat-xxxxxxxxxxxxxxxxxxxx"
-                />
-                <small>Personal Access Token with api scope</small>
-              </div>
-
-              <div className="form-group">
-                <button
-                  onClick={handleTestConnection}
-                  disabled={testingConnection || !formData.gitlabUrl || !formData.token}
-                  className="btn-test"
-                >
-                  {testingConnection ? 'Testing...' : 'Test Connection'}
-                </button>
-
-                {connectionStatus && (
-                  <div
-                    className={`connection-status ${
-                      connectionStatus.success ? 'success' : 'error'
-                    }`}
-                  >
-                    {connectionStatus.success
-                      ? 'Connection successful!'
-                      : `Failed: ${connectionStatus.error}`}
-                  </div>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => handleInputChange('type', e.target.value)}
-                >
-                  <option value="project">Project</option>
-                  <option value="group">Group</option>
-                </select>
-                <small className="type-hint">
-                  {formData.type === 'project'
-                    ? 'Use "Project" for a single GitLab repository (gitlab.com/namespace/project-name)'
-                    : 'Use "Group" to view issues from all projects within a GitLab group (gitlab.com/group-name)'}
-                </small>
-                {formData.type === 'group' && (
-                  <small className="type-warning">
-                    <i className="fas fa-exclamation-triangle"></i>
-                    <span>
-                      Group mode has limited functionality: Holidays, Color Rules, and Filter Presets
-                      are not available because GitLab does not support Group Snippets.
-                    </span>
-                  </small>
-                )}
-              </div>
-
-              {formData.type === 'project' && (
-                <div className="form-group">
-                  <label>Project ID *</label>
-                  <input
-                    type="text"
-                    value={formData.projectId}
-                    onChange={(e) => handleInputChange('projectId', e.target.value)}
-                    placeholder="12345 or namespace/project-name"
-                  />
-                  <small>Numeric ID or URL-encoded path</small>
-                </div>
-              )}
-
-              {formData.type === 'group' && (
-                <div className="form-group">
-                  <label>Group ID *</label>
-                  <input
-                    type="text"
-                    value={formData.groupId}
-                    onChange={(e) => handleInputChange('groupId', e.target.value)}
-                    placeholder="12345 or group-name"
-                  />
-                  <small>Numeric ID or URL-encoded path</small>
-                </div>
+              {editingConfig ? (
+                // Legacy edit form for existing configs
+                renderLegacyEditForm()
+              ) : (
+                // New wizard flow
+                <>
+                  {renderWizardSteps()}
+                  {renderWizardContent()}
+                </>
               )}
             </div>
 
             <div className="modal-footer">
-              <button onClick={() => setShowModal(false)} className="btn-cancel">
-                Cancel
-              </button>
-              <button onClick={handleSave} className="btn-save">
-                Save
-              </button>
+              {editingConfig ? (
+                // Legacy footer for editing
+                <>
+                  <button onClick={() => setShowModal(false)} className="btn-cancel">
+                    Cancel
+                  </button>
+                  <button onClick={handleSave} className="btn-save">
+                    Save
+                  </button>
+                </>
+              ) : (
+                // Wizard footer
+                <>
+                  {wizardStep > 1 && (
+                    <button onClick={handleWizardBack} className="btn-back">
+                      Back
+                    </button>
+                  )}
+                  <button onClick={() => setShowModal(false)} className="btn-cancel">
+                    Cancel
+                  </button>
+                  {wizardStep < 4 ? (
+                    <button
+                      onClick={handleWizardNext}
+                      className="btn-next"
+                      disabled={
+                        (wizardStep === 2 && showNewCredentialForm) // Disable next when editing new credential
+                      }
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button onClick={handleSave} className="btn-save">
+                      Save
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -364,7 +1011,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           color: var(--wx-gitlab-button-text);
         }
 
-        .btn-add, .btn-edit, .btn-delete {
+        .btn-add, .btn-edit, .btn-delete, .btn-credentials {
           padding: 4px 10px;
           border: none;
           border-radius: 4px;
@@ -373,7 +1020,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           transition: background 0.2s;
         }
 
-        .btn-test, .btn-save, .btn-cancel {
+        .btn-test, .btn-save, .btn-cancel, .btn-back, .btn-next {
           padding: 8px 16px;
           border: none;
           border-radius: 4px;
@@ -409,6 +1056,15 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           background: #c82333;
         }
 
+        .btn-credentials {
+          background: #6c757d;
+          color: white;
+        }
+
+        .btn-credentials:hover {
+          background: #5a6268;
+        }
+
         .btn-test {
           background: #17a2b8;
           color: white;
@@ -441,6 +1097,30 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           background: #5a6268;
         }
 
+        .btn-back {
+          background: #6c757d;
+          color: white;
+          margin-right: auto;
+        }
+
+        .btn-back:hover {
+          background: #5a6268;
+        }
+
+        .btn-next {
+          background: #1f75cb;
+          color: white;
+        }
+
+        .btn-next:hover:not(:disabled) {
+          background: #1662b0;
+        }
+
+        .btn-next:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
         .selector-actions {
           display: flex;
           gap: 4px;
@@ -449,6 +1129,12 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
         .config-actions {
           display: flex;
           gap: 4px;
+          align-items: center;
+        }
+
+        .missing-credential-warning {
+          font-size: 16px;
+          margin-right: 4px;
         }
 
         .modal-overlay {
@@ -472,6 +1158,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           max-height: 90vh;
           overflow-y: auto;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-selector-modal {
+          max-width: 650px;
         }
 
         .modal-header {
@@ -592,6 +1282,292 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           padding: 16px 20px;
           border-top: 1px solid var(--wx-gitlab-modal-border);
         }
+
+        /* Wizard Steps */
+        .wizard-steps {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--wx-gitlab-modal-border);
+        }
+
+        .wizard-steps .step {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--wx-gitlab-modal-hint-text);
+        }
+
+        .wizard-steps .step.active {
+          color: #1f75cb;
+        }
+
+        .wizard-steps .step.completed {
+          color: #28a745;
+        }
+
+        .wizard-steps .step-number {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: var(--wx-gitlab-filter-background, #f8f9fa);
+          border: 2px solid currentColor;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .wizard-steps .step.active .step-number {
+          background: #1f75cb;
+          color: white;
+          border-color: #1f75cb;
+        }
+
+        .wizard-steps .step.completed .step-number {
+          background: #28a745;
+          color: white;
+          border-color: #28a745;
+        }
+
+        .wizard-steps .step-label {
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        .wizard-steps .step-connector {
+          width: 30px;
+          height: 2px;
+          background: var(--wx-gitlab-modal-border);
+          margin: 0 8px;
+        }
+
+        /* Radio Group */
+        .radio-group {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .radio-option {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 12px 16px;
+          border: 2px solid var(--wx-gitlab-filter-input-border);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+        }
+
+        .radio-option:hover {
+          border-color: #1f75cb;
+          background: rgba(31, 117, 203, 0.05);
+        }
+
+        .radio-option.selected {
+          border-color: #1f75cb;
+          background: rgba(31, 117, 203, 0.1);
+        }
+
+        .radio-option input[type="radio"] {
+          width: auto;
+          margin-top: 4px;
+        }
+
+        .radio-label {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .radio-title {
+          font-weight: 600;
+          font-size: 14px;
+          color: var(--wx-gitlab-modal-text);
+        }
+
+        .radio-desc {
+          font-size: 12px;
+          color: var(--wx-gitlab-modal-hint-text);
+        }
+
+        /* Credential Selection */
+        .credential-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .credential-select {
+          width: 100%;
+        }
+
+        .selected-info {
+          margin-top: 8px;
+          padding: 8px 12px;
+          background: rgba(31, 117, 203, 0.1);
+          border-radius: 4px;
+          font-size: 13px;
+          color: #1f75cb;
+        }
+
+        /* New Credential Form */
+        .new-credential-form {
+          padding: 16px;
+          background: var(--wx-gitlab-filter-background, #f8f9fa);
+          border-radius: 8px;
+          border: 1px solid var(--wx-gitlab-filter-border);
+        }
+
+        .new-credential-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+          margin-top: 16px;
+          padding-top: 16px;
+          border-top: 1px solid var(--wx-gitlab-filter-border);
+        }
+
+        .btn-cancel-small,
+        .btn-save-small {
+          padding: 6px 12px;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .btn-cancel-small {
+          background: #6c757d;
+          color: white;
+        }
+
+        .btn-cancel-small:hover {
+          background: #5a6268;
+        }
+
+        .btn-save-small {
+          background: #28a745;
+          color: white;
+        }
+
+        .btn-save-small:hover {
+          background: #218838;
+        }
+
+        /* Confirmation Summary */
+        .confirm-summary {
+          padding: 16px;
+          background: var(--wx-gitlab-filter-background, #f8f9fa);
+          border-radius: 8px;
+          border: 1px solid var(--wx-gitlab-filter-border);
+        }
+
+        .confirm-summary h4 {
+          margin: 0 0 12px 0;
+          font-size: 14px;
+          color: var(--wx-gitlab-modal-text);
+        }
+
+        .summary-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--wx-gitlab-filter-border);
+        }
+
+        .summary-item:last-child {
+          border-bottom: none;
+        }
+
+        .summary-label {
+          font-weight: 500;
+          color: var(--wx-gitlab-modal-hint-text);
+          font-size: 13px;
+        }
+
+        .summary-value {
+          color: var(--wx-gitlab-modal-text);
+          font-size: 13px;
+          text-align: right;
+          max-width: 60%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* ProjectBrowser status */
+        .pb-status {
+          padding: 20px;
+          text-align: center;
+          color: var(--wx-gitlab-control-text, #868686);
+          font-size: 13px;
+        }
+
+        .pb-status.pb-error {
+          color: #dc3545;
+        }
+
+        /* Select mode toggle */
+        .select-mode-toggle {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .select-mode-toggle label {
+          margin-bottom: 0;
+        }
+
+        .btn-toggle-mode {
+          padding: 4px 10px;
+          border: 1px solid #1f75cb;
+          border-radius: 4px;
+          background: transparent;
+          color: #1f75cb;
+          font-size: 12px;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-toggle-mode:hover {
+          background: #1f75cb;
+          color: white;
+        }
+
+        /* Manual input section */
+        .manual-input-section {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .manual-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid var(--wx-gitlab-filter-input-border);
+          border-radius: 4px;
+          background: var(--wx-gitlab-filter-input-background);
+          color: var(--wx-gitlab-modal-text);
+          font-size: 14px;
+          box-sizing: border-box;
+        }
+
+        .manual-input:focus {
+          outline: none;
+          border-color: #1f75cb;
+        }
+
+        .manual-input-hint {
+          color: var(--wx-gitlab-modal-hint-text);
+          font-size: 12px;
+        }
       `}</style>
 
       {/* Delete Confirmation Dialog */}
@@ -624,6 +1600,13 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
         severity="warning"
         confirmLabel="OK"
         showCancel={false}
+      />
+
+      {/* Credential Manager Modal */}
+      <CredentialManager
+        isOpen={showCredentialManager}
+        onClose={handleCredentialManagerClose}
+        onCredentialsChange={loadCredentials}
       />
     </div>
   );
