@@ -12,9 +12,8 @@
  *    - Group: query { group(fullPath: "...") { ... } }
  *
  * 2. milestoneTitle filter type (Issues query):
- *    - Project issues: milestoneTitle accepts String (single value)
- *    - Group issues: milestoneTitle accepts [String] (array)
- *    This difference requires dynamic query generation based on config.type.
+ *    - Both project and group issues: milestoneTitle accepts [String!] (array)
+ *    - NOTE: GitLab API was unified - both project and group now use array type
  *
  * 3. Work Items API:
  *    - Both project and group use the same workItems query structure
@@ -629,25 +628,14 @@ export class GitLabGraphQLProvider {
     // Also supports server-side filtering to match workItems query
     // Note: milestoneTitle and milestoneWildcardId are mutually exclusive
     // Note: assigneeUsernames and assigneeWildcardId are mutually exclusive
-    //
-    // IMPORTANT: GitLab API difference between project and group:
-    // - Project issues: milestoneTitle accepts String (single value)
-    // - Group issues: milestoneTitle accepts [String] (array)
-    const milestoneTitleType =
-      this.config.type === 'group' ? '[String!]' : 'String';
-    console.log(
-      '[GitLabGraphQL] issuesQuery configType:',
-      this.config.type,
-      'milestoneTitleType:',
-      milestoneTitleType,
-    );
+    // Note: milestoneTitle accepts [String!] for both project and group (GitLab API unified)
     const issuesQuery = `
       query getIssues(
         $fullPath: ID!,
         $state: IssuableState,
         $after: String,
         $labelName: [String!],
-        $milestoneTitle: ${milestoneTitleType},
+        $milestoneTitle: [String!],
         $milestoneWildcardId: MilestoneWildcardId,
         $assigneeUsernames: [String!],
         $assigneeWildcardId: AssigneeWildcardId,
@@ -726,7 +714,7 @@ export class GitLabGraphQLProvider {
       ...baseVariables,
     };
 
-    // Variables for issues query (milestoneTitle accepts single string only)
+    // Variables for issues query (milestoneTitle accepts [String!] for both project and group)
     const issuesVariables: any = {
       ...baseVariables,
     };
@@ -743,11 +731,8 @@ export class GitLabGraphQLProvider {
       // Has specific milestone titles - use milestoneTitle (cannot combine with wildcard)
       // Note: If NONE is also selected, we can only filter by titles (API limitation)
       variables.milestoneTitle = otherMilestoneTitles;
-      // Project issues accept String (single), Group issues accept [String] (array)
-      issuesVariables.milestoneTitle =
-        this.config.type === 'group'
-          ? otherMilestoneTitles
-          : otherMilestoneTitles[0];
+      // Both project and group issues accept [String!] array
+      issuesVariables.milestoneTitle = otherMilestoneTitles;
     }
 
     // Fetch work items with optional pagination

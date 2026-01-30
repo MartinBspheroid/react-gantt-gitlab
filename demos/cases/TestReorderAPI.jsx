@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { gitlabConfigManager } from '../../src/config/GitLabConfigManager';
+import { gitlabCredentialManager } from '../../src/config/GitLabCredentialManager';
 import { GitLabGraphQLProvider } from '../../src/providers/GitLabGraphQLProvider';
 import { gitlabRestRequest } from '../../src/providers/GitLabApiUtils';
 
@@ -15,7 +16,20 @@ export default function TestReorderAPI() {
 
   useEffect(() => {
     const activeConfig = gitlabConfigManager.getActiveConfig();
-    setConfig(activeConfig);
+    if (activeConfig) {
+      // Resolve credential to get gitlabUrl and token
+      const credential = gitlabCredentialManager.getCredential(activeConfig.credentialId);
+      if (credential) {
+        setConfig({
+          ...activeConfig,
+          gitlabUrl: credential.gitlabUrl,
+          token: credential.token,
+        });
+      } else {
+        console.error('[TestReorderAPI] Credential not found for credentialId:', activeConfig.credentialId);
+        setConfig(null);
+      }
+    }
   }, []);
   const [logs, setLogs] = useState([]);
   const [testData, setTestData] = useState({
