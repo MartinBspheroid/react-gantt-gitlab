@@ -250,10 +250,11 @@ function Editor({
     // Create task object with workdays calculation
     const taskWithWorkdays = { ...activeTask };
 
-    // Check _gitlab fields to determine if GitLab actually has the dates
+    // GitLab milestones always have dates (stored directly on task.start/end, not in _gitlab)
+    // For regular tasks: check _gitlab fields to determine if GitLab actually has the dates
     // (task.start may be auto-filled with createdAt when GitLab has no startDate)
-    const hasGitLabStartDate = activeTask._gitlab?.startDate;
-    const hasGitLabDueDate = activeTask._gitlab?.dueDate;
+    const hasGitLabStartDate = isGitLabMilestone || activeTask._gitlab?.startDate;
+    const hasGitLabDueDate = isGitLabMilestone || activeTask._gitlab?.dueDate;
 
     // If GitLab doesn't have the date, set it to null so Editor shows empty
     if (!hasGitLabStartDate) {
