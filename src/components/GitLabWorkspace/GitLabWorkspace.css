@@ -1,0 +1,13 @@
+/* GitLabWorkspace.css */
+
+.gitlab-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.gitlab-workspace-content {
+  flex: 1;
+  overflow: hidden;
+}
