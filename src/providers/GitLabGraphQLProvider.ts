@@ -53,6 +53,15 @@ import {
   createMilestoneTaskId,
   extractMilestoneIid,
 } from '../utils/MilestoneIdUtils';
+import {
+  extractLinksFromDescription,
+  updateDescriptionWithLinks,
+  addBlocksRelation,
+  addBlockedByRelation,
+  removeBlocksRelation,
+  removeBlockedByRelation,
+  type DescriptionLinkMetadata,
+} from '../utils/DescriptionMetadataUtils';
 
 /**
  * Format iteration title for display
@@ -117,6 +126,23 @@ export interface GitLabGraphQLProviderConfig {
    * If not provided, getFullPath() will use projectId/groupId (legacy behavior).
    */
   fullPath?: string;
+}
+
+/**
+ * Result of creating a link, containing metadata needed for local state update
+ * This allows avoiding a full sync after link creation
+ */
+export interface CreateLinkResult {
+  /** Whether this is a native GitLab link or description metadata link */
+  isNativeLink: boolean;
+  /** Source work item IID (used as apiSourceIid for deletion) */
+  sourceIid: number;
+  /** Target work item IID */
+  targetIid: number;
+  /** For native links: the linked work item's global ID (for deletion) */
+  linkedWorkItemGlobalId?: string;
+  /** For metadata links: the relationship type */
+  metadataRelation?: 'blocks' | 'blocked_by';
 }
 
 interface WorkItem {
@@ -200,6 +226,18 @@ export class GitLabGraphQLProvider {
   public graphqlClient: GitLabGraphQLClient; // Public for testing purposes
   private updateQueue: Map<number | string, Promise<void>> = new Map();
   private isDev: boolean;
+
+  /**
+   * Cached tier support for native link creation
+   * - undefined: not yet tested
+   * - true: native links supported (Premium/Ultimate tier)
+   * - false: native links not supported, use description metadata fallback
+   *
+   * NOTE: This is a fallback mechanism for GitLab Free tier users who cannot use
+   * the native blocked work items feature (requires Premium/Ultimate subscription).
+   * See: https://docs.gitlab.com/ee/user/project/issues/related_issues.html
+   */
+  private supportsNativeLinks: boolean | undefined = undefined;
 
   constructor(config: GitLabGraphQLProviderConfig) {
     this.config = config;
@@ -3612,6 +3650,12 @@ export class GitLabGraphQLProvider {
 
   /**
    * Fetch links (related work items) for all work items
+   *
+   * This merges links from two sources:
+   * 1. Native GitLab Work Items API (LinkedItems widget) - for Premium/Ultimate tiers
+   * 2. Description metadata (HTML comments) - fallback for Free tier
+   *
+   * Links from both sources are deduplicated to avoid showing the same link twice.
    */
   private async fetchWorkItemLinks(workItems: any[]): Promise<ILink[]> {
     const links: ILink[] = [];
@@ -3638,7 +3682,9 @@ export class GitLabGraphQLProvider {
     // Use a set of normalized link identifiers: "source-target-type"
     const processedLinks = new Set<string>();
 
-    // Extract links from each work item
+    // ========================================
+    // 1. Extract links from native LinkedItems widget
+    // ========================================
     for (const workItem of workItems) {
       // Find the LinkedItems widget
       const linkedItemsWidget = workItem.widgets?.find(
@@ -3756,29 +3802,183 @@ export class GitLabGraphQLProvider {
             apiSourceIid: sourceIid,
             // Store the LINKED work item's global ID (this is what we pass to workItemsIds)
             linkedWorkItemGlobalId: linkedItem.workItem?.id,
+            // Mark as native link for deletion logic
+            isNativeLink: true,
           },
         } as ILink & {
-          _gitlab: { apiSourceIid: number; linkedWorkItemGlobalId: string };
+          _gitlab: {
+            apiSourceIid: number;
+            linkedWorkItemGlobalId: string;
+            isNativeLink: boolean;
+          };
         });
       }
     }
+
+    // ========================================
+    // 2. Extract links from description metadata (fallback)
+    // ========================================
+    for (const workItem of workItems) {
+      const sourceIid =
+        typeof workItem.iid === 'string'
+          ? parseInt(workItem.iid, 10)
+          : workItem.iid;
+
+      // Find description widget
+      const descWidget = workItem.widgets?.find(
+        (w: any) => w.__typename === 'WorkItemWidgetDescription',
+      ) as any;
+      const description = descWidget?.description;
+
+      if (!description) {
+        continue;
+      }
+
+      // Extract links from description metadata
+      const { links: metadataLinks, hasMetadata } =
+        extractLinksFromDescription(description);
+
+      if (!hasMetadata) {
+        continue;
+      }
+
+      // Process 'blocks' relationships from this issue's perspective
+      // If issue A has blocks: [B], it means A blocks B (A -> B)
+      if (metadataLinks.blocks) {
+        for (const targetIid of metadataLinks.blocks) {
+          if (!iidMap.has(targetIid)) {
+            // Skip if target is not in our task list
+            continue;
+          }
+
+          // Deduplication: use same identifier format as native links
+          const linkIdentifier = `${sourceIid}-${targetIid}-blocks`;
+          const reverseIdentifier = `${targetIid}-${sourceIid}-is_blocked_by`;
+
+          if (
+            processedLinks.has(linkIdentifier) ||
+            processedLinks.has(reverseIdentifier)
+          ) {
+            // Already have this link from native API or another source
+            continue;
+          }
+
+          processedLinks.add(linkIdentifier);
+
+          links.push({
+            id: linkIdCounter++,
+            source: sourceIid,
+            target: targetIid,
+            type: 'e2s',
+            _gitlab: {
+              // For metadata links, we store the source IID for deletion
+              apiSourceIid: sourceIid,
+              // No linkedWorkItemGlobalId for metadata links
+              linkedWorkItemGlobalId: undefined as any,
+              // Mark as metadata link for deletion logic
+              isNativeLink: false,
+              // Store the relationship type for deletion
+              metadataRelation: 'blocks' as const,
+              metadataTargetIid: targetIid,
+            },
+          } as ILink & {
+            _gitlab: {
+              apiSourceIid: number;
+              linkedWorkItemGlobalId: string | undefined;
+              isNativeLink: boolean;
+              metadataRelation?: 'blocks' | 'blocked_by';
+              metadataTargetIid?: number;
+            };
+          });
+        }
+      }
+
+      // Note: We don't need to process blocked_by here because:
+      // If A.blocked_by has [B], then B.blocks has [A], and we'll find the link
+      // when processing B. This avoids duplicates.
+      // However, we should still check blocked_by to handle orphaned metadata
+      // (e.g., if only one side was updated due to a bug or manual edit)
+      if (metadataLinks.blocked_by) {
+        for (const blockerIid of metadataLinks.blocked_by) {
+          if (!iidMap.has(blockerIid)) {
+            // Skip if blocker is not in our task list
+            continue;
+          }
+
+          // This is equivalent to: blockerIid blocks sourceIid
+          // Arrow: blockerIid -> sourceIid
+          const linkIdentifier = `${blockerIid}-${sourceIid}-blocks`;
+          const reverseIdentifier = `${sourceIid}-${blockerIid}-is_blocked_by`;
+
+          if (
+            processedLinks.has(linkIdentifier) ||
+            processedLinks.has(reverseIdentifier)
+          ) {
+            // Already have this link
+            continue;
+          }
+
+          processedLinks.add(linkIdentifier);
+
+          links.push({
+            id: linkIdCounter++,
+            source: blockerIid,
+            target: sourceIid,
+            type: 'e2s',
+            _gitlab: {
+              // Store the current issue as source for deletion (since we found it here)
+              apiSourceIid: sourceIid,
+              linkedWorkItemGlobalId: undefined as any,
+              isNativeLink: false,
+              metadataRelation: 'blocked_by' as const,
+              metadataTargetIid: blockerIid,
+            },
+          } as ILink & {
+            _gitlab: {
+              apiSourceIid: number;
+              linkedWorkItemGlobalId: string | undefined;
+              isNativeLink: boolean;
+              metadataRelation?: 'blocks' | 'blocked_by';
+              metadataTargetIid?: number;
+            };
+          });
+        }
+      }
+    }
+
+    const nativeCount = links.filter(
+      (l) => (l as any)._gitlab?.isNativeLink,
+    ).length;
+    const metadataCount = links.length - nativeCount;
+    console.log(
+      `[GitLabGraphQL] Found ${links.length} links total: ${nativeCount} native, ${metadataCount} from description metadata`,
+    );
 
     return links;
   }
 
   /**
    * Create issue link using GraphQL Work Items API
+   *
+   * Implements fallback mechanism for GitLab Free tier:
+   * 1. If supportsNativeLinks is false, directly use description metadata
+   * 2. Otherwise, try native API first
+   * 3. On tier-related error, fallback to description metadata and cache the result
+   *
+   * Returns metadata needed for local state update, avoiding full sync.
+   *
+   * NOTE: 'relates_to' links cannot be stored in description metadata (non-directional),
+   * so they will fail on Free tier without fallback option.
    */
-  async createIssueLink(link: Partial<ILink>): Promise<void> {
+  async createIssueLink(link: Partial<ILink>): Promise<CreateLinkResult> {
     if (!link.source || !link.target) {
       throw new Error('Source and target are required for issue links');
     }
 
-    // Creating issue link
-
-    // Get global IDs for both work items
-    const sourceGlobalId = await this.getWorkItemGlobalId(link.source);
-    const targetGlobalId = await this.getWorkItemGlobalId(link.target);
+    const sourceIid =
+      typeof link.source === 'string' ? parseInt(link.source, 10) : link.source;
+    const targetIid =
+      typeof link.target === 'string' ? parseInt(link.target, 10) : link.target;
 
     // Map Gantt link type to GitLab link type
     // Note: Gantt's e2s means "source must finish before target starts"
@@ -3797,7 +3997,99 @@ export class GitLabGraphQLProvider {
         break;
     }
 
-    // Creating link with specified type
+    // If we already know native links aren't supported, use fallback directly
+    if (this.supportsNativeLinks === false) {
+      await this.createLinkViaDescriptionMetadata(
+        sourceIid,
+        targetIid,
+        linkType,
+      );
+      return {
+        isNativeLink: false,
+        sourceIid,
+        targetIid,
+        metadataRelation: linkType === 'BLOCKS' ? 'blocks' : 'blocked_by',
+      };
+    }
+
+    // Try native API
+    try {
+      const targetGlobalId = await this.createNativeIssueLink(
+        link.source,
+        link.target,
+        linkType,
+      );
+      // Mark as supported on success
+      if (this.supportsNativeLinks === undefined) {
+        this.supportsNativeLinks = true;
+        console.log(
+          '[GitLabGraphQL] Native links supported - using GitLab Work Items API',
+        );
+      }
+      return {
+        isNativeLink: true,
+        sourceIid,
+        targetIid,
+        linkedWorkItemGlobalId: targetGlobalId,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      // Check if this is a tier-related error
+      if (this.isTierRestrictionError(errorMessage)) {
+        console.warn(
+          '[GitLabGraphQL] Native links not supported (Free tier), falling back to description metadata',
+        );
+        this.supportsNativeLinks = false;
+
+        // Fallback to description metadata
+        await this.createLinkViaDescriptionMetadata(
+          sourceIid,
+          targetIid,
+          linkType,
+        );
+        return {
+          isNativeLink: false,
+          sourceIid,
+          targetIid,
+          metadataRelation: linkType === 'BLOCKS' ? 'blocks' : 'blocked_by',
+        };
+      } else {
+        // Re-throw non-tier errors
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Check if an error message indicates GitLab tier restriction
+   */
+  private isTierRestrictionError(errorMessage: string): boolean {
+    const lowerMessage = errorMessage.toLowerCase();
+    return (
+      lowerMessage.includes('subscription tier') ||
+      lowerMessage.includes('blocked work items are not available') ||
+      lowerMessage.includes('not available for the current subscription') ||
+      lowerMessage.includes('premium') ||
+      lowerMessage.includes('ultimate')
+    );
+  }
+
+  /**
+   * Create issue link using native GitLab Work Items API
+   * This is the original implementation, now extracted as a separate method
+   *
+   * @returns The target work item's global ID (needed for deletion)
+   */
+  private async createNativeIssueLink(
+    source: TID,
+    target: TID,
+    linkType: string,
+  ): Promise<string> {
+    // Get global IDs for both work items
+    const sourceGlobalId = await this.getWorkItemGlobalId(source);
+    const targetGlobalId = await this.getWorkItemGlobalId(target);
 
     const mutation = `
       mutation workItemAddLinkedItems($input: WorkItemAddLinkedItemsInput!) {
@@ -3839,14 +4131,145 @@ export class GitLabGraphQLProvider {
       );
     }
 
-    // Link created successfully
+    // Return target's global ID for use in deletion
+    return targetGlobalId;
   }
 
   /**
-   * Delete issue link using GraphQL Work Items API
+   * Create link via description metadata (fallback for Free tier)
    *
-   * @param apiSourceIid - The IID of the ORIGINAL API source work item (before any direction swap)
-   * @param linkedWorkItemGlobalId - The global ID of the linked work item to unlink
+   * This stores link relationships in the issue description using HTML comments,
+   * which are invisible in GitLab's UI.
+   *
+   * For 'blocks' relationship:
+   * - Source issue: add target to its 'blocks' array
+   * - Target issue: add source to its 'blocked_by' array
+   *
+   * For 'blocked_by' relationship:
+   * - Source issue: add target to its 'blocked_by' array
+   * - Target issue: add source to its 'blocks' array
+   *
+   * NOTE: 'relates_to' links cannot be reliably stored this way (non-directional).
+   */
+  private async createLinkViaDescriptionMetadata(
+    sourceIid: number,
+    targetIid: number,
+    linkType: string,
+  ): Promise<void> {
+    if (linkType === 'RELATED') {
+      throw new Error(
+        'Related links are not supported on GitLab Free tier. Only blocking relationships (blocks/blocked_by) can be stored via description metadata.',
+      );
+    }
+
+    console.log(
+      `[GitLabGraphQL] Creating link via description metadata: ${sourceIid} ${linkType} ${targetIid}`,
+    );
+
+    // Determine which issues need updating based on link type
+    // BLOCKS: source blocks target
+    //   - source.blocks += target
+    //   - target.blocked_by += source
+    // BLOCKED_BY: source is blocked by target
+    //   - source.blocked_by += target
+    //   - target.blocks += source
+    if (linkType === 'BLOCKS') {
+      await Promise.all([
+        this.addDescriptionLinkMetadata(sourceIid, 'blocks', targetIid),
+        this.addDescriptionLinkMetadata(targetIid, 'blocked_by', sourceIid),
+      ]);
+    } else if (linkType === 'BLOCKED_BY') {
+      await Promise.all([
+        this.addDescriptionLinkMetadata(sourceIid, 'blocked_by', targetIid),
+        this.addDescriptionLinkMetadata(targetIid, 'blocks', sourceIid),
+      ]);
+    }
+
+    console.log(
+      '[GitLabGraphQL] Link created via description metadata successfully',
+    );
+  }
+
+  /**
+   * Add a link relationship to an issue's description metadata
+   */
+  private async addDescriptionLinkMetadata(
+    issueIid: number,
+    relation: 'blocks' | 'blocked_by',
+    relatedIid: number,
+  ): Promise<void> {
+    // Fetch current work item to get description
+    const workItem = await this.fetchWorkItemByIid(issueIid);
+    if (!workItem) {
+      throw new Error(`Work item ${issueIid} not found`);
+    }
+
+    // Extract description from widgets
+    const descWidget = workItem.widgets?.find(
+      (w: any) => w.__typename === 'WorkItemWidgetDescription',
+    ) as any;
+    const currentDescription = descWidget?.description || '';
+
+    // Extract current links from description
+    const { links: currentLinks } =
+      extractLinksFromDescription(currentDescription);
+
+    // Add the new relationship
+    const updatedLinks =
+      relation === 'blocks'
+        ? addBlocksRelation(currentLinks, relatedIid)
+        : addBlockedByRelation(currentLinks, relatedIid);
+
+    // Update description with new metadata
+    const newDescription = updateDescriptionWithLinks(
+      currentDescription,
+      updatedLinks,
+    );
+
+    // Update the work item
+    await this.updateWorkItem(issueIid, { details: newDescription });
+  }
+
+  /**
+   * Fetch a single work item by IID
+   * Used for description metadata operations
+   */
+  private async fetchWorkItemByIid(iid: number): Promise<any | null> {
+    const query = `
+      query getWorkItem($fullPath: ID!, $iid: String!) {
+        ${this.config.type}(fullPath: $fullPath) {
+          workItems(iid: $iid, first: 1) {
+            nodes {
+              id
+              iid
+              widgets {
+                ... on WorkItemWidgetDescription {
+                  __typename
+                  description
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const result = await this.graphqlClient.query<any>(query, {
+      fullPath: this.getFullPath(),
+      iid: String(iid),
+    });
+
+    const root = result[this.config.type];
+    const nodes = root?.workItems?.nodes;
+    return nodes && nodes.length > 0 ? nodes[0] : null;
+  }
+
+  /**
+   * Delete issue link
+   *
+   * Supports both native GitLab links and description metadata links:
+   * - Native links: requires linkedWorkItemGlobalId
+   * - Metadata links: requires metadataRelation and metadataTargetIid
    *
    * NOTE: GitLab's workItemRemoveLinkedItems mutation requires:
    * - id: source work item's global ID (the work item we fetched the link from)
@@ -3855,17 +4278,54 @@ export class GitLabGraphQLProvider {
    * IMPORTANT: We use the ORIGINAL API relationship, not the Gantt visualization direction.
    * The link was fetched from apiSourceIid's linkedItems widget, so we must call
    * the mutation on apiSourceIid to remove the link.
+   *
+   * @param apiSourceIid - The IID of the ORIGINAL API source work item (before any direction swap)
+   * @param linkedWorkItemGlobalId - The global ID of the linked work item (for native links, undefined for metadata)
+   * @param options - Additional options for metadata links
    */
   async deleteIssueLink(
     apiSourceIid: TID,
+    linkedWorkItemGlobalId: string | undefined,
+    options?: {
+      isNativeLink?: boolean;
+      metadataRelation?: 'blocks' | 'blocked_by';
+      metadataTargetIid?: number;
+    },
+  ): Promise<void> {
+    // Determine if this is a native link or metadata link
+    const isNativeLink = options?.isNativeLink ?? !!linkedWorkItemGlobalId;
+
+    if (isNativeLink && linkedWorkItemGlobalId) {
+      // Delete native GitLab link
+      await this.deleteNativeIssueLink(apiSourceIid, linkedWorkItemGlobalId);
+    } else if (
+      options?.metadataRelation !== undefined &&
+      options?.metadataTargetIid !== undefined
+    ) {
+      // Delete metadata link
+      await this.deleteLinkViaDescriptionMetadata(
+        apiSourceIid,
+        options.metadataRelation,
+        options.metadataTargetIid,
+      );
+    } else {
+      throw new Error(
+        'Invalid deleteIssueLink call: either linkedWorkItemGlobalId or metadata options required',
+      );
+    }
+  }
+
+  /**
+   * Delete native GitLab link using Work Items API
+   */
+  private async deleteNativeIssueLink(
+    apiSourceIid: TID,
     linkedWorkItemGlobalId: string,
   ): Promise<void> {
-    // Deleting issue link
-
     // Get global ID for the original API source work item
     const sourceGlobalId = await this.getWorkItemGlobalId(apiSourceIid);
 
-    console.log('[GitLabGraphQL] Deleting link:', {
+    console.log('[GitLabGraphQL] Deleting native link:', {
       apiSourceIid,
       sourceGlobalId,
       linkedWorkItemGlobalId,
@@ -3910,7 +4370,111 @@ export class GitLabGraphQLProvider {
       );
     }
 
-    // Link deleted successfully
+    console.log('[GitLabGraphQL] Native link deleted successfully');
+  }
+
+  /**
+   * Delete link via description metadata
+   *
+   * For 'blocks' relationship found in source issue:
+   * - source.blocks array: remove target
+   * - target.blocked_by array: remove source
+   *
+   * For 'blocked_by' relationship found in source issue:
+   * - source.blocked_by array: remove target (blocker)
+   * - target (blocker).blocks array: remove source
+   */
+  private async deleteLinkViaDescriptionMetadata(
+    sourceIid: TID,
+    relation: 'blocks' | 'blocked_by',
+    targetIid: number,
+  ): Promise<void> {
+    const sourceIidNum =
+      typeof sourceIid === 'string' ? parseInt(sourceIid, 10) : sourceIid;
+
+    console.log(
+      `[GitLabGraphQL] Deleting link via description metadata: ${sourceIidNum} ${relation} ${targetIid}`,
+    );
+
+    // Remove the relationship from both sides
+    if (relation === 'blocks') {
+      // source.blocks has [target] -> remove target from source.blocks
+      // target.blocked_by has [source] -> remove source from target.blocked_by
+      await Promise.all([
+        this.removeDescriptionLinkMetadata(sourceIidNum, 'blocks', targetIid),
+        this.removeDescriptionLinkMetadata(
+          targetIid,
+          'blocked_by',
+          sourceIidNum,
+        ),
+      ]);
+    } else {
+      // relation === 'blocked_by'
+      // source.blocked_by has [target] -> remove target from source.blocked_by
+      // target.blocks has [source] -> remove source from target.blocks
+      await Promise.all([
+        this.removeDescriptionLinkMetadata(
+          sourceIidNum,
+          'blocked_by',
+          targetIid,
+        ),
+        this.removeDescriptionLinkMetadata(targetIid, 'blocks', sourceIidNum),
+      ]);
+    }
+
+    console.log(
+      '[GitLabGraphQL] Link deleted via description metadata successfully',
+    );
+  }
+
+  /**
+   * Remove a link relationship from an issue's description metadata
+   */
+  private async removeDescriptionLinkMetadata(
+    issueIid: number,
+    relation: 'blocks' | 'blocked_by',
+    relatedIid: number,
+  ): Promise<void> {
+    // Fetch current work item to get description
+    const workItem = await this.fetchWorkItemByIid(issueIid);
+    if (!workItem) {
+      console.warn(
+        `[GitLabGraphQL] Work item ${issueIid} not found, skipping metadata cleanup`,
+      );
+      return;
+    }
+
+    // Extract description from widgets
+    const descWidget = workItem.widgets?.find(
+      (w: any) => w.__typename === 'WorkItemWidgetDescription',
+    ) as any;
+    const currentDescription = descWidget?.description || '';
+
+    // Extract current links from description
+    const { links: currentLinks, hasMetadata } =
+      extractLinksFromDescription(currentDescription);
+
+    if (!hasMetadata) {
+      // No metadata to clean up
+      return;
+    }
+
+    // Remove the relationship
+    const updatedLinks =
+      relation === 'blocks'
+        ? removeBlocksRelation(currentLinks, relatedIid)
+        : removeBlockedByRelation(currentLinks, relatedIid);
+
+    // Update description with new metadata
+    const newDescription = updateDescriptionWithLinks(
+      currentDescription,
+      updatedLinks,
+    );
+
+    // Only update if description actually changed
+    if (newDescription !== currentDescription) {
+      await this.updateWorkItem(issueIid, { details: newDescription });
+    }
   }
 
   /**

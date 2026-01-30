@@ -12,6 +12,7 @@ import type {
   ApplyBlueprintResult,
 } from '../types/blueprint';
 import { generateBlueprintId } from '../types/blueprint';
+import { removeLinksFromDescription } from '../utils/DescriptionMetadataUtils';
 
 // Gantt ITask type (簡化版，只包含需要的欄位)
 interface ITask {
@@ -762,10 +763,18 @@ export async function applyBlueprint(
             ? item.assignees.join(', ')
             : undefined;
 
+        // Clean description metadata from original issue
+        // Blueprint items may contain GANTT_METADATA from the original issue's description,
+        // which references old IIDs. We need to remove it before creating the new issue.
+        // Links will be created later via createIssueLink (which may use new metadata fallback).
+        const cleanDescription = item.description
+          ? removeLinksFromDescription(item.description)
+          : undefined;
+
         // 建立 Work Item
         const createdItem = await provider.createWorkItem({
           text: getNewItemTitle(item.title, options, item.issue_type),
-          details: item.description,
+          details: cleanDescription,
           start: startDate,
           end: endDate,
           parent: parentIid,

@@ -323,6 +323,12 @@ export function useGitLabSync(
 
   /**
    * Create a new link
+   *
+   * For metadata links (Free tier): directly updates local state with returned metadata.
+   * For native links (Premium/Ultimate): performs full sync to ensure proper metadata.
+   *
+   * NOTE: Gantt UI already adds the link to its internal store before calling this.
+   * We update the existing link with GitLab metadata rather than adding a new one.
    */
   const createLink = useCallback(
     async (link: Partial<ILink>) => {
@@ -331,11 +337,58 @@ export function useGitLabSync(
       }
 
       try {
-        await provider.createIssueLink(link);
+        const result = await provider.createIssueLink(link);
 
-        // Re-sync to get the actual link ID from GitLab
-        // This prevents duplicate links with different IDs
-        await sync();
+        if (result.isNativeLink) {
+          // Native links: full sync to ensure proper metadata
+          // (Native link deletion requires precise global ID matching)
+          await sync();
+        } else {
+          // Metadata links: we have all the info we need from the result
+          // Build the _gitlab metadata for deletion
+          const gitlabMeta = {
+            apiSourceIid: result.sourceIid,
+            linkedWorkItemGlobalId: undefined,
+            isNativeLink: false as const,
+            metadataRelation: result.metadataRelation,
+            metadataTargetIid: result.targetIid,
+          };
+
+          // Update existing link with GitLab metadata, or add new if not found
+          // Gantt UI may have already added the link, so we look for it by source/target
+          setLinks((prevLinks) => {
+            // Find existing link by source/target (either direction)
+            const existingIndex = prevLinks.findIndex(
+              (l) =>
+                (l.source === link.source && l.target === link.target) ||
+                (l.source === link.target && l.target === link.source),
+            );
+
+            if (existingIndex >= 0) {
+              // Update existing link with _gitlab metadata
+              const updatedLinks = [...prevLinks];
+              updatedLinks[existingIndex] = {
+                ...updatedLinks[existingIndex],
+                _gitlab: gitlabMeta,
+              };
+              return updatedLinks;
+            }
+
+            // Link not found, add new one (shouldn't happen normally)
+            const maxId = prevLinks.reduce(
+              (max, l) => Math.max(max, typeof l.id === 'number' ? l.id : 0),
+              0,
+            );
+            const newLink: ILink = {
+              id: maxId + 1,
+              source: result.sourceIid,
+              target: result.targetIid,
+              type: link.type || 'e2s',
+              _gitlab: gitlabMeta,
+            };
+            return [...prevLinks, newLink];
+          });
+        }
       } catch (error) {
         console.error('Failed to create link:', error);
         throw error;
@@ -347,17 +400,25 @@ export function useGitLabSync(
   /**
    * Delete a link
    *
+   * Supports both native GitLab links and description metadata links.
+   *
    * @param linkId - The local link ID (used for optimistic update)
    * @param apiSourceIid - The IID of the ORIGINAL API source work item
    *                       (from link._gitlab.apiSourceIid)
    * @param linkedWorkItemGlobalId - The global ID of the linked work item to unlink
-   *                                 (from link._gitlab.linkedWorkItemGlobalId)
+   *                                 (from link._gitlab.linkedWorkItemGlobalId, undefined for metadata links)
+   * @param options - Additional options for metadata links
    */
   const deleteLink = useCallback(
     async (
       linkId: number | string,
       apiSourceIid: number | string,
-      linkedWorkItemGlobalId: string,
+      linkedWorkItemGlobalId: string | undefined,
+      options?: {
+        isNativeLink?: boolean;
+        metadataRelation?: 'blocks' | 'blocked_by';
+        metadataTargetIid?: number;
+      },
     ) => {
       if (!provider) {
         throw new Error('GitLab provider not initialized');
@@ -367,7 +428,11 @@ export function useGitLabSync(
       setLinks((prevLinks) => prevLinks.filter((link) => link.id !== linkId));
 
       try {
-        await provider.deleteIssueLink(apiSourceIid, linkedWorkItemGlobalId);
+        await provider.deleteIssueLink(
+          apiSourceIid,
+          linkedWorkItemGlobalId,
+          options,
+        );
       } catch (error) {
         console.error('Failed to delete link:', error);
 

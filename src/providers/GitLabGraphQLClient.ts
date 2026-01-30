@@ -3,6 +3,8 @@
  * Handles GraphQL API requests for GitLab
  */
 
+import { getGraphQLProxyConfig } from '../utils/proxyUtils';
+
 export interface GraphQLResponse<T> {
   data?: T;
   errors?: Array<{ message: string }>;
@@ -21,46 +23,10 @@ export class GitLabGraphQLClient {
   }
 
   /**
-   * Check if running in dev mode
+   * Get proxy configuration using centralized utilities
    */
-  private get isDev(): boolean {
-    return import.meta.env.DEV;
-  }
-
-  /**
-   * Get GraphQL endpoint URL
-   */
-  private getEndpoint(): string {
-    const endpoint = `${this.config.gitlabUrl}/api/graphql`;
-
-    // In development, use Vite proxy
-    if (this.isDev) {
-      return endpoint.replace(this.config.gitlabUrl, '/api/gitlab-proxy');
-    }
-
-    // In production, check if CORS proxy is configured
-    const corsProxy = import.meta.env.VITE_CORS_PROXY;
-    if (corsProxy) {
-      return `${corsProxy}/${endpoint}`;
-    }
-
-    return endpoint;
-  }
-
-  /**
-   * Get request headers
-   */
-  private getHeaders(): HeadersInit {
-    if (this.isDev) {
-      return {
-        'X-GitLab-Token': this.config.token,
-        'Content-Type': 'application/json',
-      };
-    }
-    return {
-      Authorization: `Bearer ${this.config.token}`,
-      'Content-Type': 'application/json',
-    };
+  private getProxyConfig() {
+    return getGraphQLProxyConfig(this.config);
   }
 
   /**
@@ -79,12 +45,11 @@ export class GitLabGraphQLClient {
     variables?: Record<string, any>,
     signal?: AbortSignal,
   ): Promise<T> {
-    const endpoint = this.getEndpoint();
-    const headers = this.getHeaders();
+    const proxyConfig = this.getProxyConfig();
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(proxyConfig.url, {
       method: 'POST',
-      headers,
+      headers: proxyConfig.headers,
       body: JSON.stringify({ query, variables }),
       signal,
     });

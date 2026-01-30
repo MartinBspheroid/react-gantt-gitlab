@@ -7,6 +7,11 @@ import type {
   SyncResourceType,
 } from '../types/syncProgress';
 import { createProgressMessage } from '../types/syncProgress';
+import {
+  buildProxyUrl,
+  buildRestHeaders,
+  type ProxyConfig,
+} from '../utils/proxyUtils';
 
 export interface GitLabProxyConfig {
   gitlabUrl: string;
@@ -15,46 +20,19 @@ export interface GitLabProxyConfig {
 }
 
 /**
- * Convert GitLab URL to proxy URL in dev mode or with CORS proxy
+ * Convert GitLab URL to proxy URL with CORS proxy or Vite dev proxy
+ * @deprecated Use buildProxyUrl from proxyUtils instead
  */
 export function getProxyUrl(url: string, config: GitLabProxyConfig): string {
-  const isDev = config.isDev ?? import.meta.env.DEV;
-
-  // In development, use Vite proxy
-  if (isDev) {
-    return url.replace(config.gitlabUrl, '/api/gitlab-proxy');
-  }
-
-  // In production, check if CORS proxy is configured
-  const corsProxy = import.meta.env.VITE_CORS_PROXY;
-  if (corsProxy) {
-    // Add CORS proxy prefix to the URL
-    return `${corsProxy}/${url}`;
-  }
-
-  // No proxy, return original URL
-  return url;
+  return buildProxyUrl(url, config);
 }
 
 /**
  * Get headers for REST API requests
+ * @deprecated Use buildRestHeaders from proxyUtils instead
  */
 export function getRestHeaders(config: GitLabProxyConfig): HeadersInit {
-  const isDev = config.isDev ?? import.meta.env.DEV;
-
-  if (isDev) {
-    // In dev mode, send token via custom header for proxy
-    return {
-      'X-GitLab-Token': config.token,
-      'Content-Type': 'application/json',
-    };
-  }
-
-  // In production, use standard GitLab private token header
-  return {
-    'PRIVATE-TOKEN': config.token,
-    'Content-Type': 'application/json',
-  };
+  return buildRestHeaders(config);
 }
 
 /**

@@ -6,6 +6,7 @@
  */
 
 import type { GitLabCredential } from '../types/credential';
+import { getRestProxyConfig } from '../utils/proxyUtils';
 
 const CREDENTIALS_STORAGE_KEY = 'gitlab_gantt_credentials';
 
@@ -178,34 +179,18 @@ export class GitLabCredentialManager {
 
   /**
    * Test connection to GitLab instance
-   * NOTE: This method handles different environments:
-   * - Development: Uses Vite proxy at /api/gitlab-proxy
-   * - Production with CORS proxy: Uses the configured VITE_CORS_PROXY
-   * - Direct connection: Requires proper CORS headers from GitLab
+   * Uses centralized proxy utilities for consistent behavior across environments
    */
   static async testConnection(config: {
     gitlabUrl: string;
     token: string;
   }): Promise<{ success: boolean; error?: string; username?: string }> {
     try {
-      const isDev = import.meta.env.DEV;
-      const corsProxy = import.meta.env.VITE_CORS_PROXY;
+      const proxyConfig = getRestProxyConfig('/user', config);
 
-      let apiUrl: string;
-      let headers: HeadersInit;
-
-      if (isDev) {
-        apiUrl = `/api/gitlab-proxy/api/v4/user`;
-        headers = { 'X-GitLab-Token': config.token };
-      } else if (corsProxy) {
-        apiUrl = `${corsProxy}/${config.gitlabUrl}/api/v4/user`;
-        headers = { 'PRIVATE-TOKEN': config.token };
-      } else {
-        apiUrl = `${config.gitlabUrl}/api/v4/user`;
-        headers = { 'PRIVATE-TOKEN': config.token };
-      }
-
-      const response = await fetch(apiUrl, { headers });
+      const response = await fetch(proxyConfig.url, {
+        headers: proxyConfig.headers,
+      });
 
       if (response.ok) {
         const user = await response.json();

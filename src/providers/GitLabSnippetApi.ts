@@ -21,6 +21,7 @@ import {
   gitlabRestRequestPaginated,
   type GitLabProxyConfig,
 } from './GitLabApiUtils';
+import { getRestProxyConfig } from '../utils/proxyUtils';
 import type { ColorRule } from '../types/colorRule';
 
 export interface HolidayEntry {
@@ -255,6 +256,7 @@ export async function getSnippetContent(
 
 /**
  * Fetch raw snippet content (handles non-JSON response)
+ * Uses centralized proxy utilities for consistent behavior
  */
 async function fetchSnippetRaw(
   fullPath: string,
@@ -265,25 +267,7 @@ async function fetchSnippetRaw(
   const prefix = getEndpointPrefix(fullPath, configType);
   const endpoint = `${prefix}/snippets/${snippetId}/raw`;
 
-  const isDev =
-    proxyConfig.isDev ??
-    (typeof import.meta !== 'undefined' && import.meta.env?.DEV);
-  let url = `${proxyConfig.gitlabUrl}/api/v4${endpoint}`;
-
-  // Apply proxy if needed
-  if (isDev) {
-    url = url.replace(proxyConfig.gitlabUrl, '/api/gitlab-proxy');
-  } else {
-    const corsProxy =
-      typeof import.meta !== 'undefined' && import.meta.env?.VITE_CORS_PROXY;
-    if (corsProxy) {
-      url = `${corsProxy}/${url}`;
-    }
-  }
-
-  const headers: HeadersInit = isDev
-    ? { 'X-GitLab-Token': proxyConfig.token }
-    : { 'PRIVATE-TOKEN': proxyConfig.token };
+  const { url, headers } = getRestProxyConfig(endpoint, proxyConfig);
 
   const response = await fetch(url, { headers });
 

@@ -90,7 +90,13 @@ export interface ILink {
   type?: string;
   _gitlab?: {
     apiSourceIid: number;
-    linkedWorkItemGlobalId: string;
+    linkedWorkItemGlobalId: string | undefined;
+    /** Whether this is a native GitLab link (true) or description metadata link (false) */
+    isNativeLink?: boolean;
+    /** For metadata links: the relationship type */
+    metadataRelation?: 'blocks' | 'blocked_by';
+    /** For metadata links: the target IID of the related issue */
+    metadataTargetIid?: number;
   };
 }
 
@@ -98,6 +104,12 @@ export interface LinkValidationResult {
   valid: boolean;
   apiSourceIid?: number;
   linkedWorkItemGlobalId?: string;
+  /** Whether this is a native link or metadata link */
+  isNativeLink?: boolean;
+  /** For metadata links: the relationship type */
+  metadataRelation?: 'blocks' | 'blocked_by';
+  /** For metadata links: the target IID */
+  metadataTargetIid?: number;
   error?: string;
 }
 
@@ -131,6 +143,10 @@ export function findLinkBySourceTarget(
 /**
  * Validate that a link has the required GitLab metadata for API operations.
  *
+ * Supports both native GitLab links and description metadata links:
+ * - Native links: require apiSourceIid and linkedWorkItemGlobalId
+ * - Metadata links: require apiSourceIid, metadataRelation, and metadataTargetIid
+ *
  * @param link - Link object to validate
  * @returns Validation result with metadata if valid, error message if not
  */
@@ -149,16 +165,59 @@ export function validateLinkGitLabMetadata(
     };
   }
 
-  const { apiSourceIid, linkedWorkItemGlobalId } = link._gitlab;
+  const {
+    apiSourceIid,
+    linkedWorkItemGlobalId,
+    isNativeLink,
+    metadataRelation,
+    metadataTargetIid,
+  } = link._gitlab;
 
-  if (!apiSourceIid || !linkedWorkItemGlobalId) {
+  // Check if we have apiSourceIid (required for both link types)
+  if (!apiSourceIid) {
     return {
       valid: false,
       error:
-        'Cannot delete link: missing GitLab metadata fields. ' +
+        'Cannot delete link: missing apiSourceIid. ' +
         'Please refresh the page to reload links with proper metadata.',
     };
   }
 
-  return { valid: true, apiSourceIid, linkedWorkItemGlobalId };
+  // Determine link type and validate accordingly
+  const effectiveIsNativeLink = isNativeLink ?? !!linkedWorkItemGlobalId;
+
+  if (effectiveIsNativeLink) {
+    // Native link validation
+    if (!linkedWorkItemGlobalId) {
+      return {
+        valid: false,
+        error:
+          'Cannot delete native link: missing linkedWorkItemGlobalId. ' +
+          'Please refresh the page to reload links with proper metadata.',
+      };
+    }
+    return {
+      valid: true,
+      apiSourceIid,
+      linkedWorkItemGlobalId,
+      isNativeLink: true,
+    };
+  } else {
+    // Metadata link validation
+    if (metadataRelation === undefined || metadataTargetIid === undefined) {
+      return {
+        valid: false,
+        error:
+          'Cannot delete metadata link: missing metadataRelation or metadataTargetIid. ' +
+          'Please refresh the page to reload links with proper metadata.',
+      };
+    }
+    return {
+      valid: true,
+      apiSourceIid,
+      isNativeLink: false,
+      metadataRelation,
+      metadataTargetIid,
+    };
+  }
 }

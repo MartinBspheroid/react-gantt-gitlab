@@ -1324,32 +1324,6 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
         throw error;
       }
 
-      // Expose API to window for debugging
-      window.ganttApi = ganttApi;
-
-      // Helper function to inspect tasks (uses getTasksFromState to handle SVAR internal structure)
-      window.debugTasks = () => {
-        try {
-          const state = ganttApi.getState();
-          return getTasksFromState(state);
-        } catch (error) {
-          console.error('Error in debugTasks:', error);
-          return ganttApi.getState();
-        }
-      };
-
-      // Helper function to find a specific task
-      window.findTask = (id) => {
-        try {
-          const state = ganttApi.getState();
-          const tasks = getTasksFromState(state);
-          return tasks.find(t => t.id == id) || null;
-        } catch (error) {
-          console.error('Error in findTask:', error);
-          return null;
-        }
-      };
-
       // Auto-scroll to today after data loads
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -2273,7 +2247,20 @@ export function GitLabGantt({ initialConfigId, autoSync = false }) {
           const validation = validateLinkGitLabMetadata(link);
 
           if (validation.valid) {
-            await deleteLink(link.id, validation.apiSourceIid, validation.linkedWorkItemGlobalId);
+            // Pass appropriate options based on link type
+            const options = validation.isNativeLink
+              ? { isNativeLink: true }
+              : {
+                  isNativeLink: false,
+                  metadataRelation: validation.metadataRelation,
+                  metadataTargetIid: validation.metadataTargetIid,
+                };
+            await deleteLink(
+              link.id,
+              validation.apiSourceIid,
+              validation.linkedWorkItemGlobalId,
+              options
+            );
           } else if (link._gitlab === undefined) {
             // Link exists but no _gitlab metadata - newly created and not yet synced
             showToast('Link was just created. Syncing to update...', 'info');
