@@ -1,0 +1,39 @@
+/* src/components/GitLabWorkspace/ViewSwitcher.css */
+
+.view-switcher {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-switcher-btn:hover {
+  color: #374151;
+  background: #e5e7eb;
+}
+
+.view-switcher-btn.active {
+  color: #1f2937;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.view-switcher-btn i {
+  font-size: 12px;
+}
