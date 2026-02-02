@@ -2315,7 +2315,8 @@ export function GanttView({
       </div>
       )}
 
-      {!hideSharedToolbar && showViewOptions && (
+      {/* View Controls - always shown when enabled (Gantt-specific) */}
+      {showViewOptions && (
         <div className="view-controls">
           <label className="control-label">
             Range:
@@ -2576,6 +2577,15 @@ export function GanttView({
 
       <div className="gantt-wrapper">
         <div className="gantt-toolbar-row">
+          {/* View Options Toggle - Gantt specific */}
+          <button
+            onClick={() => setShowViewOptions(!showViewOptions)}
+            className="btn-view-options"
+            title="View Options"
+          >
+            <i className="fas fa-sliders-h"></i>
+            <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}></i>
+          </button>
           <ColumnSettingsDropdown
             isOpen={showColumnSettings}
             onToggle={() => setShowColumnSettings(!showColumnSettings)}
