@@ -1,0 +1,73 @@
+/* src/components/KanbanView/KanbanList.css */
+
+.kanban-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-width: 300px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.kanban-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #e5e7eb;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.kanban-list-header-others {
+  background: #fef3c7;
+  border-bottom-color: #fcd34d;
+}
+
+.kanban-list-header-closed {
+  background: #dbeafe;
+  border-bottom-color: #93c5fd;
+}
+
+.kanban-list-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+}
+
+.kanban-list-count {
+  background: #9ca3af;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.kanban-list-header-others .kanban-list-count {
+  background: #d97706;
+}
+
+.kanban-list-header-closed .kanban-list-count {
+  background: #3b82f6;
+}
+
+.kanban-list-content {
+  flex: 1;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  min-height: 100px;
+}
+
+.kanban-list-empty {
+  color: #9ca3af;
+  font-size: 12px;
+  text-align: center;
+  padding: 20px 10px;
+  font-style: italic;
+}
