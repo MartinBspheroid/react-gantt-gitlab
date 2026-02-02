@@ -1,3 +1,5 @@
+// src/components/GitLabWorkspace/GitLabWorkspace.jsx
+
 /**
  * GitLabWorkspace
  *
@@ -8,23 +10,25 @@
 import { useState } from 'react';
 import { GitLabDataProvider } from '../../contexts/GitLabDataContext';
 import { GanttView } from '../GanttView/GanttView';
-// import { KanbanView } from '../KanbanView/KanbanView'; // TODO: Phase 2
+import { KanbanView } from '../KanbanView/KanbanView';
+import { ViewSwitcher } from './ViewSwitcher';
 import './GitLabWorkspace.css';
 
 export function GitLabWorkspace({ initialConfigId, autoSync = false }) {
-  // eslint-disable-next-line no-unused-vars
-  const [activeView, setActiveView] = useState('gantt'); // 'gantt' | 'kanban' - TODO: Enable when Kanban is ready
+  const [activeView, setActiveView] = useState('gantt'); // 'gantt' | 'kanban'
 
   return (
     <GitLabDataProvider initialConfigId={initialConfigId} autoSync={autoSync}>
       <div className="gitlab-workspace">
-        {/* View Switcher - TODO: Enable when Kanban is ready */}
-        {/* <ViewSwitcher activeView={activeView} onViewChange={setActiveView} /> */}
+        {/* View Switcher in header area */}
+        <div className="gitlab-workspace-header">
+          <ViewSwitcher activeView={activeView} onViewChange={setActiveView} />
+        </div>
 
         {/* View Content */}
         <div className="gitlab-workspace-content">
           {activeView === 'gantt' && <GanttView />}
-          {/* {activeView === 'kanban' && <KanbanView />} */}
+          {activeView === 'kanban' && <KanbanView />}
         </div>
       </div>
     </GitLabDataProvider>

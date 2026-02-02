@@ -1,10 +1,19 @@
-/* GitLabWorkspace.css */
+/* src/components/GitLabWorkspace/GitLabWorkspace.css */
 
 .gitlab-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
+}
+
+.gitlab-workspace-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
 }
 
 .gitlab-workspace-content {
