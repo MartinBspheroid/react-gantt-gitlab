@@ -19,11 +19,15 @@ import './SharedToolbar.css';
  * @param {string} activeView - Current active view ('gantt' | 'kanban')
  * @param {function} onViewChange - Callback when view changes (view: string) => void
  * @param {function} onSettingsClick - Callback when settings button is clicked
+ * @param {boolean} showViewOptions - Whether view options panel is visible
+ * @param {function} onViewOptionsToggle - Callback when view options button is clicked
  */
 export function SharedToolbar({
   activeView,
   onViewChange,
   onSettingsClick,
+  showViewOptions,
+  onViewOptionsToggle,
 }) {
   // Get data from context
   const {
@@ -33,7 +37,20 @@ export function SharedToolbar({
     sync,
     syncState,
     filterOptions,
+    tasks,
   } = useGitLabData();
+
+  // Calculate stats from tasks
+  const stats = {
+    total: tasks?.length || 0,
+    completed: tasks?.filter(t => t.progress === 100 || t._gitlab?.state === 'closed').length || 0,
+    inProgress: tasks?.filter(t => t.progress > 0 && t.progress < 100).length || 0,
+    notStarted: tasks?.filter(t => t.progress === 0 && t._gitlab?.state !== 'closed').length || 0,
+    overdue: tasks?.filter(t => {
+      if (!t.end || t._gitlab?.state === 'closed') return false;
+      return new Date(t.end) < new Date();
+    }).length || 0,
+  };
 
   return (
     <div className="shared-toolbar">
@@ -86,6 +103,21 @@ export function SharedToolbar({
         <i className="fas fa-cog" />
       </button>
 
+      {/* View Options Toggle - Only for Gantt view, before Sync */}
+      {activeView === 'gantt' && (
+        <>
+          <div className="shared-toolbar-divider" />
+          <button
+            onClick={onViewOptionsToggle}
+            className={`shared-toolbar-btn shared-toolbar-btn-icon ${showViewOptions ? 'active' : ''}`}
+            title="View Options"
+          >
+            <i className="fas fa-sliders-h" />
+            <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`} />
+          </button>
+        </>
+      )}
+
       {/* Divider */}
       <div className="shared-toolbar-divider" />
 
@@ -96,6 +128,30 @@ export function SharedToolbar({
         filterOptions={filterOptions}
       />
 
+      {/* Spacer to push stats to the right */}
+      <div className="shared-toolbar-spacer" />
+
+      {/* Stats Panel */}
+      <div className="shared-toolbar-stats">
+        <span className="stat-item">
+          <span className="stat-label">Total:</span>
+          <span className="stat-value">{stats.total}</span>
+        </span>
+        <span className="stat-item">
+          <span className="stat-label">Done:</span>
+          <span className="stat-value stat-completed">{stats.completed}</span>
+        </span>
+        <span className="stat-item">
+          <span className="stat-label">In Progress:</span>
+          <span className="stat-value stat-progress">{stats.inProgress}</span>
+        </span>
+        {stats.overdue > 0 && (
+          <span className="stat-item">
+            <span className="stat-label">Overdue:</span>
+            <span className="stat-value stat-overdue">{stats.overdue}</span>
+          </span>
+        )}
+      </div>
     </div>
   );
 }

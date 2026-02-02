@@ -130,12 +130,68 @@
 
 /* Icon-only button */
 .shared-toolbar-btn-icon {
-  width: 28px;
-  padding: 0;
+  width: auto;
+  min-width: 28px;
+  padding: 0 6px;
 }
 
 .shared-toolbar-btn-icon i {
   font-size: 14px;
+}
+
+.shared-toolbar-btn-icon .chevron-icon {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* Active state for toggle buttons */
+.shared-toolbar-btn.active {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* Spacer to push elements to the right */
+.shared-toolbar-spacer {
+  flex: 1;
+  min-width: 20px;
+}
+
+/* Stats Panel */
+.shared-toolbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.shared-toolbar-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shared-toolbar-stats .stat-label {
+  color: #9ca3af;
+}
+
+.shared-toolbar-stats .stat-value {
+  font-weight: 600;
+  color: #374151;
+}
+
+.shared-toolbar-stats .stat-completed {
+  color: #10b981;
+}
+
+.shared-toolbar-stats .stat-progress {
+  color: #3b82f6;
+}
+
+.shared-toolbar-stats .stat-overdue {
+  color: #ef4444;
 }
 
 /* Responsive adjustments */

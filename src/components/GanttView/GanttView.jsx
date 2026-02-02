@@ -11,6 +11,7 @@ import '../LabelCell.css';
 import './GanttView.css';
 import '../shared/modal-close-button.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Gantt from '../Gantt.jsx';
 import Editor from '../Editor.jsx';
 import Toolbar from '../Toolbar.jsx';
@@ -147,6 +148,7 @@ export function GanttView({
   hideSharedToolbar = false,
   showSettings: externalShowSettings,
   onSettingsClose,
+  externalShowViewOptions,
 }) {
   // === Get data from GitLabDataContext ===
   const {
@@ -219,7 +221,10 @@ export function GanttView({
   const setShowSettings = onSettingsClose
     ? (value) => { if (!value) onSettingsClose(); else setInternalShowSettings(true); }
     : setInternalShowSettings;
-  const [showViewOptions, setShowViewOptions] = useState(false);
+  // View Options can be controlled externally (from GitLabWorkspace) or internally
+  const [internalShowViewOptions, setInternalShowViewOptions] = useState(false);
+  const showViewOptions = externalShowViewOptions !== undefined ? externalShowViewOptions : internalShowViewOptions;
+  const setShowViewOptions = setInternalShowViewOptions;
 
   // MoveInModal state
   const [showMoveInModal, setShowMoveInModal] = useState(false);
@@ -2315,87 +2320,97 @@ export function GanttView({
       </div>
       )}
 
-      {/* View Controls - always shown when enabled (Gantt-specific) */}
-      {showViewOptions && (
-        <div className="view-controls">
-          <label className="control-label">
-            Range:
-            <select
-              value={dateRangePreset}
-              onChange={(e) => setDateRangePreset(e.target.value)}
-              className="unit-select"
-            >
-              <option value="1m">1 Month</option>
-              <option value="3m">3 Months</option>
-              <option value="6m">6 Months</option>
-              <option value="1y">1 Year</option>
-              <option value="2y">2 Years</option>
-              <option value="custom">Custom</option>
-            </select>
-          </label>
-          {dateRangePreset === 'custom' && (
-            <>
-              <label className="control-label">
-                From:
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="date-input"
-                />
-              </label>
-              <label className="control-label">
-                To:
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="date-input"
-                />
-              </label>
-            </>
-          )}
-          <label className="control-label">
-            Width:
-            <input
-              type="range"
-              min="20"
-              max="100"
-              value={cellWidthDisplay}
-              onChange={(e) => handleCellWidthChange(Number(e.target.value))}
-              className="slider"
-              disabled={lengthUnit !== 'day'}
-            />
-            <span className="control-value">{lengthUnit === 'day' ? cellWidthDisplay : effectiveCellWidth}</span>
-          </label>
-          <label className="control-label">
-            Height:
-            <input
-              type="range"
-              min="20"
-              max="60"
-              value={cellHeightDisplay}
-              onChange={(e) => handleCellHeightChange(Number(e.target.value))}
-              className="slider"
-            />
-            <span className="control-value">{cellHeightDisplay}</span>
-          </label>
-          <label className="control-label">
-            Unit:
-            <select
-              value={lengthUnit}
-              onChange={(e) => setLengthUnit(e.target.value)}
-              className="unit-select"
-            >
-              <option value="hour">Hour</option>
-              <option value="day">Day</option>
-              <option value="week">Week</option>
-              <option value="month">Month</option>
-              <option value="quarter">Quarter</option>
-            </select>
-          </label>
-        </div>
-      )}
+      {/* View Controls - render via portal when in workspace mode, otherwise inline */}
+      {showViewOptions && (() => {
+        const viewControlsContent = (
+          <div className="view-controls">
+            <label className="control-label">
+              Range:
+              <select
+                value={dateRangePreset}
+                onChange={(e) => setDateRangePreset(e.target.value)}
+                className="unit-select"
+              >
+                <option value="1m">1 Month</option>
+                <option value="3m">3 Months</option>
+                <option value="6m">6 Months</option>
+                <option value="1y">1 Year</option>
+                <option value="2y">2 Years</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            {dateRangePreset === 'custom' && (
+              <>
+                <label className="control-label">
+                  From:
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="date-input"
+                  />
+                </label>
+                <label className="control-label">
+                  To:
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="date-input"
+                  />
+                </label>
+              </>
+            )}
+            <label className="control-label">
+              Width:
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value={cellWidthDisplay}
+                onChange={(e) => handleCellWidthChange(Number(e.target.value))}
+                className="slider"
+                disabled={lengthUnit !== 'day'}
+              />
+              <span className="control-value">{lengthUnit === 'day' ? cellWidthDisplay : effectiveCellWidth}</span>
+            </label>
+            <label className="control-label">
+              Height:
+              <input
+                type="range"
+                min="20"
+                max="60"
+                value={cellHeightDisplay}
+                onChange={(e) => handleCellHeightChange(Number(e.target.value))}
+                className="slider"
+              />
+              <span className="control-value">{cellHeightDisplay}</span>
+            </label>
+            <label className="control-label">
+              Unit:
+              <select
+                value={lengthUnit}
+                onChange={(e) => setLengthUnit(e.target.value)}
+                className="unit-select"
+              >
+                <option value="hour">Hour</option>
+                <option value="day">Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="quarter">Quarter</option>
+              </select>
+            </label>
+          </div>
+        );
+
+        // If embedded in workspace, render via portal to the container above FilterPanel
+        const portalContainer = document.getElementById('view-options-container');
+        if (hideSharedToolbar && portalContainer) {
+          return createPortal(viewControlsContent, portalContainer);
+        }
+        // Otherwise render inline
+        return viewControlsContent;
+      })()}
 
       {showSettings && (
         <div
@@ -2577,15 +2592,6 @@ export function GanttView({
 
       <div className="gantt-wrapper">
         <div className="gantt-toolbar-row">
-          {/* View Options Toggle - Gantt specific */}
-          <button
-            onClick={() => setShowViewOptions(!showViewOptions)}
-            className="btn-view-options"
-            title="View Options"
-          >
-            <i className="fas fa-sliders-h"></i>
-            <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}></i>
-          </button>
           <ColumnSettingsDropdown
             isOpen={showColumnSettings}
             onToggle={() => setShowColumnSettings(!showColumnSettings)}

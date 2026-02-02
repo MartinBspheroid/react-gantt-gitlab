@@ -510,6 +510,12 @@
   align-items: center;
   /* Match wx-toolbar padding */
   padding: 4px;
+  gap: 4px;
+}
+
+.gantt-toolbar-row .btn-view-options {
+  /* Ensure visibility in toolbar row */
+  flex-shrink: 0;
 }
 
 .gantt-toolbar-row .column-settings-container {
