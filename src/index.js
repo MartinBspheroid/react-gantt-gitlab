@@ -56,5 +56,16 @@ export {
   useGitLabDataOptional,
 } from './contexts/GitLabDataContext';
 
+// KanbanView exports
+export {
+  KanbanView,
+  KanbanBoard,
+  KanbanList,
+  KanbanCard,
+} from './components/KanbanView';
+
+// ViewSwitcher export
+export { ViewSwitcher } from './components/GitLabWorkspace/ViewSwitcher';
+
 // Backward compatibility: GitLabGantt now wraps GitLabWorkspace
 export { GitLabGantt } from './components/GitLabGantt.jsx';
