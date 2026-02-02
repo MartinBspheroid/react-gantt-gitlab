@@ -1,0 +1,111 @@
+/**
+ * BoardSelector Styles
+ */
+
+.board-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.board-selector-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.board-selector-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.board-selector-select {
+  height: 28px;
+  min-width: 180px;
+  padding: 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.board-selector-select:hover {
+  border-color: #9ca3af;
+}
+
+.board-selector-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.board-selector-select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Button styles */
+.board-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.board-selector-btn:hover:not(:disabled) {
+  color: #1f2937;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.board-selector-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.board-selector-btn i {
+  font-size: 11px;
+}
+
+/* New button - primary style */
+.board-selector-btn-new {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.board-selector-btn-new:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+/* Settings button - icon only */
+.board-selector-btn-settings {
+  width: 28px;
+  padding: 0;
+}
+
+/* Loading indicator */
+.board-selector-loading {
+  color: #6b7280;
+  font-size: 14px;
+  margin-left: 4px;
+}
