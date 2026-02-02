@@ -1,0 +1,186 @@
+/* src/components/GitLabWorkspace/SharedToolbar.css */
+
+/**
+ * SharedToolbar Styles
+ *
+ * Styling for the shared toolbar component used by both Gantt and Kanban views.
+ * Uses flexbox layout and matches existing GanttView header styling.
+ */
+
+.shared-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border-bottom: 1px solid #d1d5db;
+  flex-wrap: wrap;
+}
+
+/* View Switcher - Segmented button group */
+.shared-toolbar-view-switcher {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn:hover {
+  color: #374151;
+  background: #e5e7eb;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn.active {
+  color: #1f2937;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn i {
+  font-size: 12px;
+}
+
+/* Divider */
+.shared-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
+
+/* Project Selector */
+.shared-toolbar-project {
+  display: flex;
+  align-items: center;
+}
+
+.shared-toolbar-select {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.shared-toolbar-select:hover {
+  border-color: #9ca3af;
+}
+
+.shared-toolbar-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+}
+
+.shared-toolbar-select:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Generic button styles */
+.shared-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.shared-toolbar-btn:hover {
+  color: #1f2937;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.shared-toolbar-btn:active {
+  background: #e5e7eb;
+}
+
+/* Icon-only button */
+.shared-toolbar-btn-icon {
+  width: 28px;
+  padding: 0;
+}
+
+.shared-toolbar-btn-icon i {
+  font-size: 14px;
+}
+
+/* Filter toggle button */
+.shared-toolbar-btn-filter {
+  padding: 0 12px;
+}
+
+.shared-toolbar-btn-filter .chevron-icon {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.shared-toolbar-btn-filter.active {
+  color: #1f75cb;
+  background: #eff6ff;
+  border-color: #1f75cb;
+}
+
+.shared-toolbar-btn-filter.active:hover {
+  background: #dbeafe;
+}
+
+/* Spacer to push elements to the right */
+.shared-toolbar-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shared-toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .shared-toolbar-select {
+    min-width: 120px;
+  }
+
+  .shared-toolbar-view-switcher .view-switcher-btn span {
+    display: none;
+  }
+
+  .shared-toolbar-btn-filter span {
+    display: none;
+  }
+}
