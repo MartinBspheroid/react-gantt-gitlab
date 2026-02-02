@@ -5,11 +5,6 @@
  * This file contains component-specific styles for lists, checkboxes, etc.
  */
 
-/* Error state for input */
-.board-settings-modal .dialog-input.error {
-  border-color: #ef4444;
-}
-
 /* Custom footer layout: delete on left, cancel/save on right */
 .board-settings-footer-content {
   display: flex;

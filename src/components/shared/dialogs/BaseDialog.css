@@ -166,6 +166,10 @@
   box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
 }
 
+.base-dialog .dialog-input.error {
+  border-color: #ef4444;
+}
+
 .base-dialog .dialog-input::placeholder {
   color: var(--wx-gitlab-modal-hint-text, #999);
 }
