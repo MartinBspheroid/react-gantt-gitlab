@@ -36,6 +36,11 @@ export interface GitLabSyncResult {
   syncState: SyncState;
   sync: (options?: GitLabSyncOptions) => Promise<void>;
   syncTask: (id: number | string, updates: Partial<ITask>) => Promise<void>;
+  reorderTaskLocal: (
+    taskId: number | string,
+    targetTaskId: number | string,
+    position: 'before' | 'after',
+  ) => { rollback: () => void };
   createTask: (task: Partial<ITask>) => Promise<ITask>;
   createMilestone: (milestone: Partial<ITask>) => Promise<ITask>;
   deleteTask: (id: number | string) => Promise<void>;
@@ -221,6 +226,110 @@ export function useGitLabSync(
       }
     },
     [provider],
+  );
+
+  /**
+   * Optimistically reorder a task's position relative to a target task.
+   * Updates local state immediately and returns a rollback function.
+   *
+   * @param taskId - The ID of the task to move
+   * @param targetTaskId - The ID of the target task
+   * @param position - 'before' or 'after' the target
+   * @returns Object with rollback function
+   */
+  const reorderTaskLocal = useCallback(
+    (
+      taskId: number | string,
+      targetTaskId: number | string,
+      position: 'before' | 'after',
+    ): { rollback: () => void } => {
+      console.log('[reorderTaskLocal] Called with:', {
+        taskId,
+        targetTaskId,
+        position,
+      });
+
+      const previousTasks = tasksRef.current;
+      console.log(
+        '[reorderTaskLocal] Previous tasks count:',
+        previousTasks.length,
+      );
+
+      const taskIndex = previousTasks.findIndex((t) => t.id === taskId);
+      const targetIndex = previousTasks.findIndex((t) => t.id === targetTaskId);
+
+      console.log('[reorderTaskLocal] Found indices:', {
+        taskIndex,
+        targetIndex,
+      });
+
+      if (taskIndex === -1 || targetIndex === -1) {
+        console.log(
+          '[reorderTaskLocal] Task not found, returning empty rollback',
+        );
+        return { rollback: () => {} };
+      }
+
+      const task = previousTasks[taskIndex];
+      const targetTask = previousTasks[targetIndex];
+
+      console.log('[reorderTaskLocal] Task:', {
+        id: task.id,
+        text: task.text,
+        relativePosition: task._gitlab?.relativePosition,
+      });
+      console.log('[reorderTaskLocal] Target:', {
+        id: targetTask.id,
+        text: targetTask.text,
+        relativePosition: targetTask._gitlab?.relativePosition,
+      });
+
+      // Calculate new relativePosition
+      // Use a simple offset from target position for optimistic update.
+      // The actual position will be determined by GitLab API - this is just
+      // for immediate UI feedback to ensure the task appears near the target.
+      const targetPos = targetTask._gitlab?.relativePosition ?? targetTask.id;
+      console.log('[reorderTaskLocal] Target position:', targetPos);
+
+      // Simple offset: place slightly after or before target
+      // Using small offset (1) so it appears adjacent to target in sort order
+      const newPosition = position === 'after' ? targetPos + 1 : targetPos - 1;
+      console.log(
+        '[reorderTaskLocal] New position (offset from target):',
+        newPosition,
+      );
+
+      // Optimistic update: update the task's relativePosition
+      const updatedTasks = previousTasks.map((t) => {
+        if (t.id === taskId) {
+          return {
+            ...t,
+            _gitlab: {
+              ...t._gitlab,
+              relativePosition: newPosition,
+            },
+          };
+        }
+        return t;
+      });
+
+      console.log(
+        '[reorderTaskLocal] Setting updated tasks, new position for task:',
+        newPosition,
+      );
+      setTasks(updatedTasks);
+      tasksRef.current = updatedTasks;
+
+      // Return rollback function
+      return {
+        rollback: () => {
+          console.log('[reorderTaskLocal] Rolling back to previous state');
+          setTasks(previousTasks);
+          tasksRef.current = previousTasks;
+        },
+      };
+    },
+    [],
   );
 
   /**
@@ -547,6 +656,7 @@ export function useGitLabSync(
     syncState,
     sync,
     syncTask,
+    reorderTaskLocal,
     createTask,
     createMilestone,
     deleteTask,

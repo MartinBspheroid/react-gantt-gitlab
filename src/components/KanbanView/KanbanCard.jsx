@@ -14,6 +14,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { openGitLabLink } from '../../utils/GitLabLinkUtils';
 import './KanbanCard.css';
 
 /**
@@ -63,16 +64,17 @@ function parseAssignees(assigneesStr) {
 export function KanbanCard({
   task,
   labelColorMap,
-  onDoubleClick,
-  maxLabels = 3,
+  childTasks = [], // Child tasks (workItemType=Task) to display
+  maxLabels = 2,
   maxAssignees = 2,
   listId,
   isDragging = false,
   isDragOverlay = false,
-  isDragDisabled = false, // When true, same-list drag is disabled (non-manual sort mode)
+  isDragDisabled = false, // When true, same-list reorder is disabled (non-manual sort mode)
 }) {
   // Setup sortable hook for drag-and-drop
-  // Note: disabled only affects same-list sortable behavior, cross-list drag still works
+  // Note: We always enable dragging to support cross-list drag.
+  // Same-list reorder restriction is handled in KanbanBoardDnd.handleDragEnd
   const {
     attributes,
     listeners,
@@ -83,7 +85,7 @@ export function KanbanCard({
   } = useSortable({
     id: task.id,
     data: { taskId: task.id, listId },
-    disabled: isDragDisabled,
+    // Don't use disabled here - it would block cross-list drag too
   });
 
   // Build transform style for drag animation
@@ -100,17 +102,15 @@ export function KanbanCard({
   if (isDragOverlay) {
     classNames.push('drag-overlay');
   }
-  if (isDragDisabled) {
-    classNames.push('kanban-card-drag-disabled');
-  }
+  // Note: isDragDisabled no longer adds a class since cards can always be dragged
+  // for cross-list operations. Same-list reorder is blocked in handleDragEnd.
 
   const labels = parseLabels(task.labels);
   const assignees = parseAssignees(task.assigned);
   const dueInfo = formatDueDate(task.end);
 
-  // Task completion status from GitLab
-  const taskCompletion = task._gitlab?.taskCompletionStatus;
-  const hasTaskCompletion = taskCompletion && taskCompletion.count > 0;
+  // Child tasks (GitLab Tasks with workItemType='Task')
+  const hasChildTasks = childTasks && childTasks.length > 0;
 
   // Calculate visible labels and overflow
   const visibleLabels = labels.slice(0, maxLabels);
@@ -120,10 +120,17 @@ export function KanbanCard({
   const visibleAssignees = assignees.slice(0, maxAssignees);
   const overflowAssignees = assignees.length - maxAssignees;
 
-  const handleDoubleClick = (e) => {
+  // Handle click on ID to open GitLab link
+  // Also handle mouseDown to prevent drag from starting
+  const handleIdClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    onDoubleClick?.(task);
+    openGitLabLink(task);
+  };
+
+  const handleIdMouseDown = (e) => {
+    // Stop propagation to prevent drag from starting
+    e.stopPropagation();
   };
 
   return (
@@ -131,16 +138,34 @@ export function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={classNames.join(' ')}
-      onDoubleClick={handleDoubleClick}
       data-task-id={task.id}
       {...attributes}
       {...listeners}
     >
-      {/* Issue ID and Title */}
+      {/* Issue ID, Due Date, and Title */}
       <div className="kanban-card-header">
-        <span className="kanban-card-id">#{task._gitlab?.iid || task.id}</span>
+        <div className="kanban-card-header-row">
+          <span
+            className="kanban-card-id"
+            onClick={handleIdClick}
+            onMouseDown={handleIdMouseDown}
+            onTouchStart={handleIdMouseDown}
+            title="Open in GitLab"
+          >
+            #{task._gitlab?.iid || task.id}
+          </span>
+          {dueInfo.text && (
+            <span
+              className={`kanban-card-due ${dueInfo.isOverdue ? 'kanban-card-due-overdue' : ''}`}
+            >
+              {dueInfo.isOverdue ? '-' : ''}
+              {dueInfo.text}
+            </span>
+          )}
+        </div>
         <span className="kanban-card-title">{task.text}</span>
       </div>
+
 
       {/* Assignees */}
       {assignees.length > 0 && (
@@ -178,23 +203,18 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Bottom row: Task completion and Due date */}
-      {(hasTaskCompletion || dueInfo.text) && (
-        <div className="kanban-card-footer">
-          {hasTaskCompletion && (
-            <span className="kanban-card-tasks">
-              <i className="fas fa-check-square kanban-card-icon" />
-              {taskCompletion.completedCount}/{taskCompletion.count}
-            </span>
-          )}
-          {dueInfo.text && (
-            <span
-              className={`kanban-card-due ${dueInfo.isOverdue ? 'kanban-card-due-overdue' : ''}`}
+      {/* Child Tasks (GitLab Tasks) */}
+      {hasChildTasks && (
+        <div className="kanban-card-tasks">
+          {childTasks.map((childTask) => (
+            <div
+              key={childTask.id}
+              className={`kanban-card-task-item ${childTask._gitlab?.state === 'closed' ? 'kanban-card-task-done' : ''}`}
             >
-              {dueInfo.isOverdue ? '-' : ''}
-              {dueInfo.text}
-            </span>
-          )}
+              <i className={`fas ${childTask._gitlab?.state === 'closed' ? 'fa-check-square' : 'fa-square'} kanban-card-icon`} />
+              <span className="kanban-card-task-title">{childTask.text}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

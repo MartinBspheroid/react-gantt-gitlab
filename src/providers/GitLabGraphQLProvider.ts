@@ -1983,6 +1983,7 @@ export class GitLabGraphQLProvider {
         iid: Number(workItem.iid),
         state: workItem.state,
         workItemType: workItem.workItemType?.name,
+        createdAt: workItem.createdAt, // Created timestamp for sorting
         startDate: dateWidget?.startDate, // Track if task has explicit start date
         dueDate: dateWidget?.dueDate, // Track if task has explicit due date
         epicParentId, // Store Epic parent ID if exists (for Issues without Milestone)
@@ -2003,6 +2004,9 @@ export class GitLabGraphQLProvider {
         iterationTitle: iterationWidget?.iteration
           ? formatIterationTitle(iterationWidget.iteration)
           : undefined,
+        // relativePosition for Kanban sorting (from Issue API, only for root-level Issues)
+        relativePosition:
+          isIssue && !parentIid ? relativePositionMap.get(iid) : undefined,
       },
     };
 

@@ -11,12 +11,15 @@
  * are handled by the parent component via callback props.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
   closestCorners,
   pointerWithin,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core';
 import { KanbanBoard } from './KanbanBoard';
 import { KanbanCard } from './KanbanCard';
@@ -87,11 +90,20 @@ function findTaskListId(taskId, board, tasks) {
 
 /**
  * Check if a list allows same-list drag (manual sorting)
+ * Uses current sort (including temporary overrides) not just default sort.
  * @param {string} listId - The list ID
  * @param {Object} board - The board configuration
+ * @param {Object} sortOverrides - Temporary sort overrides from KanbanBoard state
  * @returns {boolean}
  */
-function isListDragEnabled(listId, board) {
+function isListDragEnabled(listId, board, sortOverrides = {}) {
+  // Check for temporary override first
+  const override = sortOverrides[listId];
+  if (override?.sortBy) {
+    return override.sortBy === 'position';
+  }
+
+  // Fall back to default sort from board config
   if (listId === '__others__') {
     return (board?.othersSortBy || 'position') === 'position';
   }
@@ -105,13 +117,33 @@ function isListDragEnabled(listId, board) {
 export function KanbanBoardDnd({
   board,
   tasks,
+  childTasksMap,
   labelColorMap,
   labelPriorityMap,
   onCardDoubleClick,
   onSameListReorder,
   onCrossListDrag,
-  onListSortChange, // Callback: (listId, newSortBy) => void
 }) {
+  // Configure sensors with activation constraint
+  // Require 5px of movement before drag starts, allowing clicks to work
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 5px movement required to start drag
+      },
+    }),
+  );
+
+  // Temporary sort overrides per list (not persisted to config)
+  // Map of listId -> { sortBy, sortOrder }
+  // Lifted from KanbanBoard to allow drag logic to access current sort state
+  const [sortOverrides, setSortOverrides] = useState({});
+
+  // Reset sort overrides when board changes
+  useEffect(() => {
+    setSortOverrides({});
+  }, [board?.id]);
+
   // Drag state
   const [activeTask, setActiveTask] = useState(null);
   const [activeListId, setActiveListId] = useState(null);
@@ -149,6 +181,8 @@ export function KanbanBoardDnd({
     async (event) => {
       const { active, over } = event;
 
+      console.log('[KanbanBoardDnd.handleDragEnd] Event:', { activeId: active?.id, overId: over?.id });
+
       // Capture current state before resetting (for async operations)
       const currentActiveListId = activeListId;
 
@@ -157,11 +191,16 @@ export function KanbanBoardDnd({
       setActiveListId(null);
       setOverListId(null);
 
-      if (!over || !currentActiveListId) return;
+      if (!over || !currentActiveListId) {
+        console.log('[KanbanBoardDnd.handleDragEnd] Early return: no over or activeListId');
+        return;
+      }
 
       // Get target list ID
       const targetListId = over.data?.current?.listId || over.id;
       const targetTaskId = over.data?.current?.taskId || null;
+
+      console.log('[KanbanBoardDnd.handleDragEnd] Target info:', { targetListId, targetTaskId, currentActiveListId });
 
       // Get list info for source and target
       const sourceList = getListInfo(currentActiveListId, board);
@@ -169,12 +208,21 @@ export function KanbanBoardDnd({
 
       // Same list reorder - only if list is in manual (position) sort mode
       if (currentActiveListId === targetListId && targetTaskId) {
-        if (!isListDragEnabled(currentActiveListId, board)) {
+        console.log('[KanbanBoardDnd.handleDragEnd] Same list reorder detected');
+        if (!isListDragEnabled(currentActiveListId, board, sortOverrides)) {
+          console.log('[KanbanBoardDnd.handleDragEnd] Drag disabled for this list, returning');
           // Non-manual sort mode - don't allow same-list reorder
           return;
         }
         if (onSameListReorder) {
-          await onSameListReorder(active.id, targetTaskId, 'after');
+          // Determine position based on drag direction (using delta.y from event)
+          // If delta.y < 0, we're dragging upward, so place 'before' target
+          // If delta.y >= 0, we're dragging downward, so place 'after' target
+          const delta = event.delta;
+          const position = delta && delta.y < 0 ? 'before' : 'after';
+          console.log('[KanbanBoardDnd.handleDragEnd] Calling onSameListReorder:', { activeId: active.id, targetTaskId, position, deltaY: delta?.y });
+          await onSameListReorder(active.id, targetTaskId, position);
+          console.log('[KanbanBoardDnd.handleDragEnd] onSameListReorder completed');
         }
         return;
       }
@@ -191,7 +239,7 @@ export function KanbanBoardDnd({
         }
       }
     },
-    [activeListId, board, onSameListReorder, onCrossListDrag],
+    [activeListId, board, sortOverrides, onSameListReorder, onCrossListDrag],
   );
 
   // Handle drag cancel (e.g., pressing Escape)
@@ -203,6 +251,7 @@ export function KanbanBoardDnd({
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -212,12 +261,14 @@ export function KanbanBoardDnd({
       <KanbanBoard
         board={board}
         tasks={tasks}
+        childTasksMap={childTasksMap}
         labelColorMap={labelColorMap}
         labelPriorityMap={labelPriorityMap}
         onCardDoubleClick={onCardDoubleClick}
-        onListSortChange={onListSortChange}
         activeTaskId={activeTask?.id}
         overListId={overListId}
+        sortOverrides={sortOverrides}
+        onSortOverridesChange={setSortOverrides}
       />
 
       {/* Drag overlay - shows card preview during drag */}

@@ -11,7 +11,13 @@ export interface IssueBoardList {
   /** 篩選的 label 名稱（AND 邏輯：issue 必須包含所有 labels） */
   labels: string[];
   /** 排序欄位 */
-  sortBy: 'position' | 'due_date' | 'created_at' | 'label_priority' | 'id';
+  sortBy:
+    | 'position'
+    | 'due_date'
+    | 'created_at'
+    | 'label_priority'
+    | 'title'
+    | 'assignee';
   /** 排序順序 */
   sortOrder: 'asc' | 'desc';
 }
@@ -22,7 +28,8 @@ export type SortField =
   | 'due_date'
   | 'created_at'
   | 'label_priority'
-  | 'id';
+  | 'title'
+  | 'assignee';
 
 /** Issue Board 定義 */
 export interface IssueBoard {

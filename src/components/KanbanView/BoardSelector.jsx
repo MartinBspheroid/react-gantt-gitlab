@@ -69,7 +69,7 @@ export function BoardSelector({
         disabled={loading || saving}
       >
         <i className="fas fa-plus" />
-        <span>New</span>
+        <span>Board</span>
       </button>
 
       {/* Settings button (only if board is selected) */}

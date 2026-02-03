@@ -10,6 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import '../LabelCell.css';
 import './GanttView.css';
 import '../shared/modal-close-button.css';
+import '../shared/SettingsModal.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Gantt from '../Gantt.jsx';

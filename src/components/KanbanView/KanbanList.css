@@ -3,8 +3,9 @@
 .kanban-list {
   display: flex;
   flex-direction: column;
-  min-width: 260px;
-  max-width: 300px;
+  width: 280px; /* Fixed width for all lists */
+  min-width: 280px;
+  max-width: 280px;
   height: 100%; /* Fill parent height */
   background: #f3f4f6;
   border-radius: 6px;
@@ -56,35 +57,9 @@
   background: #3b82f6;
 }
 
-/* Sort dropdown in header */
-.kanban-list-sort-select {
+/* SortControl is positioned at end of header */
+.kanban-list-header .sort-control {
   margin-left: auto;
-  padding: 2px 4px;
-  font-size: 11px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: white;
-  cursor: pointer;
-  color: #6b7280;
-  max-width: 100px;
-}
-
-.kanban-list-sort-select:hover {
-  border-color: #1f75cb;
-}
-
-.kanban-list-sort-select:focus {
-  outline: none;
-  border-color: #1f75cb;
-  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
-}
-
-.kanban-list-header-others .kanban-list-sort-select {
-  border-color: #fcd34d;
-}
-
-.kanban-list-header-closed .kanban-list-sort-select {
-  border-color: #93c5fd;
 }
 
 .kanban-list-content {
@@ -118,4 +93,50 @@
   border: 2px dashed #93c5fd;
   background: #dbeafe;
   border-radius: 4px;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-list {
+  /* Darker background for better contrast with cards */
+  background: #25282c;
+}
+
+.wx-willow-dark-theme .kanban-list-header {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-list-header-others {
+  background: rgba(217, 119, 6, 0.2);
+  border-bottom-color: #d97706;
+}
+
+.wx-willow-dark-theme .kanban-list-header-closed {
+  background: rgba(59, 130, 246, 0.2);
+  border-bottom-color: #3b82f6;
+}
+
+.wx-willow-dark-theme .kanban-list-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-list-count {
+  background: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-list-empty {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-list-over {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.wx-willow-dark-theme .kanban-list-over .kanban-list-content {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.wx-willow-dark-theme .kanban-list-over .kanban-list-empty {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.2);
 }

@@ -88,28 +88,29 @@
   font-size: 10px;
 }
 
-/* Lists */
-.board-settings-empty {
-  padding: 20px;
-  text-align: center;
-  color: #6b7280;
-  font-size: 13px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px dashed #d1d5db;
-}
-
+/* Lists container */
 .board-settings-lists {
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   overflow: hidden;
 }
 
+/* Empty state for regular lists (shown between Others and Closed) */
+.board-settings-empty {
+  padding: 16px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* List item base */
 .board-settings-list-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 12px;
   border-bottom: 1px solid #e5e7eb;
   background: white;
 }
@@ -122,6 +123,37 @@
   background: #f9fafb;
 }
 
+/* Special list (Others, Closed) styling */
+.board-settings-list-special {
+  background: #fafafa;
+}
+
+.board-settings-list-special .list-item-name {
+  color: #6b7280;
+}
+
+.board-settings-list-disabled {
+  opacity: 0.6;
+}
+
+.board-settings-list-disabled:hover {
+  background: #fafafa;
+}
+
+/* Toggle checkbox for special lists */
+.list-item-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+
+.list-item-toggle input[type='checkbox'] {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Drag buttons for regular lists */
 .list-item-drag {
   display: flex;
   flex-direction: column;
@@ -156,6 +188,7 @@
   font-size: 10px;
 }
 
+/* List info */
 .list-item-info {
   flex: 1;
   min-width: 0;
@@ -175,12 +208,40 @@
   display: block;
   font-size: 11px;
   color: #6b7280;
-  margin-top: 2px;
+  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Sort controls for special lists (inline) */
+.list-item-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.list-item-sort-select {
+  padding: 3px 6px;
+  font-size: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.list-item-sort-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.list-item-sort-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Action buttons for regular lists */
 .list-item-actions {
   display: flex;
   gap: 4px;
@@ -219,42 +280,91 @@
   font-size: 12px;
 }
 
-/* Checkboxes */
-.board-settings-checkboxes {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .board-settings-section > label,
+.wx-willow-dark-theme .board-settings-section-header > label {
+  color: var(--wx-demo-text-primary, #e6e6e6);
 }
 
-.board-settings-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
+.wx-willow-dark-theme .board-settings-add-btn {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
 }
 
-.board-settings-checkbox:hover {
-  background: #f9fafb;
+.wx-willow-dark-theme .board-settings-add-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+  border-color: var(--wx-gitlab-button-border, #384047);
 }
 
-.board-settings-checkbox input[type='checkbox'] {
-  margin-top: 2px;
-  cursor: pointer;
+.wx-willow-dark-theme .board-settings-lists {
+  border-color: var(--wx-gitlab-header-border, #384047);
 }
 
-.board-settings-checkbox > span:nth-child(2) {
-  font-size: 13px;
-  font-weight: 500;
-  color: #1f2937;
+.wx-willow-dark-theme .board-settings-empty {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-secondary, #9fa1ae);
 }
 
-.board-settings-checkbox .checkbox-description {
-  display: block;
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 1px;
+.wx-willow-dark-theme .board-settings-list-item {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .board-settings-list-item:hover {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+}
+
+.wx-willow-dark-theme .board-settings-list-special {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .board-settings-list-special .list-item-name {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .board-settings-list-disabled:hover {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .list-move-btn {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-move-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-labels {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-item-sort-select {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-sort-select:focus {
+  border-color: #37a9ef;
+}
+
+.wx-willow-dark-theme .list-action-btn {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-action-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-action-btn-delete:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
 }

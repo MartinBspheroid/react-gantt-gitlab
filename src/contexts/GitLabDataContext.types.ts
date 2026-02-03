@@ -49,6 +49,11 @@ export interface GitLabDataContextValue {
   syncState: SyncState;
   sync: (options?: GitLabSyncOptions) => Promise<void>;
   syncTask: (id: number | string, updates: Partial<ITask>) => Promise<void>;
+  reorderTaskLocal: (
+    taskId: number | string,
+    targetTaskId: number | string,
+    position: 'before' | 'after',
+  ) => { rollback: () => void };
   createTask: (task: Partial<ITask>) => Promise<ITask>;
   createMilestone: (milestone: Partial<ITask>) => Promise<ITask>;
   deleteTask: (id: number | string, taskData?: ITask) => Promise<void>;

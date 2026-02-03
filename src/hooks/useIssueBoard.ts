@@ -183,7 +183,8 @@ export function useIssueBoard({
   );
 
   /**
-   * Update an existing board
+   * Update an existing board (optimistic update)
+   * UI updates immediately, API call happens in background
    */
   const updateBoard = useCallback(
     async (board: IssueBoard): Promise<void> => {
@@ -192,26 +193,34 @@ export function useIssueBoard({
         return;
       }
 
+      // Capture previous state for rollback
+      const previousBoards = boards;
+
+      // Optimistic update: update local state immediately
+      setBoards((prev) => prev.map((b) => (b.id === board.id ? board : b)));
+      console.log('[useIssueBoard] Optimistic update board:', board.id);
+
+      // Save to API in background (don't await, don't block UI)
       setSaving(true);
       setError(null);
 
-      try {
-        await apiUpdateBoard(fullPath, board, proxyConfig, configType);
-
-        // Update local state
-        setBoards((prev) => prev.map((b) => (b.id === board.id ? board : b)));
-
-        console.log('[useIssueBoard] Updated board:', board.id);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to update board';
-        console.error('[useIssueBoard] Update error:', err);
-        setError(message);
-      } finally {
-        setSaving(false);
-      }
+      apiUpdateBoard(fullPath, board, proxyConfig, configType)
+        .then(() => {
+          console.log('[useIssueBoard] Board saved to API:', board.id);
+        })
+        .catch((err) => {
+          const message =
+            err instanceof Error ? err.message : 'Failed to update board';
+          console.error('[useIssueBoard] Update error, rolling back:', err);
+          // Rollback on failure
+          setBoards(previousBoards);
+          setError(message);
+        })
+        .finally(() => {
+          setSaving(false);
+        });
     },
-    [proxyConfig, fullPath, configType],
+    [proxyConfig, fullPath, configType, boards],
   );
 
   /**

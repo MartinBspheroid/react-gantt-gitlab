@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { BaseDialog } from '../shared/dialogs/BaseDialog';
+import { SORT_OPTIONS, SORT_ORDER_OPTIONS } from './constants';
 import './BoardSettingsModal.css';
 
 /**
@@ -34,6 +35,10 @@ export function BoardSettingsModal({
   const [name, setName] = useState('');
   const [showOthers, setShowOthers] = useState(true);
   const [showClosed, setShowClosed] = useState(true);
+  const [othersSortBy, setOthersSortBy] = useState('position');
+  const [othersSortOrder, setOthersSortOrder] = useState('asc');
+  const [closedSortBy, setClosedSortBy] = useState('position');
+  const [closedSortOrder, setClosedSortOrder] = useState('asc');
   const [lists, setLists] = useState([]);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -44,6 +49,10 @@ export function BoardSettingsModal({
       setName(board.name);
       setShowOthers(board.showOthers);
       setShowClosed(board.showClosed);
+      setOthersSortBy(board.othersSortBy || 'position');
+      setOthersSortOrder(board.othersSortOrder || 'asc');
+      setClosedSortBy(board.closedSortBy || 'position');
+      setClosedSortOrder(board.closedSortOrder || 'asc');
       setLists([...board.lists]);
       setError('');
       setConfirmDelete(false);
@@ -64,6 +73,10 @@ export function BoardSettingsModal({
       name: trimmedName,
       showOthers,
       showClosed,
+      othersSortBy,
+      othersSortOrder,
+      closedSortBy,
+      closedSortOrder,
       lists,
     };
 
@@ -168,92 +181,143 @@ export function BoardSettingsModal({
           </button>
         </div>
 
-        {lists.length === 0 ? (
-          <div className="board-settings-empty">
-            No lists defined. Click "Add List" to create one.
-          </div>
-        ) : (
-          <div className="board-settings-lists">
-            {lists.map((list, index) => (
-              <div key={list.id} className="board-settings-list-item">
-                <div className="list-item-drag">
-                  <button
-                    className="list-move-btn"
-                    onClick={() => handleMoveList(list.id, 'up')}
-                    disabled={index === 0 || saving}
-                    title="Move up"
-                  >
-                    <i className="fas fa-chevron-up" />
-                  </button>
-                  <button
-                    className="list-move-btn"
-                    onClick={() => handleMoveList(list.id, 'down')}
-                    disabled={index === lists.length - 1 || saving}
-                    title="Move down"
-                  >
-                    <i className="fas fa-chevron-down" />
-                  </button>
-                </div>
-                <div className="list-item-info">
-                  <span className="list-item-name">{list.name}</span>
-                  <span className="list-item-labels">
-                    {list.labels.length > 0
-                      ? `Labels: ${list.labels.join(', ')}`
-                      : 'No labels'}
-                  </span>
-                </div>
-                <div className="list-item-actions">
-                  <button
-                    className="list-action-btn"
-                    onClick={() => onEditList(list)}
-                    disabled={saving}
-                    title="Edit"
-                  >
-                    <i className="fas fa-edit" />
-                  </button>
-                  <button
-                    className="list-action-btn list-action-btn-delete"
-                    onClick={() => handleDeleteList(list.id)}
-                    disabled={saving}
-                    title="Delete"
-                  >
-                    <i className="fas fa-trash" />
-                  </button>
-                </div>
+        <div className="board-settings-lists">
+          {/* Others list (top) */}
+          <div className={`board-settings-list-item board-settings-list-special${showOthers ? '' : ' board-settings-list-disabled'}`}>
+            <div className="list-item-toggle">
+              <input
+                type="checkbox"
+                checked={showOthers}
+                onChange={(e) => setShowOthers(e.target.checked)}
+                disabled={saving}
+              />
+            </div>
+            <div className="list-item-info">
+              <span className="list-item-name">Others</span>
+              <span className="list-item-labels">Issues that don't match any list</span>
+            </div>
+            {showOthers && (
+              <div className="list-item-sort">
+                <select
+                  className="list-item-sort-select"
+                  value={othersSortBy}
+                  onChange={(e) => setOthersSortBy(e.target.value)}
+                  disabled={saving}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <select
+                  className="list-item-sort-select"
+                  value={othersSortOrder}
+                  onChange={(e) => setOthersSortOrder(e.target.value)}
+                  disabled={saving}
+                >
+                  {SORT_ORDER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Special lists */}
-      <div className="board-settings-section">
-        <label>Special Lists</label>
-        <div className="board-settings-checkboxes">
-          <label className="board-settings-checkbox">
-            <input
-              type="checkbox"
-              checked={showOthers}
-              onChange={(e) => setShowOthers(e.target.checked)}
-              disabled={saving}
-            />
-            <span>Show "Others" list</span>
-            <span className="checkbox-description">
-              Issues that don't match any list
-            </span>
-          </label>
-          <label className="board-settings-checkbox">
-            <input
-              type="checkbox"
-              checked={showClosed}
-              onChange={(e) => setShowClosed(e.target.checked)}
-              disabled={saving}
-            />
-            <span>Show "Closed" list</span>
-            <span className="checkbox-description">
-              Issues that are closed
-            </span>
-          </label>
+          {/* Regular lists */}
+          {lists.map((list, index) => (
+            <div key={list.id} className="board-settings-list-item">
+              <div className="list-item-drag">
+                <button
+                  className="list-move-btn"
+                  onClick={() => handleMoveList(list.id, 'up')}
+                  disabled={index === 0 || saving}
+                  title="Move up"
+                >
+                  <i className="fas fa-chevron-up" />
+                </button>
+                <button
+                  className="list-move-btn"
+                  onClick={() => handleMoveList(list.id, 'down')}
+                  disabled={index === lists.length - 1 || saving}
+                  title="Move down"
+                >
+                  <i className="fas fa-chevron-down" />
+                </button>
+              </div>
+              <div className="list-item-info">
+                <span className="list-item-name">{list.name}</span>
+                <span className="list-item-labels">
+                  {list.labels.length > 0
+                    ? `Labels: ${list.labels.join(', ')}`
+                    : 'No labels'}
+                </span>
+              </div>
+              <div className="list-item-actions">
+                <button
+                  className="list-action-btn"
+                  onClick={() => onEditList(list)}
+                  disabled={saving}
+                  title="Edit"
+                >
+                  <i className="fas fa-edit" />
+                </button>
+                <button
+                  className="list-action-btn list-action-btn-delete"
+                  onClick={() => handleDeleteList(list.id)}
+                  disabled={saving}
+                  title="Delete"
+                >
+                  <i className="fas fa-trash" />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Empty state for regular lists */}
+          {lists.length === 0 && (
+            <div className="board-settings-empty">
+              No custom lists. Click "Add List" to create one.
+            </div>
+          )}
+
+          {/* Closed list (bottom) */}
+          <div className={`board-settings-list-item board-settings-list-special${showClosed ? '' : ' board-settings-list-disabled'}`}>
+            <div className="list-item-toggle">
+              <input
+                type="checkbox"
+                checked={showClosed}
+                onChange={(e) => setShowClosed(e.target.checked)}
+                disabled={saving}
+              />
+            </div>
+            <div className="list-item-info">
+              <span className="list-item-name">Closed</span>
+              <span className="list-item-labels">Closed issues</span>
+            </div>
+            {showClosed && (
+              <div className="list-item-sort">
+                <select
+                  className="list-item-sort-select"
+                  value={closedSortBy}
+                  onChange={(e) => setClosedSortBy(e.target.value)}
+                  disabled={saving}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <select
+                  className="list-item-sort-select"
+                  value={closedSortOrder}
+                  onChange={(e) => setClosedSortOrder(e.target.value)}
+                  disabled={saving}
+                >
+                  {SORT_ORDER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </BaseDialog>

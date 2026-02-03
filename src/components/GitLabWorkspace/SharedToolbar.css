@@ -209,3 +209,86 @@
     display: none;
   }
 }
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .shared-toolbar {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher {
+  background: var(--wx-demo-segmented-background, #2c2f33);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn:hover {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+  background: var(--wx-demo-button-hover-background, #2c2f33);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn.active {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+  background: var(--wx-gitlab-control-background, #23262a);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.wx-willow-dark-theme .shared-toolbar-divider {
+  background: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-color: var(--wx-gitlab-control-border, #384047);
+  color: var(--wx-gitlab-control-value, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:hover {
+  border-color: var(--wx-gitlab-button-hover-text, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:focus {
+  border-color: #37a9ef;
+  box-shadow: 0 0 0 2px rgba(55, 169, 239, 0.2);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:disabled {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-gitlab-button-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn:hover {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-gitlab-button-hover-text, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn:active {
+  background: var(--wx-demo-button-active-background, #33373c);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn.active {
+  background: rgba(55, 169, 239, 0.2);
+  border-color: #37a9ef;
+  color: #37a9ef;
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats .stat-label {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats .stat-value {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}

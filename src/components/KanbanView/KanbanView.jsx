@@ -27,9 +27,13 @@ import { BoardSettingsModal } from './BoardSettingsModal';
 import { ListEditDialog } from './ListEditDialog';
 import { GitLabFilters } from '../../utils/GitLabFilters';
 import { useDragOperations } from '../../hooks/useDragOperations';
+import { ProjectSelector } from '../ProjectSelector';
+import { ColorRulesEditor } from '../ColorRulesEditor';
 import './KanbanView.css';
+import '../shared/SettingsModal.css';
+import '../shared/modal-close-button.css';
 
-export function KanbanView() {
+export function KanbanView({ showSettings, onSettingsClose }) {
   // Get shared data from context
   const {
     tasks: allTasks,
@@ -41,6 +45,21 @@ export function KanbanView() {
     provider,
     sync,
     syncTask,
+    reorderTaskLocal,
+    // For settings modal
+    configs,
+    reloadConfigs,
+    handleConfigChange,
+    canEditHolidays,
+    holidaysText,
+    workdaysText,
+    colorRules,
+    holidaysLoading,
+    holidaysSaving,
+    holidaysError,
+    setHolidaysText,
+    setWorkdaysText,
+    setColorRules,
   } = useGitLabData();
 
   // Board management state from hook
@@ -107,6 +126,12 @@ export function KanbanView() {
 
   // Add labelPriority to tasks
   const tasksWithPriority = useMemo(() => {
+    console.log('[KanbanView] tasksWithPriority recalculating, allTasks count:', allTasks.length);
+    // Debug: check task 22's relativePosition
+    const task22 = allTasks.find(t => t.id === 22);
+    if (task22) {
+      console.log('[KanbanView] Task 22 relativePosition:', task22._gitlab?.relativePosition);
+    }
     return allTasks.map((task) => {
       const taskLabels = task.labels
         ? task.labels.split(', ').filter(Boolean)
@@ -126,17 +151,39 @@ export function KanbanView() {
 
   // Apply client-side filters (same as Gantt)
   const filteredTasks = useMemo(() => {
-    // Only include issues (not milestones)
+    // Only include issues (not milestones, not Tasks which are child items)
     const issuesOnly = tasksWithPriority.filter(
-      (task) => task.$isIssue || task._gitlab?.type === 'issue'
+      (task) =>
+        (task.$isIssue || task._gitlab?.type === 'issue') &&
+        task._gitlab?.workItemType !== 'Task'
     );
     return GitLabFilters.applyFilters(issuesOnly, filterOptions);
   }, [tasksWithPriority, filterOptions]);
 
+  // Build child tasks map: issueId -> childTasks[]
+  // Child tasks are items with workItemType='Task' and have a parent
+  const childTasksMap = useMemo(() => {
+    const map = new Map();
+    tasksWithPriority.forEach((task) => {
+      // Check if this is a Task (child item) with a parent
+      if (task._gitlab?.workItemType === 'Task' && task.parent) {
+        const parentId = task.parent;
+        if (!map.has(parentId)) {
+          map.set(parentId, []);
+        }
+        map.get(parentId).push(task);
+      }
+    });
+    return map;
+  }, [tasksWithPriority]);
+
   // === Drag-and-Drop Operations ===
   // Reorder task wrapper: converts task ID to GitLab IID for API call
+  // Uses optimistic update for immediate UI feedback
   const reorderTask = useCallback(
     async (taskId, targetTaskId, position) => {
+      console.log('[KanbanView.reorderTask] Called with:', { taskId, targetTaskId, position });
+
       if (!provider) {
         throw new Error('Provider not available');
       }
@@ -145,9 +192,25 @@ export function KanbanView() {
       if (!task?._gitlab?.iid || !targetTask?._gitlab?.iid) {
         throw new Error('Task IID not found');
       }
-      await provider.reorderWorkItem(task._gitlab.iid, targetTask._gitlab.iid, position);
+
+      console.log('[KanbanView.reorderTask] Before optimistic update');
+      // Optimistic update: update local state immediately
+      const { rollback } = reorderTaskLocal(taskId, targetTaskId, position);
+      console.log('[KanbanView.reorderTask] After optimistic update');
+
+      try {
+        // Sync to GitLab
+        console.log('[KanbanView.reorderTask] Calling provider.reorderWorkItem');
+        await provider.reorderWorkItem(task._gitlab.iid, targetTask._gitlab.iid, position);
+        console.log('[KanbanView.reorderTask] API call succeeded');
+      } catch (error) {
+        console.log('[KanbanView.reorderTask] API call failed, rolling back');
+        // Rollback on failure
+        rollback();
+        throw error;
+      }
     },
-    [provider, filteredTasks]
+    [provider, filteredTasks, reorderTaskLocal]
   );
 
   // Refresh tasks by triggering a sync
@@ -228,37 +291,12 @@ export function KanbanView() {
     [editingList, addList, updateList, showToast]
   );
 
-  // Handle list sort change from header dropdown
-  const handleListSortChange = useCallback(
-    async (listId, newSortBy) => {
-      if (!currentBoard) return;
-
-      // Handle special lists (Others, Closed)
-      if (listId === '__others__') {
-        await updateBoard({
-          ...currentBoard,
-          othersSortBy: newSortBy,
-        });
-        return;
-      }
-      if (listId === '__closed__') {
-        await updateBoard({
-          ...currentBoard,
-          closedSortBy: newSortBy,
-        });
-        return;
-      }
-
-      // Regular list: update the list's sortBy
-      const list = currentBoard.lists.find((l) => l.id === listId);
-      if (list) {
-        await updateList({
-          ...list,
-          sortBy: newSortBy,
-        });
-      }
-    },
-    [currentBoard, updateBoard, updateList]
+  // Render loading state
+  const renderLoadingState = () => (
+    <div className="kanban-view-empty">
+      <i className="fas fa-spinner fa-spin" />
+      <h3>Loading Boards...</h3>
+    </div>
   );
 
   // Render empty state when no board
@@ -296,18 +334,20 @@ export function KanbanView() {
 
       {/* Board Content */}
       <div className="kanban-view-content">
-        {!currentBoard ? (
+        {boardsLoading ? (
+          renderLoadingState()
+        ) : !currentBoard ? (
           renderEmptyState()
         ) : (
           <KanbanBoardDnd
             board={currentBoard}
             tasks={filteredTasks}
+            childTasksMap={childTasksMap}
             labelColorMap={labelColorMap}
             labelPriorityMap={labelPriorityMap}
             onCardDoubleClick={handleCardDoubleClick}
             onSameListReorder={handleSameListReorder}
             onCrossListDrag={handleCrossListDrag}
-            onListSortChange={handleListSortChange}
           />
         )}
       </div>
@@ -340,6 +380,147 @@ export function KanbanView() {
         onSave={handleSaveList}
         saving={boardsSaving}
       />
+
+      {/* Project Settings Modal (shared with GanttView) */}
+      {showSettings && (
+        <div
+          className="settings-modal-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              onSettingsClose?.();
+            }
+          }}
+        >
+          <div className="settings-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-header">
+              <h3>Settings</h3>
+              <button onClick={onSettingsClose} className="modal-close-btn">
+                &times;
+              </button>
+            </div>
+
+            <div className="settings-modal-body">
+              <div className="settings-section">
+                <h4>GitLab Project</h4>
+                <ProjectSelector
+                  onProjectChange={(config) => {
+                    handleConfigChange(config);
+                    onSettingsClose?.();
+                  }}
+                  currentConfigId={currentConfig?.id}
+                  onConfigsChange={reloadConfigs}
+                />
+              </div>
+
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Holidays
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                  {holidaysSaving && (
+                    <span className="saving-indicator">
+                      <i className="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">Add holiday dates (one per line, formats: YYYY-MM-DD or YYYY/M/D, optional name after space)</p>
+                {holidaysError && (
+                  <div className="holidays-error">
+                    <i className="fas fa-exclamation-triangle"></i> {holidaysError}
+                  </div>
+                )}
+                <textarea
+                  value={holidaysText}
+                  onChange={(e) => setHolidaysText(e.target.value)}
+                  placeholder="2025-01-01 New Year&#10;2025/2/28&#10;2025-12-25 Christmas"
+                  className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
+                  rows={6}
+                  disabled={!canEditHolidays || holidaysLoading}
+                />
+                {canEditHolidays && (
+                  <div className="holiday-presets">
+                    <button
+                      onClick={() => setHolidaysText('')}
+                      className="preset-btn preset-btn-clear"
+                      disabled={holidaysLoading}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Extra Working Days
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">Add extra working days on weekends (one per line, formats: YYYY-MM-DD or YYYY/M/D)</p>
+                <textarea
+                  value={workdaysText}
+                  onChange={(e) => setWorkdaysText(e.target.value)}
+                  placeholder="2025/1/25&#10;2025-02-08"
+                  className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
+                  rows={6}
+                  disabled={!canEditHolidays || holidaysLoading}
+                />
+                {canEditHolidays && (
+                  <div className="holiday-presets">
+                    <button
+                      onClick={() => setWorkdaysText('')}
+                      className="preset-btn preset-btn-clear"
+                      disabled={holidaysLoading}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Color Rules
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                  {holidaysSaving && (
+                    <span className="saving-indicator">
+                      <i className="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">
+                  Highlight time bars with diagonal stripes based on issue title matching conditions
+                </p>
+                <ColorRulesEditor
+                  rules={colorRules}
+                  onRulesChange={setColorRules}
+                  canEdit={canEditHolidays}
+                  saving={holidaysSaving}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

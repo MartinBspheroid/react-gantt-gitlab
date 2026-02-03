@@ -1,0 +1,164 @@
+/**
+ * Shared Settings Modal Styles
+ * Used by GanttView and KanbanView for project settings
+ */
+
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wx-gitlab-modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.settings-modal-content {
+  background: var(--wx-gitlab-modal-background);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wx-gitlab-modal-border);
+  background: var(--wx-gitlab-modal-header-background);
+}
+
+.settings-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text);
+}
+
+.settings-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--wx-gitlab-modal-section-border);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text);
+}
+
+.settings-hint {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--wx-gitlab-modal-hint-text);
+}
+
+.holidays-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--wx-gitlab-filter-input-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-filter-input-background);
+  color: var(--wx-gitlab-modal-text);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.holidays-textarea:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.holidays-textarea.disabled {
+  background: var(--wx-gitlab-disabled-background, #f5f5f5);
+  color: var(--wx-gitlab-disabled-text, #999);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.permission-warning {
+  font-size: 12px;
+  font-weight: normal;
+  color: #e67700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.permission-warning i {
+  font-size: 11px;
+}
+
+.saving-indicator {
+  font-size: 12px;
+  font-weight: normal;
+  color: #1f75cb;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.holidays-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.holiday-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.preset-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: var(--wx-gitlab-button-hover-background);
+  border-color: var(--wx-gitlab-button-hover-text);
+}
+
+.preset-btn-clear {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.preset-btn-clear:hover {
+  background: #f5c6cb;
+}

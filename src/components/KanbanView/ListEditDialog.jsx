@@ -11,6 +11,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BaseDialog } from '../shared/dialogs/BaseDialog';
 import { FilterMultiSelect } from '../FilterMultiSelect';
+import { SORT_OPTIONS, SORT_ORDER_OPTIONS } from './constants';
 import './ListEditDialog.css';
 
 /**
@@ -152,11 +153,11 @@ export function ListEditDialog({
             onChange={(e) => setSortBy(e.target.value)}
             disabled={saving}
           >
-            <option value="position">Position</option>
-            <option value="due_date">Due Date</option>
-            <option value="created_at">Created Date</option>
-            <option value="label_priority">Label Priority</option>
-            <option value="id">ID</option>
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           <select
             className="dialog-input"
@@ -164,8 +165,11 @@ export function ListEditDialog({
             onChange={(e) => setSortOrder(e.target.value)}
             disabled={saving}
           >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            {SORT_ORDER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

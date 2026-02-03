@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { KanbanCard } from './KanbanCard';
+import { SortControl } from './SortControl';
 import './KanbanList.css';
 
 /**
@@ -56,11 +57,26 @@ function sortTasks(tasks, sortBy, sortOrder, labelPriorityMap) {
         comparison = priorityA - priorityB;
         break;
 
-      case 'id':
+      case 'title':
+        // Sort by task title (text field) alphabetically
+        const titleA = (a.text || '').toLowerCase();
+        const titleB = (b.text || '').toLowerCase();
+        comparison = titleA.localeCompare(titleB);
+        break;
+
+      case 'assignee':
+        // Sort by first assignee name alphabetically
+        // Unassigned issues go to the end
+        const assigneeA = (a.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
+        const assigneeB = (b.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
+        comparison = assigneeA.localeCompare(assigneeB);
+        break;
+
       default:
-        const idA = a._gitlab?.iid ?? a.id;
-        const idB = b._gitlab?.iid ?? b.id;
-        comparison = idA - idB;
+        // Fallback to position
+        const defaultPosA = a._gitlab?.relativePosition ?? a.id;
+        const defaultPosB = b._gitlab?.relativePosition ?? b.id;
+        comparison = defaultPosA - defaultPosB;
         break;
     }
 
@@ -70,26 +86,21 @@ function sortTasks(tasks, sortBy, sortOrder, labelPriorityMap) {
   return sorted;
 }
 
-/** Sort options for the list dropdown */
-const SORT_OPTIONS = [
-  { value: 'position', label: 'Position (Manual)' },
-  { value: 'due_date', label: 'Due Date' },
-  { value: 'created_at', label: 'Created' },
-  { value: 'label_priority', label: 'Label Priority' },
-];
-
 export function KanbanList({
   id,
   name,
   tasks,
+  childTasksMap,
   sortBy = 'position',
   sortOrder = 'asc',
+  defaultSortBy = 'position', // Default sort field from list config
+  defaultSortOrder = 'asc', // Default sort order from list config
   labelColorMap,
   labelPriorityMap,
   isSpecial = false, // true for Others and Closed lists
   specialType = null, // 'others' | 'closed'
   onCardDoubleClick,
-  onSortChange, // Callback when sort changes: (newSortBy) => void
+  onSortChange, // Callback when sort changes: (newSortBy, newSortOrder) => void
   activeTaskId = null, // ID of the currently dragged task
   isOver = false, // Whether a dragged item is over this list (from parent)
   isDragEnabled = true, // Whether same-list drag is enabled (false when sortBy !== 'position')
@@ -104,10 +115,18 @@ export function KanbanList({
   const isDropTarget = isOver || isOverDroppable;
 
   // Sort tasks
-  const sortedTasks = useMemo(
-    () => sortTasks(tasks, sortBy, sortOrder, labelPriorityMap),
-    [tasks, sortBy, sortOrder, labelPriorityMap],
-  );
+  const sortedTasks = useMemo(() => {
+    const sorted = sortTasks(tasks, sortBy, sortOrder, labelPriorityMap);
+    // Debug: log sorted tasks for Others list
+    if (id === '__others__') {
+      console.log('[KanbanList Others] sortedTasks:', sorted.map(t => ({
+        id: t.id,
+        text: t.text?.substring(0, 20),
+        relativePosition: t._gitlab?.relativePosition,
+      })));
+    }
+    return sorted;
+  }, [tasks, sortBy, sortOrder, labelPriorityMap, id]);
 
   // Get task IDs for SortableContext
   const taskIds = useMemo(
@@ -129,19 +148,14 @@ export function KanbanList({
       <div className={headerClass}>
         <span className="kanban-list-name">{name}</span>
         <span className="kanban-list-count">{tasks.length}</span>
-        <select
-          className="kanban-list-sort-select"
-          value={sortBy}
-          onChange={(e) => onSortChange?.(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          title="Sort by"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <SortControl
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          defaultSortBy={defaultSortBy}
+          defaultSortOrder={defaultSortOrder}
+          onChange={onSortChange}
+          specialType={specialType}
+        />
       </div>
 
       {/* List Content with SortableContext for drag-and-drop ordering */}
@@ -155,6 +169,7 @@ export function KanbanList({
                 key={task.id}
                 task={task}
                 listId={id}
+                childTasks={childTasksMap?.get(task.id) || []}
                 labelColorMap={labelColorMap}
                 onDoubleClick={onCardDoubleClick}
                 isDragging={task.id === activeTaskId}

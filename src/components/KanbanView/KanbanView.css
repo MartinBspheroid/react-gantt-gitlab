@@ -131,3 +131,41 @@
   font-size: 14px;
   max-width: 400px;
 }
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-view {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .kanban-view-header {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-view-board-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-view-board-name i {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-stats {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-empty {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-empty > i {
+  color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-view-empty h3 {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-view-loading {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}

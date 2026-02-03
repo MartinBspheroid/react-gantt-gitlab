@@ -10,6 +10,12 @@
   align-items: stretch; /* Lists stretch to full height */
 }
 
+/* Panning state - middle mouse button drag */
+.kanban-board-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .kanban-board-empty {
   display: flex;
   flex-direction: column;
@@ -35,4 +41,17 @@
 .kanban-board-empty-hint {
   font-size: 13px;
   color: #9ca3af;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-board-empty {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-board-empty i {
+  color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-board-empty-hint {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
 }
