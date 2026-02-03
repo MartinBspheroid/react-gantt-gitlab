@@ -218,7 +218,8 @@
 .settings-section h4 {
   margin: 0 0 12px;
   font-size: 14px;
-  color: var(--wx-color-secondary, #586069);
+  /* NOTE: --wx-color-secondary is 'transparent' in willow theme, use --wx-gitlab-modal-text instead */
+  color: var(--wx-gitlab-modal-text, #586069);
 }
 
 /* Dark theme for modal - moved to main dark theme section below */

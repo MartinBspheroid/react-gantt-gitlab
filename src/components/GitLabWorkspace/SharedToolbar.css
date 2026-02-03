@@ -1,0 +1,294 @@
+/* src/components/GitLabWorkspace/SharedToolbar.css */
+
+/**
+ * SharedToolbar Styles
+ *
+ * Styling for the shared toolbar component used by both Gantt and Kanban views.
+ * Uses flexbox layout and matches existing GanttView header styling.
+ */
+
+.shared-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border-bottom: 1px solid #d1d5db;
+  flex-wrap: wrap;
+}
+
+/* View Switcher - Segmented button group */
+.shared-toolbar-view-switcher {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn:hover {
+  color: #374151;
+  background: #e5e7eb;
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn.active {
+  color: #1f2937;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.shared-toolbar-view-switcher .view-switcher-btn i {
+  font-size: 12px;
+}
+
+/* Divider */
+.shared-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
+
+/* Project Selector */
+.shared-toolbar-project {
+  display: flex;
+  align-items: center;
+}
+
+.shared-toolbar-select {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.shared-toolbar-select:hover {
+  border-color: #9ca3af;
+}
+
+.shared-toolbar-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+}
+
+.shared-toolbar-select:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Generic button styles */
+.shared-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.shared-toolbar-btn:hover {
+  color: #1f2937;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.shared-toolbar-btn:active {
+  background: #e5e7eb;
+}
+
+/* Icon-only button */
+.shared-toolbar-btn-icon {
+  width: auto;
+  min-width: 28px;
+  padding: 0 6px;
+}
+
+.shared-toolbar-btn-icon i {
+  font-size: 14px;
+}
+
+.shared-toolbar-btn-icon .chevron-icon {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* Active state for toggle buttons */
+.shared-toolbar-btn.active {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* Spacer to push elements to the right */
+.shared-toolbar-spacer {
+  flex: 1;
+  min-width: 20px;
+}
+
+/* Stats Panel */
+.shared-toolbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.shared-toolbar-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shared-toolbar-stats .stat-label {
+  color: #9ca3af;
+}
+
+.shared-toolbar-stats .stat-value {
+  font-weight: 600;
+  color: #374151;
+}
+
+.shared-toolbar-stats .stat-completed {
+  color: #10b981;
+}
+
+.shared-toolbar-stats .stat-progress {
+  color: #3b82f6;
+}
+
+.shared-toolbar-stats .stat-overdue {
+  color: #ef4444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shared-toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .shared-toolbar-select {
+    min-width: 120px;
+  }
+
+  .shared-toolbar-view-switcher .view-switcher-btn span {
+    display: none;
+  }
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .shared-toolbar {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher {
+  background: var(--wx-demo-segmented-background, #2c2f33);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn:hover {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+  background: var(--wx-demo-button-hover-background, #2c2f33);
+}
+
+.wx-willow-dark-theme .shared-toolbar-view-switcher .view-switcher-btn.active {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+  background: var(--wx-gitlab-control-background, #23262a);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.wx-willow-dark-theme .shared-toolbar-divider {
+  background: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-color: var(--wx-gitlab-control-border, #384047);
+  color: var(--wx-gitlab-control-value, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:hover {
+  border-color: var(--wx-gitlab-button-hover-text, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:focus {
+  border-color: #37a9ef;
+  box-shadow: 0 0 0 2px rgba(55, 169, 239, 0.2);
+}
+
+.wx-willow-dark-theme .shared-toolbar-select:disabled {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-gitlab-button-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn:hover {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-gitlab-button-hover-text, #e6e6e6);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn:active {
+  background: var(--wx-demo-button-active-background, #33373c);
+}
+
+.wx-willow-dark-theme .shared-toolbar-btn.active {
+  background: rgba(55, 169, 239, 0.2);
+  border-color: #37a9ef;
+  color: #37a9ef;
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats .stat-label {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .shared-toolbar-stats .stat-value {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}

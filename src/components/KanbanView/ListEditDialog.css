@@ -1,0 +1,31 @@
+/**
+ * ListEditDialog Styles
+ *
+ * Minimal styles - most styling comes from BaseDialog.css
+ * Only contains component-specific overrides
+ */
+
+/* Override z-index to be above BoardSettingsModal */
+.list-edit-dialog {
+  z-index: 1001;
+}
+
+/* Hide the FilterMultiSelect header since we have our own label */
+.list-edit-labels-field .fms-header {
+  display: none;
+}
+
+/* Increase the options list height for better visibility */
+.list-edit-labels-field .fms-options {
+  max-height: 180px;
+}
+
+/* Sort settings layout */
+.list-edit-sort {
+  display: flex;
+  gap: 8px;
+}
+
+.list-edit-sort select {
+  flex: 1;
+}

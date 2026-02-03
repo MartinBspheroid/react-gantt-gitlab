@@ -1,0 +1,23 @@
+/* src/components/GitLabWorkspace/GitLabWorkspace.css */
+
+.gitlab-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.gitlab-workspace-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+  flex-shrink: 0; /* Prevent header from shrinking to zero */
+}
+
+.gitlab-workspace-content {
+  flex: 1;
+  overflow: hidden;
+}

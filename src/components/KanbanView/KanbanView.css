@@ -1,0 +1,171 @@
+/* src/components/KanbanView/KanbanView.css */
+
+.kanban-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f9fafb;
+}
+
+.kanban-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kanban-view-board-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+}
+
+.kanban-view-board-name i {
+  color: #6b7280;
+}
+
+.kanban-view-stats {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.kanban-view-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Empty state - when no board is selected */
+.kanban-view-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: #6b7280;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.kanban-view-empty > i {
+  font-size: 48px;
+  color: #d1d5db;
+}
+
+.kanban-view-empty h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.kanban-view-empty p {
+  margin: 0;
+  font-size: 14px;
+  max-width: 300px;
+}
+
+.kanban-view-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.kanban-view-empty-btn:hover {
+  background: #2563eb;
+}
+
+.kanban-view-empty-btn i {
+  font-size: 12px;
+}
+
+/* Loading state */
+.kanban-view-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.kanban-view-loading i {
+  font-size: 32px;
+  color: #3b82f6;
+}
+
+/* Error state */
+.kanban-view-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #dc2626;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.kanban-view-error i {
+  font-size: 32px;
+}
+
+.kanban-view-error p {
+  margin: 0;
+  font-size: 14px;
+  max-width: 400px;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-view {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .kanban-view-header {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-view-board-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-view-board-name i {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-stats {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-empty {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-view-empty > i {
+  color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-view-empty h3 {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-view-loading {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}

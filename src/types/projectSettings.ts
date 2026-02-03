@@ -41,6 +41,11 @@ export interface FilterSettings {
 }
 
 /**
+ * View mode type
+ */
+export type ViewMode = 'gantt' | 'kanban';
+
+/**
  * 專案設定
  */
 export interface ProjectSettings {
@@ -48,6 +53,8 @@ export interface ProjectSettings {
   version: 1;
   /** Filter 相關設定 */
   filter?: FilterSettings;
+  /** 上次使用的視圖模式 */
+  viewMode?: ViewMode;
   // 預留給日後擴充
   // ui?: { ... };
   // display?: { ... };
@@ -166,6 +173,31 @@ export function updateProjectFilterSettings(
   const settings = loadProjectSettings(type, id) || { version: 1 };
   settings.filter = filter;
   saveProjectSettings(type, id, settings);
+}
+
+/**
+ * 更新專案的 ViewMode 設定
+ */
+export function updateProjectViewMode(
+  type: 'project' | 'group',
+  id: string | number,
+  viewMode: ViewMode,
+): void {
+  const settings = loadProjectSettings(type, id) || { version: 1 };
+  settings.viewMode = viewMode;
+  saveProjectSettings(type, id, settings);
+}
+
+/**
+ * 讀取專案的 ViewMode 設定
+ * @returns ViewMode or undefined if not set
+ */
+export function getProjectViewMode(
+  type: 'project' | 'group',
+  id: string | number,
+): ViewMode | undefined {
+  const settings = loadProjectSettings(type, id);
+  return settings?.viewMode;
 }
 
 /**

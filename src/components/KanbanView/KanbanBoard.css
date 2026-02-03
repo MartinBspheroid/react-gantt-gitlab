@@ -1,0 +1,57 @@
+/* src/components/KanbanView/KanbanBoard.css */
+
+.kanban-board {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden; /* Prevent vertical scroll on board */
+  align-items: stretch; /* Lists stretch to full height */
+}
+
+/* Panning state - middle mouse button drag */
+.kanban-board-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.kanban-board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  text-align: center;
+  padding: 40px;
+}
+
+.kanban-board-empty i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+.kanban-board-empty p {
+  margin: 4px 0;
+  font-size: 16px;
+}
+
+.kanban-board-empty-hint {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-board-empty {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-board-empty i {
+  color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-board-empty-hint {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}

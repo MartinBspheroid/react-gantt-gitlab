@@ -420,9 +420,11 @@ export class GitLabGraphQLProvider {
 
     try {
       // Fetch members, milestones, and labels in parallel with pagination support
+      // For projects: include_ancestor_labels=true to also get group labels
+      // For groups: include_ancestor_groups=true to get parent group labels
       const labelsEndpoint =
         this.config.type === 'project'
-          ? `/projects/${encodeURIComponent(fullPath)}/labels`
+          ? `/projects/${encodeURIComponent(fullPath)}/labels?include_ancestor_labels=true`
           : `/groups/${encodeURIComponent(fullPath)}/labels?include_ancestor_groups=true`;
 
       const [membersNodes, milestonesNodes, labelsFromRest] = await Promise.all(
@@ -1981,6 +1983,7 @@ export class GitLabGraphQLProvider {
         iid: Number(workItem.iid),
         state: workItem.state,
         workItemType: workItem.workItemType?.name,
+        createdAt: workItem.createdAt, // Created timestamp for sorting
         startDate: dateWidget?.startDate, // Track if task has explicit start date
         dueDate: dateWidget?.dueDate, // Track if task has explicit due date
         epicParentId, // Store Epic parent ID if exists (for Issues without Milestone)
@@ -2001,6 +2004,9 @@ export class GitLabGraphQLProvider {
         iterationTitle: iterationWidget?.iteration
           ? formatIterationTitle(iterationWidget.iteration)
           : undefined,
+        // relativePosition for Kanban sorting (from Issue API, only for root-level Issues)
+        relativePosition:
+          isIssue && !parentIid ? relativePositionMap.get(iid) : undefined,
       },
     };
 
@@ -2810,7 +2816,18 @@ export class GitLabGraphQLProvider {
       input.stateEvent = task.state === 'closed' ? 'CLOSE' : 'REOPEN';
     }
 
-    // TODO: Handle assignees, labels, milestone
+    // Labels - use REST API since GraphQL WorkItemWidgetLabelsUpdateInput
+    // requires addLabelIds/removeLabelIds instead of direct labelIds
+    if (task.labels !== undefined) {
+      const labelTitles = String(task.labels)
+        .split(',')
+        .map((l) => l.trim())
+        .filter(Boolean);
+      // Use REST API to update labels
+      await this.updateIssueLabels(id, labelTitles);
+    }
+
+    // TODO: Handle assignees, milestone
 
     const mutation = `
       mutation updateWorkItem($input: WorkItemUpdateInput!) {

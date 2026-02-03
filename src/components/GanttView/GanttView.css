@@ -1,0 +1,649 @@
+/**
+ * GanttView Component Styles
+ * Copied from GitLabGantt.css for GanttView component
+ */
+
+.gitlab-gantt-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.gitlab-gantt-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--wx-gitlab-header-background);
+  border-bottom: 1px solid var(--wx-gitlab-header-border);
+  flex-wrap: wrap;
+}
+
+.project-switcher {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.view-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--wx-gitlab-control-background);
+  border-bottom: 1px solid var(--wx-gitlab-control-border);
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--wx-gitlab-control-text);
+  white-space: nowrap;
+}
+
+.slider {
+  width: 80px;
+  height: 4px;
+  cursor: pointer;
+}
+
+.slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.control-value {
+  min-width: 30px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--wx-gitlab-control-value);
+}
+
+.unit-select {
+  padding: 2px 6px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.unit-select:hover {
+  border-color: var(--wx-gitlab-button-hover-text);
+}
+
+.unit-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.date-input {
+  padding: 2px 6px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  width: 120px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.project-select-compact {
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  cursor: pointer;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.btn-settings {
+  height: 24px;
+  width: 24px;
+  padding: 0;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-button-background);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wx-gitlab-button-text);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.btn-settings:hover {
+  color: var(--wx-gitlab-button-hover-text);
+  background: var(--wx-gitlab-button-hover-background);
+}
+
+.btn-view-options {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-button-background);
+  cursor: pointer;
+  color: var(--wx-gitlab-button-text);
+  font-size: 12px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  box-sizing: border-box;
+}
+
+.btn-view-options:hover {
+  color: var(--wx-gitlab-button-hover-text);
+  background: var(--wx-gitlab-button-hover-background);
+}
+
+.btn-view-options .chevron-icon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.column-settings-container {
+  position: relative;
+}
+
+.btn-column-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.btn-column-settings:hover {
+  color: var(--wx-gitlab-button-hover-text);
+  background: var(--wx-gitlab-button-hover-background);
+}
+
+.column-settings-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--wx-gitlab-dropdown-background, white);
+  border: 1px solid var(--wx-gitlab-dropdown-border, #ddd);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+}
+
+.column-settings-header {
+  padding: 8px 12px 4px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--wx-gitlab-dropdown-text, #333);
+}
+
+.column-settings-hint {
+  padding: 0 12px 8px;
+  font-size: 11px;
+  color: var(--wx-gitlab-dropdown-hint, #888);
+  border-bottom: 1px solid var(--wx-gitlab-dropdown-border, #eee);
+}
+
+.column-settings-list {
+  padding: 8px 0;
+}
+
+.column-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: grab;
+  transition: background 0.15s;
+}
+
+.column-item:hover {
+  background: var(--wx-gitlab-dropdown-hover, #f5f5f5);
+}
+
+.column-item.dragging {
+  opacity: 0.5;
+  background: var(--wx-gitlab-dropdown-hover, #f0f0f0);
+}
+
+.column-item.drag-over {
+  border-top: 2px solid var(--wx-gitlab-primary, #1f75cb);
+}
+
+.column-drop-zone-end {
+  height: 8px;
+  margin: 0 8px;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.column-drop-zone-end.active {
+  height: 12px;
+  background: var(--wx-gitlab-primary, #1f75cb);
+  opacity: 0.3;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  color: var(--wx-gitlab-dropdown-hint, #999);
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.column-checkbox {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--wx-gitlab-dropdown-text, #333);
+}
+
+.column-checkbox input {
+  margin-right: 8px;
+}
+
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wx-gitlab-modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.settings-modal-content {
+  background: var(--wx-gitlab-modal-background);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wx-gitlab-modal-border);
+  background: var(--wx-gitlab-modal-header-background);
+}
+
+.settings-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text);
+}
+
+.settings-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--wx-gitlab-modal-section-border);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-gitlab-modal-text);
+}
+
+.settings-hint {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--wx-gitlab-modal-hint-text);
+}
+
+.holidays-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--wx-gitlab-filter-input-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-filter-input-background);
+  color: var(--wx-gitlab-modal-text);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.holidays-textarea:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.holidays-textarea.disabled {
+  background: var(--wx-gitlab-disabled-background, #f5f5f5);
+  color: var(--wx-gitlab-disabled-text, #999);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.permission-warning {
+  font-size: 12px;
+  font-weight: normal;
+  color: #e67700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.permission-warning i {
+  font-size: 11px;
+}
+
+.saving-indicator {
+  font-size: 12px;
+  font-weight: normal;
+  color: #1f75cb;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.holidays-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.holiday-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.preset-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--wx-gitlab-button-border);
+  border-radius: 4px;
+  background: var(--wx-gitlab-button-background);
+  color: var(--wx-gitlab-button-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: var(--wx-gitlab-button-hover-background);
+  border-color: var(--wx-gitlab-button-hover-text);
+}
+
+.preset-btn-clear {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.preset-btn-clear:hover {
+  background: #f5c6cb;
+}
+
+/* Today marker styling - see shared/TodayMarker.css */
+
+.stats-panel {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.stat-item {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.stat-label {
+  color: var(--wx-gitlab-control-text);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: var(--wx-gitlab-control-value);
+}
+
+.stat-completed {
+  color: #28a745;
+}
+
+.stat-progress {
+  color: #1f75cb;
+}
+
+.stat-overdue {
+  color: #dc3545;
+}
+
+.error-banner {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-left: 4px solid #dc3545;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.retry-btn {
+  padding: 4px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+.gantt-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gantt-toolbar-row {
+  display: flex;
+  align-items: center;
+  /* Match wx-toolbar padding */
+  padding: 4px;
+  gap: 4px;
+}
+
+.gantt-toolbar-row .btn-view-options {
+  /* Ensure visibility in toolbar row */
+  flex-shrink: 0;
+}
+
+.gantt-toolbar-row .column-settings-container {
+  /* Match wx-tb-element padding for consistent spacing */
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+/* Remove wx-toolbar's left padding since gantt-toolbar-row provides it */
+.gantt-toolbar-row .wx-toolbar {
+  padding-left: 0;
+}
+
+.gantt-chart-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Make task bars semi-transparent to see grid and holidays */
+.wx-task {
+  opacity: 0.7;
+}
+
+.wx-summary {
+  opacity: 0.7;
+}
+
+.wx-task:hover,
+.wx-summary:hover {
+  opacity: 0.85;
+}
+
+.wx-task.wx-selected,
+.wx-summary.wx-selected {
+  opacity: 0.9;
+}
+
+/* Milestone styling - use class-based selector for GitLab milestones */
+/* Exclude milestones with color rules (they use striped backgrounds) */
+.wx-bar.wx-gitlab-milestone:not(.wx-color-rule-single):not(
+    .wx-color-rule-double
+  ):not(.wx-color-rule-triple) {
+  background-color: var(--wx-gantt-milestone-color) !important;
+  border-color: var(--wx-gantt-milestone-color) !important;
+}
+
+.wx-bar.wx-gitlab-milestone:not(.wx-color-rule-single):not(
+    .wx-color-rule-double
+  ):not(.wx-color-rule-triple)
+  .wx-content {
+  background-color: var(--wx-gantt-milestone-color) !important;
+}
+
+.gitlab-gantt-loading,
+.gitlab-gantt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1f75cb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+}
+
+.empty-message h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.empty-message p {
+  margin: 0;
+}
+
+/* Weekend and holiday highlighting */
+.wx-gantt-holidays .wx-weekend {
+  background-color: var(--wx-gantt-holiday-background) !important;
+  position: absolute !important;
+  height: 100% !important;
+  z-index: 0 !important;
+}
+
+/* Baseline bar styling - keep default height with padding */
+.wx-baseline {
+  pointer-events: none !important;
+  background-color: #00ba94 !important; /* Green - represents GitLab Task original range */
+  z-index: 1 !important;
+  opacity: 0.7 !important;
+}
+
+/* Milestone baseline should be blue (contains issues) */
+.wx-baseline.wx-milestone {
+  background-color: #37a9ef !important; /* Blue - represents GitLab Issue original range */
+}
+
+/* Parent task bracket baseline */
+.wx-baseline-bracket {
+  color: #00ba94 !important;
+  opacity: 0.5 !important;
+}
+
+.wx-baseline-bracket.wx-milestone {
+  color: #37a9ef !important;
+}
+
+/* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
+.wx-bar.wx-parent-task {
+  z-index: 2 !important;
+}

@@ -1,0 +1,370 @@
+/**
+ * BoardSettingsModal Styles
+ *
+ * Most styling comes from BaseDialog.css
+ * This file contains component-specific styles for lists, checkboxes, etc.
+ */
+
+/* Custom footer layout: delete on left, cancel/save on right */
+.board-settings-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.board-settings-footer-right {
+  display: flex;
+  gap: 8px;
+}
+
+/* Delete button confirm state */
+.board-settings-modal .dialog-btn-danger.confirm {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Section */
+.board-settings-section {
+  margin-top: 8px;
+}
+
+.board-settings-section > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.board-settings-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.board-settings-section-header > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.board-settings-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.board-settings-add-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.board-settings-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.board-settings-add-btn i {
+  font-size: 10px;
+}
+
+/* Lists container */
+.board-settings-lists {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Empty state for regular lists (shown between Others and Closed) */
+.board-settings-empty {
+  padding: 16px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* List item base */
+.board-settings-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
+
+.board-settings-list-item:last-child {
+  border-bottom: none;
+}
+
+.board-settings-list-item:hover {
+  background: #f9fafb;
+}
+
+/* Special list (Others, Closed) styling */
+.board-settings-list-special {
+  background: #fafafa;
+}
+
+.board-settings-list-special .list-item-name {
+  color: #6b7280;
+}
+
+.board-settings-list-disabled {
+  opacity: 0.6;
+}
+
+.board-settings-list-disabled:hover {
+  background: #fafafa;
+}
+
+/* Toggle checkbox for special lists */
+.list-item-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+
+.list-item-toggle input[type='checkbox'] {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Drag buttons for regular lists */
+.list-item-drag {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list-move-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.list-move-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.list-move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.list-move-btn i {
+  font-size: 10px;
+}
+
+/* List info */
+.list-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item-labels {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sort controls for special lists (inline) */
+.list-item-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.list-item-sort-select {
+  padding: 3px 6px;
+  font-size: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.list-item-sort-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+}
+
+.list-item-sort-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Action buttons for regular lists */
+.list-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.list-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.list-action-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.list-action-btn-delete:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.list-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.list-action-btn i {
+  font-size: 12px;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .board-settings-section > label,
+.wx-willow-dark-theme .board-settings-section-header > label {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .board-settings-add-btn {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .board-settings-add-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+  border-color: var(--wx-gitlab-button-border, #384047);
+}
+
+.wx-willow-dark-theme .board-settings-lists {
+  border-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .board-settings-empty {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .board-settings-list-item {
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .board-settings-list-item:hover {
+  background: var(--wx-gitlab-button-hover-background, #33373c);
+}
+
+.wx-willow-dark-theme .board-settings-list-special {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .board-settings-list-special .list-item-name {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .board-settings-list-disabled:hover {
+  background: var(--wx-gitlab-control-background, #23262a);
+}
+
+.wx-willow-dark-theme .list-move-btn {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-move-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-labels {
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-item-sort-select {
+  background: var(--wx-gitlab-button-background, #2c2f33);
+  border-color: var(--wx-gitlab-button-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-item-sort-select:focus {
+  border-color: #37a9ef;
+}
+
+.wx-willow-dark-theme .list-action-btn {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .list-action-btn:hover:not(:disabled) {
+  background: var(--wx-gitlab-header-border, #384047);
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .list-action-btn-delete:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}

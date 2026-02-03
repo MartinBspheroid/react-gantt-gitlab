@@ -1,0 +1,243 @@
+/* src/components/KanbanView/SortControl.css */
+
+.sort-control {
+  display: flex;
+  align-items: stretch; /* All children same height */
+  gap: 0; /* No gap - use border-radius to create visual grouping */
+  height: 22px; /* Fixed height for consistency */
+}
+
+/* Shared styles for all interactive elements */
+.sort-control-select,
+.sort-control-order-btn,
+.sort-control-reset-btn {
+  height: 100%;
+  font-size: 11px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6; /* Gray background for default state */
+  cursor: pointer;
+  color: #6b7280;
+}
+
+/* Sort dropdown */
+.sort-control-select {
+  padding: 0 4px;
+  max-width: 100px;
+  border-radius: 0 4px 4px 0; /* Right side rounded by default */
+}
+
+/* When reset button is present, dropdown has no left radius */
+.sort-control-reset-btn + .sort-control-select {
+  border-radius: 0;
+  border-left: none; /* Avoid double border */
+}
+
+/* When order button follows, dropdown has no right radius */
+.sort-control-select:has(+ .sort-control-order-btn) {
+  border-radius: 0 0 0 0;
+}
+
+/* Reset + select + order: select has no radius */
+.sort-control-reset-btn + .sort-control-select:has(+ .sort-control-order-btn) {
+  border-radius: 0;
+}
+
+/* When no reset button, dropdown has left radius */
+.sort-control-select:first-child {
+  border-radius: 4px 4px 4px 4px;
+}
+
+.sort-control-select:first-child:has(+ .sort-control-order-btn) {
+  border-radius: 4px 0 0 4px;
+}
+
+.sort-control-select:focus {
+  outline: none;
+  border-color: #1f75cb;
+  z-index: 1; /* Show focus ring above neighbors */
+}
+
+/* Modified state - not using default sort (white background) */
+.sort-control-select-modified {
+  border-color: #f59e0b;
+  background: white;
+}
+
+.sort-control-select-modified:focus {
+  border-color: #d97706;
+}
+
+/* Special list variants */
+.sort-control-select-others {
+  border-color: #fcd34d;
+}
+
+.sort-control-select-others.sort-control-select-modified {
+  border-color: #f59e0b;
+  background: white;
+}
+
+.sort-control-select-closed {
+  border-color: #93c5fd;
+}
+
+.sort-control-select-closed.sort-control-select-modified {
+  border-color: #f59e0b;
+  background: white;
+}
+
+/* Sort order toggle button */
+.sort-control-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+  border-radius: 0 4px 4px 0; /* Right side rounded */
+  border-left: none; /* Avoid double border with select */
+}
+
+.sort-control-order-btn:hover {
+  border-color: #1f75cb;
+  color: #1f75cb;
+  background: #f0f7ff;
+}
+
+.sort-control-order-btn:focus {
+  outline: none;
+  border-color: #1f75cb;
+  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+}
+
+/* Others list variant */
+.sort-control-order-btn-others {
+  border-color: #fcd34d;
+}
+
+.sort-control-order-btn-others:hover {
+  border-color: #d97706;
+  color: #d97706;
+  background: #fef3c7;
+}
+
+/* Closed list variant */
+.sort-control-order-btn-closed {
+  border-color: #93c5fd;
+}
+
+.sort-control-order-btn-closed:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #dbeafe;
+}
+
+/* Reset button (left side) - white background when non-default */
+.sort-control-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+  border-radius: 4px 0 0 4px; /* Left side rounded */
+  border-color: #f59e0b;
+  background: white;
+  color: #d97706;
+}
+
+.sort-control-reset-btn:hover {
+  border-color: #d97706;
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.sort-control-reset-btn:focus {
+  outline: none;
+  border-color: #d97706;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.1);
+}
+
+/* Others list variant */
+.sort-control-reset-btn-others {
+  border-color: #f59e0b;
+  background: white;
+}
+
+.sort-control-reset-btn-others:hover {
+  border-color: #d97706;
+  background: #fef3c7;
+}
+
+/* Closed list variant */
+.sort-control-reset-btn-closed {
+  border-color: #f59e0b;
+  background: white;
+}
+
+.sort-control-reset-btn-closed:hover {
+  border-color: #d97706;
+  background: #fef3c7;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .sort-control-select,
+.wx-willow-dark-theme .sort-control-order-btn,
+.wx-willow-dark-theme .sort-control-reset-btn {
+  border-color: var(--wx-gitlab-header-border, #384047);
+  background: var(--wx-gitlab-control-background, #23262a);
+  color: var(--wx-demo-text-secondary, #9fa1ae);
+}
+
+.wx-willow-dark-theme .sort-control-select:focus {
+  border-color: #37a9ef;
+}
+
+.wx-willow-dark-theme .sort-control-select-modified {
+  border-color: #d97706;
+  background: var(--wx-gitlab-header-background, #2c2f33);
+}
+
+.wx-willow-dark-theme .sort-control-select-others {
+  border-color: #d97706;
+}
+
+.wx-willow-dark-theme .sort-control-select-closed {
+  border-color: #3b82f6;
+}
+
+.wx-willow-dark-theme .sort-control-order-btn:hover {
+  border-color: #37a9ef;
+  color: #37a9ef;
+  background: rgba(55, 169, 239, 0.15);
+}
+
+.wx-willow-dark-theme .sort-control-order-btn-others {
+  border-color: #d97706;
+}
+
+.wx-willow-dark-theme .sort-control-order-btn-others:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.wx-willow-dark-theme .sort-control-order-btn-closed {
+  border-color: #3b82f6;
+}
+
+.wx-willow-dark-theme .sort-control-order-btn-closed:hover {
+  border-color: #60a5fa;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.wx-willow-dark-theme .sort-control-reset-btn {
+  border-color: #d97706;
+  background: var(--wx-gitlab-header-background, #2c2f33);
+  color: #f59e0b;
+}
+
+.wx-willow-dark-theme .sort-control-reset-btn:hover {
+  border-color: #f59e0b;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+}

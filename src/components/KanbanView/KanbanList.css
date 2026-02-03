@@ -1,0 +1,142 @@
+/* src/components/KanbanView/KanbanList.css */
+
+.kanban-list {
+  display: flex;
+  flex-direction: column;
+  width: 280px; /* Fixed width for all lists */
+  min-width: 280px;
+  max-width: 280px;
+  height: 100%; /* Fill parent height */
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.kanban-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #e5e7eb;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.kanban-list-header-others {
+  background: #fef3c7;
+  border-bottom-color: #fcd34d;
+}
+
+.kanban-list-header-closed {
+  background: #dbeafe;
+  border-bottom-color: #93c5fd;
+}
+
+.kanban-list-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+}
+
+.kanban-list-count {
+  background: #9ca3af;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.kanban-list-header-others .kanban-list-count {
+  background: #d97706;
+}
+
+.kanban-list-header-closed .kanban-list-count {
+  background: #3b82f6;
+}
+
+/* SortControl is positioned at end of header */
+.kanban-list-header .sort-control {
+  margin-left: auto;
+}
+
+.kanban-list-content {
+  flex: 1;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  min-height: 100px;
+}
+
+.kanban-list-empty {
+  color: #9ca3af;
+  font-size: 12px;
+  text-align: center;
+  padding: 20px 10px;
+  font-style: italic;
+}
+
+/* Drop target highlight styles */
+.kanban-list-over {
+  background: #dbeafe;
+}
+
+.kanban-list-over .kanban-list-content {
+  background: #eff6ff;
+}
+
+.kanban-list-over .kanban-list-empty {
+  border: 2px dashed #93c5fd;
+  background: #dbeafe;
+  border-radius: 4px;
+}
+
+/* ========== Dark Theme ========== */
+.wx-willow-dark-theme .kanban-list {
+  /* Darker background for better contrast with cards */
+  background: #25282c;
+}
+
+.wx-willow-dark-theme .kanban-list-header {
+  background: var(--wx-gitlab-control-background, #23262a);
+  border-bottom-color: var(--wx-gitlab-header-border, #384047);
+}
+
+.wx-willow-dark-theme .kanban-list-header-others {
+  background: rgba(217, 119, 6, 0.2);
+  border-bottom-color: #d97706;
+}
+
+.wx-willow-dark-theme .kanban-list-header-closed {
+  background: rgba(59, 130, 246, 0.2);
+  border-bottom-color: #3b82f6;
+}
+
+.wx-willow-dark-theme .kanban-list-name {
+  color: var(--wx-demo-text-primary, #e6e6e6);
+}
+
+.wx-willow-dark-theme .kanban-list-count {
+  background: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-list-empty {
+  color: var(--wx-gitlab-control-text, #9fa1ae);
+}
+
+.wx-willow-dark-theme .kanban-list-over {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.wx-willow-dark-theme .kanban-list-over .kanban-list-content {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.wx-willow-dark-theme .kanban-list-over .kanban-list-empty {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.2);
+}
