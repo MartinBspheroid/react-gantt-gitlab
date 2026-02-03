@@ -273,6 +273,11 @@ export function useGitLabSync(
     ): { rollback: () => void } => {
       const previousTasks = tasksRef.current;
 
+      // Early exit if dropping on self (no-op)
+      if (taskId === targetTaskId) {
+        return { rollback: () => {} };
+      }
+
       const task = previousTasks.find((t) => t.id === taskId);
       const targetTask = previousTasks.find((t) => t.id === targetTaskId);
 
