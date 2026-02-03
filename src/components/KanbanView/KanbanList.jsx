@@ -18,29 +18,31 @@ import './KanbanList.css';
 /**
  * Sort tasks based on sortBy and sortOrder
  */
-function sortTasks(tasks, sortBy, sortOrder, labelPriorityMap) {
+function sortTasks(tasks, sortBy, sortOrder) {
   const sorted = [...tasks];
 
   sorted.sort((a, b) => {
     let comparison = 0;
 
     switch (sortBy) {
-      case 'position':
+      case 'position': {
         // Use relative_position from GitLab, fallback to id
         const posA = a._gitlab?.relativePosition ?? a.id;
         const posB = b._gitlab?.relativePosition ?? b.id;
         comparison = posA - posB;
         break;
+      }
 
-      case 'due_date':
+      case 'due_date': {
         // Null/invalid dates go to the end
         const dateA = a.end ? new Date(a.end).getTime() : Infinity;
         const dateB = b.end ? new Date(b.end).getTime() : Infinity;
         // Guard against NaN from invalid date strings
         comparison = (Number.isNaN(dateA) ? Infinity : dateA) - (Number.isNaN(dateB) ? Infinity : dateB);
         break;
+      }
 
-      case 'created_at':
+      case 'created_at': {
         const createdA = a._gitlab?.createdAt
           ? new Date(a._gitlab.createdAt).getTime()
           : 0;
@@ -49,35 +51,40 @@ function sortTasks(tasks, sortBy, sortOrder, labelPriorityMap) {
           : 0;
         comparison = createdA - createdB;
         break;
+      }
 
-      case 'label_priority':
+      case 'label_priority': {
         // Use labelPriority computed in parent, fallback to MAX_SAFE_INTEGER
         const priorityA = a.labelPriority ?? Number.MAX_SAFE_INTEGER;
         const priorityB = b.labelPriority ?? Number.MAX_SAFE_INTEGER;
         comparison = priorityA - priorityB;
         break;
+      }
 
-      case 'title':
+      case 'title': {
         // Sort by task title (text field) alphabetically
         const titleA = (a.text || '').toLowerCase();
         const titleB = (b.text || '').toLowerCase();
         comparison = titleA.localeCompare(titleB);
         break;
+      }
 
-      case 'assignee':
+      case 'assignee': {
         // Sort by first assignee name alphabetically
         // Unassigned issues go to the end
         const assigneeA = (a.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
         const assigneeB = (b.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
         comparison = assigneeA.localeCompare(assigneeB);
         break;
+      }
 
-      default:
+      default: {
         // Fallback to position
         const defaultPosA = a._gitlab?.relativePosition ?? a.id;
         const defaultPosB = b._gitlab?.relativePosition ?? b.id;
         comparison = defaultPosA - defaultPosB;
         break;
+      }
     }
 
     return sortOrder === 'desc' ? -comparison : comparison;
@@ -96,8 +103,6 @@ export function KanbanList({
   defaultSortBy = 'position', // Default sort field from list config
   defaultSortOrder = 'asc', // Default sort order from list config
   labelColorMap,
-  labelPriorityMap,
-  isSpecial = false, // true for Others and Closed lists
   specialType = null, // 'others' | 'closed'
   onCardDoubleClick,
   onSortChange, // Callback when sort changes: (newSortBy, newSortOrder) => void
@@ -115,18 +120,10 @@ export function KanbanList({
   const isDropTarget = isOver || isOverDroppable;
 
   // Sort tasks
-  const sortedTasks = useMemo(() => {
-    const sorted = sortTasks(tasks, sortBy, sortOrder, labelPriorityMap);
-    // Debug: log sorted tasks for Others list
-    if (id === '__others__') {
-      console.log('[KanbanList Others] sortedTasks:', sorted.map(t => ({
-        id: t.id,
-        text: t.text?.substring(0, 20),
-        relativePosition: t._gitlab?.relativePosition,
-      })));
-    }
-    return sorted;
-  }, [tasks, sortBy, sortOrder, labelPriorityMap, id]);
+  const sortedTasks = useMemo(
+    () => sortTasks(tasks, sortBy, sortOrder),
+    [tasks, sortBy, sortOrder],
+  );
 
   // Get task IDs for SortableContext
   const taskIds = useMemo(

@@ -43,7 +43,6 @@ export function KanbanBoard({
   tasks,
   childTasksMap,
   labelColorMap,
-  labelPriorityMap,
   onCardDoubleClick,
   activeTaskId = null,
   overListId = null,
@@ -226,8 +225,6 @@ export function KanbanBoard({
           defaultSortBy={list.defaultSortBy}
           defaultSortOrder={list.defaultSortOrder}
           labelColorMap={labelColorMap}
-          labelPriorityMap={labelPriorityMap}
-          isSpecial={list.isSpecial}
           specialType={list.specialType}
           onCardDoubleClick={onCardDoubleClick}
           onSortChange={(newSortBy, newSortOrder) => handleListSortChange(list.id, newSortBy, newSortOrder)}

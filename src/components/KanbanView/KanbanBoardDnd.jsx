@@ -119,7 +119,6 @@ export function KanbanBoardDnd({
   tasks,
   childTasksMap,
   labelColorMap,
-  labelPriorityMap,
   onCardDoubleClick,
   onSameListReorder,
   onCrossListDrag,
@@ -181,8 +180,6 @@ export function KanbanBoardDnd({
     async (event) => {
       const { active, over } = event;
 
-      console.log('[KanbanBoardDnd.handleDragEnd] Event:', { activeId: active?.id, overId: over?.id });
-
       // Capture current state before resetting (for async operations)
       const currentActiveListId = activeListId;
 
@@ -192,7 +189,6 @@ export function KanbanBoardDnd({
       setOverListId(null);
 
       if (!over || !currentActiveListId) {
-        console.log('[KanbanBoardDnd.handleDragEnd] Early return: no over or activeListId');
         return;
       }
 
@@ -200,17 +196,13 @@ export function KanbanBoardDnd({
       const targetListId = over.data?.current?.listId || over.id;
       const targetTaskId = over.data?.current?.taskId || null;
 
-      console.log('[KanbanBoardDnd.handleDragEnd] Target info:', { targetListId, targetTaskId, currentActiveListId });
-
       // Get list info for source and target
       const sourceList = getListInfo(currentActiveListId, board);
       const targetList = getListInfo(targetListId, board);
 
       // Same list reorder - only if list is in manual (position) sort mode
       if (currentActiveListId === targetListId && targetTaskId) {
-        console.log('[KanbanBoardDnd.handleDragEnd] Same list reorder detected');
         if (!isListDragEnabled(currentActiveListId, board, sortOverrides)) {
-          console.log('[KanbanBoardDnd.handleDragEnd] Drag disabled for this list, returning');
           // Non-manual sort mode - don't allow same-list reorder
           return;
         }
@@ -220,9 +212,7 @@ export function KanbanBoardDnd({
           // If delta.y >= 0, we're dragging downward, so place 'after' target
           const delta = event.delta;
           const position = delta && delta.y < 0 ? 'before' : 'after';
-          console.log('[KanbanBoardDnd.handleDragEnd] Calling onSameListReorder:', { activeId: active.id, targetTaskId, position, deltaY: delta?.y });
           await onSameListReorder(active.id, targetTaskId, position);
-          console.log('[KanbanBoardDnd.handleDragEnd] onSameListReorder completed');
         }
         return;
       }
@@ -263,7 +253,6 @@ export function KanbanBoardDnd({
         tasks={tasks}
         childTasksMap={childTasksMap}
         labelColorMap={labelColorMap}
-        labelPriorityMap={labelPriorityMap}
         onCardDoubleClick={onCardDoubleClick}
         activeTaskId={activeTask?.id}
         overListId={overListId}

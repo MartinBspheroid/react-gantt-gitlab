@@ -47,7 +47,6 @@ export function KanbanView({ showSettings, onSettingsClose }) {
     syncTask,
     reorderTaskLocal,
     // For settings modal
-    configs,
     reloadConfigs,
     handleConfigChange,
     canEditHolidays,
@@ -126,12 +125,6 @@ export function KanbanView({ showSettings, onSettingsClose }) {
 
   // Add labelPriority to tasks
   const tasksWithPriority = useMemo(() => {
-    console.log('[KanbanView] tasksWithPriority recalculating, allTasks count:', allTasks.length);
-    // Debug: check task 22's relativePosition
-    const task22 = allTasks.find(t => t.id === 22);
-    if (task22) {
-      console.log('[KanbanView] Task 22 relativePosition:', task22._gitlab?.relativePosition);
-    }
     return allTasks.map((task) => {
       const taskLabels = task.labels
         ? task.labels.split(', ').filter(Boolean)
@@ -182,8 +175,6 @@ export function KanbanView({ showSettings, onSettingsClose }) {
   // Uses optimistic update for immediate UI feedback
   const reorderTask = useCallback(
     async (taskId, targetTaskId, position) => {
-      console.log('[KanbanView.reorderTask] Called with:', { taskId, targetTaskId, position });
-
       if (!provider) {
         throw new Error('Provider not available');
       }
@@ -193,18 +184,13 @@ export function KanbanView({ showSettings, onSettingsClose }) {
         throw new Error('Task IID not found');
       }
 
-      console.log('[KanbanView.reorderTask] Before optimistic update');
       // Optimistic update: update local state immediately
       const { rollback } = reorderTaskLocal(taskId, targetTaskId, position);
-      console.log('[KanbanView.reorderTask] After optimistic update');
 
       try {
         // Sync to GitLab
-        console.log('[KanbanView.reorderTask] Calling provider.reorderWorkItem');
         await provider.reorderWorkItem(task._gitlab.iid, targetTask._gitlab.iid, position);
-        console.log('[KanbanView.reorderTask] API call succeeded');
       } catch (error) {
-        console.log('[KanbanView.reorderTask] API call failed, rolling back');
         // Rollback on failure
         rollback();
         throw error;
@@ -344,7 +330,6 @@ export function KanbanView({ showSettings, onSettingsClose }) {
             tasks={filteredTasks}
             childTasksMap={childTasksMap}
             labelColorMap={labelColorMap}
-            labelPriorityMap={labelPriorityMap}
             onCardDoubleClick={handleCardDoubleClick}
             onSameListReorder={handleSameListReorder}
             onCrossListDrag={handleCrossListDrag}

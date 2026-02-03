@@ -619,14 +619,7 @@ export function GitLabDataProvider({
 
   // === Build Context Value ===
   const contextValue = useMemo<GitLabDataContextValue>(
-    () => {
-      // Debug: log when context value is recalculated
-      console.log('[GitLabDataContext] contextValue useMemo recalculating, tasks count:', tasks.length);
-      const task22 = tasks.find((t) => t.id === 22);
-      if (task22) {
-        console.log('[GitLabDataContext] Task 22 relativePosition:', task22._gitlab?.relativePosition);
-      }
-      return {
+    () => ({
       // Core Data
       tasks,
       links,
@@ -697,8 +690,7 @@ export function GitLabDataProvider({
       showToast,
       countWorkdays,
       calculateEndDateByWorkdays,
-    };
-    },
+    }),
     [
       tasks,
       links,

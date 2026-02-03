@@ -90,7 +90,6 @@ export function useIssueBoard({
    */
   const loadBoards = useCallback(async () => {
     if (!proxyConfig || !fullPath) {
-      console.log('[useIssueBoard] No proxy config or fullPath, skipping load');
       return;
     }
 
@@ -115,8 +114,6 @@ export function useIssueBoard({
       } else {
         setCurrentBoardId(null);
       }
-
-      console.log('[useIssueBoard] Loaded boards:', loadedBoards.length);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to load boards';
@@ -167,7 +164,6 @@ export function useIssueBoard({
         setBoards((prev) => [...prev, newBoard]);
         selectBoard(newBoard.id);
 
-        console.log('[useIssueBoard] Created board:', newBoard.id);
         return newBoard;
       } catch (err) {
         const message =
@@ -198,7 +194,6 @@ export function useIssueBoard({
 
       // Optimistic update: update local state immediately
       setBoards((prev) => prev.map((b) => (b.id === board.id ? board : b)));
-      console.log('[useIssueBoard] Optimistic update board:', board.id);
 
       // Save to API in background (don't await, don't block UI)
       setSaving(true);
@@ -206,7 +201,7 @@ export function useIssueBoard({
 
       apiUpdateBoard(fullPath, board, proxyConfig, configType)
         .then(() => {
-          console.log('[useIssueBoard] Board saved to API:', board.id);
+          // Board saved successfully
         })
         .catch((err) => {
           const message =
@@ -254,8 +249,6 @@ export function useIssueBoard({
 
           return filtered;
         });
-
-        console.log('[useIssueBoard] Deleted board:', boardId);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Failed to delete board';

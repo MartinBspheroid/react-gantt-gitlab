@@ -70,7 +70,6 @@ export function KanbanCard({
   listId,
   isDragging = false,
   isDragOverlay = false,
-  isDragDisabled = false, // When true, same-list reorder is disabled (non-manual sort mode)
 }) {
   // Setup sortable hook for drag-and-drop
   // Note: We always enable dragging to support cross-list drag.
@@ -102,8 +101,6 @@ export function KanbanCard({
   if (isDragOverlay) {
     classNames.push('drag-overlay');
   }
-  // Note: isDragDisabled no longer adds a class since cards can always be dragged
-  // for cross-list operations. Same-list reorder is blocked in handleDragEnd.
 
   const labels = parseLabels(task.labels);
   const assignees = parseAssignees(task.assigned);

@@ -243,61 +243,26 @@ export function useGitLabSync(
       targetTaskId: number | string,
       position: 'before' | 'after',
     ): { rollback: () => void } => {
-      console.log('[reorderTaskLocal] Called with:', {
-        taskId,
-        targetTaskId,
-        position,
-      });
-
       const previousTasks = tasksRef.current;
-      console.log(
-        '[reorderTaskLocal] Previous tasks count:',
-        previousTasks.length,
-      );
 
       const taskIndex = previousTasks.findIndex((t) => t.id === taskId);
       const targetIndex = previousTasks.findIndex((t) => t.id === targetTaskId);
 
-      console.log('[reorderTaskLocal] Found indices:', {
-        taskIndex,
-        targetIndex,
-      });
-
       if (taskIndex === -1 || targetIndex === -1) {
-        console.log(
-          '[reorderTaskLocal] Task not found, returning empty rollback',
-        );
         return { rollback: () => {} };
       }
 
-      const task = previousTasks[taskIndex];
       const targetTask = previousTasks[targetIndex];
-
-      console.log('[reorderTaskLocal] Task:', {
-        id: task.id,
-        text: task.text,
-        relativePosition: task._gitlab?.relativePosition,
-      });
-      console.log('[reorderTaskLocal] Target:', {
-        id: targetTask.id,
-        text: targetTask.text,
-        relativePosition: targetTask._gitlab?.relativePosition,
-      });
 
       // Calculate new relativePosition
       // Use a simple offset from target position for optimistic update.
       // The actual position will be determined by GitLab API - this is just
       // for immediate UI feedback to ensure the task appears near the target.
       const targetPos = targetTask._gitlab?.relativePosition ?? targetTask.id;
-      console.log('[reorderTaskLocal] Target position:', targetPos);
 
       // Simple offset: place slightly after or before target
       // Using small offset (1) so it appears adjacent to target in sort order
       const newPosition = position === 'after' ? targetPos + 1 : targetPos - 1;
-      console.log(
-        '[reorderTaskLocal] New position (offset from target):',
-        newPosition,
-      );
 
       // Optimistic update: update the task's relativePosition
       const updatedTasks = previousTasks.map((t) => {
@@ -313,17 +278,12 @@ export function useGitLabSync(
         return t;
       });
 
-      console.log(
-        '[reorderTaskLocal] Setting updated tasks, new position for task:',
-        newPosition,
-      );
       setTasks(updatedTasks);
       tasksRef.current = updatedTasks;
 
       // Return rollback function
       return {
         rollback: () => {
-          console.log('[reorderTaskLocal] Rolling back to previous state');
           setTasks(previousTasks);
           tasksRef.current = previousTasks;
         },
