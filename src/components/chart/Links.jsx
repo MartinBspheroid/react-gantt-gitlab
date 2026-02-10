@@ -90,7 +90,12 @@ function hasVisibleBar(task) {
   if (!task) return false;
 
   // 基本座標檢查（$x, $y 可能為 0，所以用 != null）
-  if (task.$x == null || task.$y == null || task.$w == null || task.$h == null) {
+  if (
+    task.$x == null ||
+    task.$y == null ||
+    task.$w == null ||
+    task.$h == null
+  ) {
     return false;
   }
   if (task.$w <= 0 || task.$h <= 0) {
@@ -98,7 +103,8 @@ function hasVisibleBar(task) {
   }
 
   // GitLab milestone 特殊處理：日期存在 task.start/end，不在 _gitlab
-  const isGitLabMilestone = task.$isMilestone || task._gitlab?.type === 'milestone';
+  const isGitLabMilestone =
+    task.$isMilestone || task._gitlab?.type === 'milestone';
   if (isGitLabMilestone) {
     return true;
   }
@@ -126,18 +132,30 @@ function hasVisibleBar(task) {
  * 1. 使用動態水平偏移量（cellWidth / 2，最大 20px），在不同 zoom level 下更自然
  * 2. 「下往上」的 link 從目標下方繞過，而非上方（修正 library 的 ㄇ 字形問題）
  */
-function calculateLinkPath(link, sourceTask, targetTask, cellHeight, cellWidth, baselines) {
+function calculateLinkPath(
+  link,
+  sourceTask,
+  targetTask,
+  cellHeight,
+  cellWidth,
+  baselines,
+) {
   const { isFromStart, isToStart } = getLinkEndpoints(link.type);
 
   // 動態水平偏移量：cellWidth 的一半，但不超過上限
   const linkOffset = Math.min(cellWidth / 2, LIBRARY_LINK_OFFSET_MAX);
 
   // bar 中心的垂直偏移（與 library 一致）
-  const barCenterOffset = Math.round(cellHeight / 2) - LIBRARY_BAR_CENTER_ADJUST;
+  const barCenterOffset =
+    Math.round(cellHeight / 2) - LIBRARY_BAR_CENTER_ADJUST;
 
   // baseline 啟用時，Y 座標需要減去偏移值
-  const sourceY = baselines ? sourceTask.$y - LIBRARY_BASELINE_Y_OFFSET : sourceTask.$y;
-  const targetY = baselines ? targetTask.$y - LIBRARY_BASELINE_Y_OFFSET : targetTask.$y;
+  const sourceY = baselines
+    ? sourceTask.$y - LIBRARY_BASELINE_Y_OFFSET
+    : sourceTask.$y;
+  const targetY = baselines
+    ? targetTask.$y - LIBRARY_BASELINE_Y_OFFSET
+    : targetTask.$y;
 
   // 起點（源任務）
   const startX = getTaskConnectionX(sourceTask, isFromStart);
@@ -193,16 +211,16 @@ function calculateLinkPath(link, sourceTask, targetTask, cellHeight, cellWidth, 
 
 export default function Links() {
   const api = useContext(storeContext);
-  const links = useStore(api, "_links");
-  const tasks = useStore(api, "_tasks");
-  const cellHeight = useStore(api, "cellHeight");
-  const cellWidth = useStore(api, "cellWidth");
-  const baselines = useStore(api, "baselines");
+  const links = useStore(api, '_links');
+  const tasks = useStore(api, '_tasks');
+  const cellHeight = useStore(api, 'cellHeight');
+  const cellWidth = useStore(api, 'cellWidth');
+  const baselines = useStore(api, 'baselines');
 
   // task ID -> task 物件的 Map（效能優化）
   const taskMap = useMemo(() => {
     const map = new Map();
-    (tasks || []).forEach(task => map.set(task.id, task));
+    (tasks || []).forEach((task) => map.set(task.id, task));
     return map;
   }, [tasks]);
 
@@ -210,7 +228,7 @@ export default function Links() {
   // 只處理兩端任務都有可見 bar 的 link
   const processedLinks = useMemo(() => {
     return (links || [])
-      .map(link => {
+      .map((link) => {
         const sourceTask = taskMap.get(link.source);
         const targetTask = taskMap.get(link.target);
 
@@ -218,7 +236,14 @@ export default function Links() {
         if (hasVisibleBar(sourceTask) && hasVisibleBar(targetTask)) {
           return {
             ...link,
-            $p: calculateLinkPath(link, sourceTask, targetTask, cellHeight, cellWidth, baselines)
+            $p: calculateLinkPath(
+              link,
+              sourceTask,
+              targetTask,
+              cellHeight,
+              cellWidth,
+              baselines,
+            ),
           };
         }
         // 任一端沒有可見 bar，不顯示此 link
@@ -229,7 +254,7 @@ export default function Links() {
 
   return (
     <svg className="wx-dkx3NwEn wx-links">
-      {processedLinks.map(link => (
+      {processedLinks.map((link) => (
         <polyline
           className="wx-dkx3NwEn wx-line"
           points={link.$p}

@@ -3,7 +3,14 @@
  * Provides a dropdown menu for toggling column visibility and reordering columns
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  useLayoutEffect,
+} from 'react';
 import ReactDOM from 'react-dom';
 import { getGitLabLinkInfo } from '../utils/LinkUtils';
 
@@ -26,7 +33,7 @@ const ALL_COLUMNS = [
 
 // Default settings based on ALL_COLUMNS
 const DEFAULT_SETTINGS = {
-  columns: ALL_COLUMNS.map(col => ({
+  columns: ALL_COLUMNS.map((col) => ({
     key: col.key,
     visible: col.defaultVisible,
   })),
@@ -45,14 +52,14 @@ export function useColumnSettings() {
         if (!parsed.columns) {
           // Old format was just visibility object
           return {
-            columns: ALL_COLUMNS.map(col => ({
+            columns: ALL_COLUMNS.map((col) => ({
               key: col.key,
               visible: parsed[col.key] ?? col.defaultVisible,
             })),
           };
         }
         // Ensure all columns exist (for forward compatibility)
-        const existingKeys = new Set(parsed.columns.map(c => c.key));
+        const existingKeys = new Set(parsed.columns.map((c) => c.key));
         const mergedColumns = [...parsed.columns];
         for (const col of ALL_COLUMNS) {
           if (!existingKeys.has(col.key)) {
@@ -72,16 +79,16 @@ export function useColumnSettings() {
   }, [columnSettings]);
 
   const toggleColumn = useCallback((key) => {
-    setColumnSettings(prev => ({
+    setColumnSettings((prev) => ({
       ...prev,
-      columns: prev.columns.map(col =>
-        col.key === key ? { ...col, visible: !col.visible } : col
+      columns: prev.columns.map((col) =>
+        col.key === key ? { ...col, visible: !col.visible } : col,
       ),
     }));
   }, []);
 
   const reorderColumns = useCallback((fromIndex, toIndex) => {
-    setColumnSettings(prev => {
+    setColumnSettings((prev) => {
       const newColumns = [...prev.columns];
       const [removed] = newColumns.splice(fromIndex, 1);
       newColumns.splice(toIndex, 0, removed);
@@ -110,7 +117,8 @@ function DraggableColumnItem({
   isDragging,
   dragOverIndex,
 }) {
-  const label = ALL_COLUMNS.find(c => c.key === column.key)?.label || column.key;
+  const label =
+    ALL_COLUMNS.find((c) => c.key === column.key)?.label || column.key;
 
   // Determine drop position indicator based on cursor position
   const showDropBefore = dragOverIndex === index;
@@ -199,17 +207,24 @@ export function ColumnSettingsDropdown({
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+    if (
+      dragIndex !== null &&
+      dragOverIndex !== null &&
+      dragIndex !== dragOverIndex
+    ) {
       onReorderColumns(dragIndex, dragOverIndex);
     }
     setDragIndex(null);
     setDragOverIndex(null);
   }, [dragIndex, dragOverIndex, onReorderColumns]);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    handleDragEnd();
-  }, [handleDragEnd]);
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      handleDragEnd();
+    },
+    [handleDragEnd],
+  );
 
   return (
     <div className="column-settings-container" ref={dropdownRef}>
@@ -493,7 +508,8 @@ const LabelTooltip = ({ anchorRef, labels, colorMap }) => {
       if (!el || !anchor) return;
 
       const rect = anchor.getBoundingClientRect();
-      const tooltipHeight = el.offsetHeight || el.getBoundingClientRect().height || 0;
+      const tooltipHeight =
+        el.offsetHeight || el.getBoundingClientRect().height || 0;
 
       // Viewport boundaries for flip calculation
       const spaceBelow = window.innerHeight - rect.bottom;
@@ -520,10 +536,7 @@ const LabelTooltip = ({ anchorRef, labels, colorMap }) => {
   }, [anchorRef]);
 
   return ReactDOM.createPortal(
-    <div
-      ref={tooltipRef}
-      className="label-cell-tooltip-portal"
-    >
+    <div ref={tooltipRef} className="label-cell-tooltip-portal">
       {labels.map((title, index) => (
         <span
           key={index}
@@ -534,7 +547,7 @@ const LabelTooltip = ({ anchorRef, labels, colorMap }) => {
         </span>
       ))}
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -621,15 +634,19 @@ export function buildColumnsFromSettings(columnSettings, cellComponents) {
   } = cellComponents;
 
   return columnSettings.columns
-    .filter(col => col.visible)
-    .map(col => {
+    .filter((col) => col.visible)
+    .map((col) => {
       const config = { ...COLUMN_CONFIGS[col.key] };
       // Inject external cell components
       if (col.key === 'start' || col.key === 'end') {
         // Use DateEditCell when editable, otherwise use DateCell (readonly)
         if (dateEditable && DateEditCell) {
           config.cell = (props) => (
-            <DateEditCell {...props} readonly={false} onDateChange={onDateChange} />
+            <DateEditCell
+              {...props}
+              readonly={false}
+              onDateChange={onDateChange}
+            />
           );
         } else {
           config.cell = DateCell;
@@ -639,7 +656,11 @@ export function buildColumnsFromSettings(columnSettings, cellComponents) {
       } else if (col.key === 'labels') {
         // Inject LabelCell with labelColorMap and labelPriorityMap for colored, priority-sorted label tags
         config.cell = (props) => (
-          <LabelCell {...props} labelColorMap={labelColorMap} labelPriorityMap={labelPriorityMap} />
+          <LabelCell
+            {...props}
+            labelColorMap={labelColorMap}
+            labelPriorityMap={labelPriorityMap}
+          />
         );
       }
       return config;

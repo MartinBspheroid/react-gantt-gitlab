@@ -16,18 +16,18 @@ import './Bars.css';
 
 // Parent task baseline 括號樣式常數（9-slice 設計：斜邊固定，中間伸縮）
 const BRACKET_CONFIG = {
-  GAP: 10,           // 與 task bar 的間距
-  ARM_LENGTH: 3,    // 斜邊水平寬度（固定）- 改小讓斜邊更短
-  DROP_HEIGHT: 4,   // 斜邊垂直落差（固定）- 改小讓直線更貼近下方
-  STROKE_WIDTH: 4,  // 線條粗細
+  GAP: 10, // 與 task bar 的間距
+  ARM_LENGTH: 3, // 斜邊水平寬度（固定）- 改小讓斜邊更短
+  DROP_HEIGHT: 4, // 斜邊垂直落差（固定）- 改小讓直線更貼近下方
+  STROKE_WIDTH: 4, // 線條粗細
 };
 
 /**
  * 標題偏移常數（避開 link 轉折區域）
  * link 轉折距離 = min(cellWidth/2, LINK_OFFSET_MAX)
  */
-const LINK_OFFSET_MAX = 20;  // 與 Links.jsx 的 LIBRARY_LINK_OFFSET_MAX 一致
-const LABEL_GAP = 4;         // 標題與 link 轉折點之間的緩衝
+const LINK_OFFSET_MAX = 20; // 與 Links.jsx 的 LIBRARY_LINK_OFFSET_MAX 一致
+const LABEL_GAP = 4; // 標題與 link 轉折點之間的緩衝
 
 /**
  * 計算標題的動態偏移量
@@ -87,19 +87,22 @@ function Bars(props) {
 
   const api = useContext(storeContext);
 
-  const [rTasksValue, rTasksCounter] = useStoreWithCounter(api,"_tasks");
-  const [rLinksValue, rLinksCounter] = useStoreWithCounter(api,"_links");
-  const areaValue = useStore(api,"area");
-  const scalesValue = useStore(api,"_scales");
-  const taskTypesValue = useStore(api,"taskTypes");
-  const baselinesValue = useStore(api,"baselines");
-  const selectedValue = useStore(api,"_selected");
-  const scrollTaskStore = useStore(api,"_scrollTask" );
-  const cellWidthValue = useStore(api, "cellWidth");
+  const [rTasksValue, rTasksCounter] = useStoreWithCounter(api, '_tasks');
+  const [rLinksValue, rLinksCounter] = useStoreWithCounter(api, '_links');
+  const areaValue = useStore(api, 'area');
+  const scalesValue = useStore(api, '_scales');
+  const taskTypesValue = useStore(api, 'taskTypes');
+  const baselinesValue = useStore(api, 'baselines');
+  const selectedValue = useStore(api, '_selected');
+  const scrollTaskStore = useStore(api, '_scrollTask');
+  const cellWidthValue = useStore(api, 'cellWidth');
 
   // 動態計算標題偏移（隨 cellWidth 變化）
   // 設定為 CSS 變數，讓子元素的 .wx-text-out 可以使用
-  const labelOffset = useMemo(() => getLabelOffset(cellWidthValue), [cellWidthValue]);
+  const labelOffset = useMemo(
+    () => getLabelOffset(cellWidthValue),
+    [cellWidthValue],
+  );
 
   const tasks = useMemo(() => {
     if (!areaValue || !Array.isArray(rTasksValue)) return [];
@@ -201,7 +204,9 @@ function Bars(props) {
       const task = api.getTask(id);
 
       if (!readonly) {
-        const mode = isCascadeMode ? 'cascade' : (getMoveMode(node, point, task) || 'move');
+        const mode = isCascadeMode
+          ? 'cascade'
+          : getMoveMode(node, point, task) || 'move';
 
         setTaskMove({
           id,
@@ -247,7 +252,6 @@ function Bars(props) {
     [readonly],
   );
 
-
   const up = useCallback(() => {
     if (taskMove) {
       const { id, mode, dx, l, w, start, isCascadeMode } = taskMove;
@@ -277,7 +281,7 @@ function Bars(props) {
             id,
             task: update,
             diff,
-            mode: mode === 'cascade' ? 'move' : mode,  // 'move', 'start', or 'end'
+            mode: mode === 'cascade' ? 'move' : mode, // 'move', 'start', or 'end'
           });
         }
         ignoreNextClickRef.current = true;
@@ -313,7 +317,11 @@ function Bars(props) {
           } else if (mode === 'end') {
             left = l;
             width = w + dx;
-          } else if (mode === 'move' || mode === 'move-baseline' || mode === 'cascade') {
+          } else if (
+            mode === 'move' ||
+            mode === 'move-baseline' ||
+            mode === 'cascade'
+          ) {
             left = l + dx;
             width = w;
           }
@@ -402,14 +410,10 @@ function Bars(props) {
     [api, readonly],
   );
 
-
   const types = ['e2s', 's2s', 'e2e', 's2e'];
-  const getLinkType = useCallback(
-    (fromStart, toStart) => {
-      return types[(fromStart ? 1 : 0) + (toStart ? 0 : 2)];
-    },
-    [],
-  );
+  const getLinkType = useCallback((fromStart, toStart) => {
+    return types[(fromStart ? 1 : 0) + (toStart ? 0 : 2)];
+  }, []);
 
   const alreadyLinked = useCallback(
     (target, toStart) => {
@@ -434,7 +438,7 @@ function Bars(props) {
       setLinkFrom(null);
     }
   }, [linkFrom]);
-  
+
   const onClick = useCallback(
     (e) => {
       if (ignoreNextClickRef.current) {
@@ -503,7 +507,6 @@ function Bars(props) {
     [touched],
   );
 
-
   const taskTypeCss = useCallback(
     (type) => {
       let css = taskTypesValue.some((t) => type === t.id) ? type : 'task';
@@ -543,14 +546,19 @@ function Bars(props) {
         if (task.$skip) return null;
 
         // Color rules matching
-        const matchedRules = getMatchingRules(task.text, parseLabelsString(task.labels), colorRules);
+        const matchedRules = getMatchingRules(
+          task.text,
+          parseLabelsString(task.labels),
+          colorRules,
+        );
         const hasColorRules = matchedRules.length > 0;
 
         // Build stripe class based on number of matches
         let stripeClass = '';
         if (hasColorRules) {
           if (matchedRules.length === 1) stripeClass = ' wx-color-rule-single';
-          else if (matchedRules.length === 2) stripeClass = ' wx-color-rule-double';
+          else if (matchedRules.length === 2)
+            stripeClass = ' wx-color-rule-double';
           else stripeClass = ' wx-color-rule-triple';
         }
 
@@ -566,7 +574,10 @@ function Bars(props) {
         };
 
         // Determine base color based on task type
-        const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone' || task.type === 'milestone';
+        const isMilestone =
+          task.$isMilestone ||
+          task._gitlab?.type === 'milestone' ||
+          task.type === 'milestone';
         let baseColor = '#00ba94'; // Default: green for tasks
         if (isMilestone) {
           baseColor = '#ad44ab'; // Purple for milestones
@@ -575,12 +586,23 @@ function Bars(props) {
         }
 
         // Build inline style for CSS variables
-        const stripeStyle = hasColorRules ? {
-          '--wx-base-color': baseColor,
-          '--wx-color-rule-1': toRgba(matchedRules[0]?.color, matchedRules[0]?.opacity ?? 1),
-          '--wx-color-rule-2': toRgba(matchedRules[1]?.color || matchedRules[0]?.color, matchedRules[1]?.opacity ?? matchedRules[0]?.opacity ?? 1),
-          '--wx-color-rule-3': toRgba(matchedRules[2]?.color || matchedRules[0]?.color, matchedRules[2]?.opacity ?? matchedRules[0]?.opacity ?? 1),
-        } : {};
+        const stripeStyle = hasColorRules
+          ? {
+              '--wx-base-color': baseColor,
+              '--wx-color-rule-1': toRgba(
+                matchedRules[0]?.color,
+                matchedRules[0]?.opacity ?? 1,
+              ),
+              '--wx-color-rule-2': toRgba(
+                matchedRules[1]?.color || matchedRules[0]?.color,
+                matchedRules[1]?.opacity ?? matchedRules[0]?.opacity ?? 1,
+              ),
+              '--wx-color-rule-3': toRgba(
+                matchedRules[2]?.color || matchedRules[0]?.color,
+                matchedRules[2]?.opacity ?? matchedRules[0]?.opacity ?? 1,
+              ),
+            }
+          : {};
 
         const barClass =
           `wx-bar wx-${taskTypeCss(task.type)}` +
@@ -588,8 +610,14 @@ function Bars(props) {
           (linkFrom && linkFrom.id === task.id ? ' wx-selected' : '') +
           (task.$reorder ? ' wx-reorder-task' : '') +
           (task.$parent ? ' wx-parent-task' : '') +
-          (task.$isIssue !== undefined ? (task.$isIssue ? ' wx-gitlab-issue' : ' wx-gitlab-task') : '') +
-          (task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-gitlab-milestone' : '') +
+          (task.$isIssue !== undefined
+            ? task.$isIssue
+              ? ' wx-gitlab-issue'
+              : ' wx-gitlab-task'
+            : '') +
+          (task.$isMilestone || task._gitlab?.type === 'milestone'
+            ? ' wx-gitlab-milestone'
+            : '') +
           stripeClass;
         const leftLinkClass =
           'wx-link wx-left' +
@@ -609,7 +637,11 @@ function Bars(props) {
           <Fragment key={task.id}>
             <div
               className={'wx-GKbcLEGA ' + barClass}
-              style={{ ...taskStyle(task), ...stripeStyle, '--wx-label-offset': `${labelOffset}px` }}
+              style={{
+                ...taskStyle(task),
+                ...stripeStyle,
+                '--wx-label-offset': `${labelOffset}px`,
+              }}
               data-tooltip-id={task.id}
               data-id={task.id}
               tabIndex={focused === task.id ? 0 : -1}
@@ -642,9 +674,7 @@ function Bars(props) {
                   {TaskTemplate ? (
                     <TaskTemplate data={task} api={api} onAction={forward} />
                   ) : (
-                    <div className="wx-GKbcLEGA wx-text-out">
-                      {task.text}
-                    </div>
+                    <div className="wx-GKbcLEGA wx-text-out">{task.text}</div>
                   )}
                 </>
               )}
@@ -657,7 +687,12 @@ function Bars(props) {
                   title="Drag to move with all children"
                 >
                   <svg viewBox="0 0 10 8" width="10" height="8">
-                    <polygon points="0,0 10,0 5,8" fill="currentColor" stroke="#333" strokeWidth="0.5"/>
+                    <polygon
+                      points="0,0 10,0 5,8"
+                      fill="currentColor"
+                      stroke="#333"
+                      strokeWidth="0.5"
+                    />
                   </svg>
                 </div>
               )}
@@ -673,7 +708,11 @@ function Bars(props) {
                 // Parent tasks: 使用括號形式 baseline（向下包覆子任務）
                 <ParentBaselineBracket
                   task={task}
-                  isMilestone={task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone'}
+                  isMilestone={
+                    task.type === 'milestone' ||
+                    task.$isMilestone ||
+                    task._gitlab?.type === 'milestone'
+                  }
                   cellWidth={cellWidthValue}
                 />
               ) : (
@@ -681,7 +720,11 @@ function Bars(props) {
                 <div
                   className={
                     'wx-GKbcLEGA wx-baseline' +
-                    (task.type === 'milestone' || task.$isMilestone || task._gitlab?.type === 'milestone' ? ' wx-milestone' : '')
+                    (task.type === 'milestone' ||
+                    task.$isMilestone ||
+                    task._gitlab?.type === 'milestone'
+                      ? ' wx-milestone'
+                      : '')
                   }
                   style={baselineStyle(task)}
                 ></div>

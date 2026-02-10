@@ -28,7 +28,13 @@ const formatDate = (date) => {
  * @param {(mode: 'overwrite' | 'end-only') => void} props.onConfirm - Confirm callback with mode
  * @param {() => void} props.onCancel - Cancel callback
  */
-function DrawBarConfirmDialog({ startDate, endDate, countWorkdays, onConfirm, onCancel }) {
+function DrawBarConfirmDialog({
+  startDate,
+  endDate,
+  countWorkdays,
+  onConfirm,
+  onCancel,
+}) {
   // Display end date (endDate is exclusive, so show the day before)
   const displayEndDate = useMemo(() => {
     if (!endDate) return null;

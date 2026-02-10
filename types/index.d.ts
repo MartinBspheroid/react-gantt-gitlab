@@ -24,43 +24,58 @@ export interface IColumnConfig extends Omit<IGanttColumn, 'header'> {
   editor?: ITableColumn['editor'];
 }
 
+export interface IProjectBoundaries {
+  projectStart: Date | null;
+  projectEnd: Date | null;
+}
+
+export interface IProjectConfig {
+  projectStart?: Date | null;
+  projectEnd?: Date | null;
+}
+
+export interface IGanttApi extends IApi {
+  getProjectBoundaries(): IProjectBoundaries;
+}
+
 export declare const Gantt: FC<
   {
     columns?: false | IColumnConfig[];
     taskTemplate?: FC<{
       data: ITask;
-      api: IApi;
+      api: IGanttApi;
       onaction: (ev: { action: string; data: { [key: string]: any } }) => void;
     }>;
     readonly?: boolean;
     cellBorders?: 'column' | 'full';
     highlightTime?: (date: Date, unit: 'day' | 'hour') => string;
-    init?: (api: IApi) => void;
+    init?: (api: IGanttApi) => void;
   } & IConfig &
+    IProjectConfig &
     GanttActions<TMethodsConfig>
 >;
 
 export declare const HeaderMenu: FC<
   ComponentProps<typeof BaseHeaderMenu> & {
-    api?: IApi;
+    api?: IGanttApi;
   }
 >;
 
 export declare const ContextMenu: FC<
   ComponentProps<typeof BaseContextMenu> & {
-    api?: IApi;
+    api?: IGanttApi;
   }
 >;
 
 export declare const Toolbar: FC<
   ComponentProps<typeof BaseToolbar> & {
-    api?: IApi;
+    api?: IGanttApi;
   }
 >;
 
 export declare const Editor: FC<
   ComponentProps<typeof BaseEditor> & {
-    api?: IApi;
+    api?: IGanttApi;
   }
 >;
 
@@ -68,7 +83,7 @@ export declare const Tooltip: FC<{
   content?: FC<{
     data: ITask;
   }>;
-  api?: IApi;
+  api?: IGanttApi;
   children?: ReactNode;
 }>;
 

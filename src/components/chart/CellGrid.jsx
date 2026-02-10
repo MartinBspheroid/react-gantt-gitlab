@@ -1,22 +1,16 @@
-import {
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import storeContext from '../../context';
 import { grid } from '@svar-ui/gantt-store';
 import { useStore } from '@svar-ui/lib-react';
 
-
 function CellGrid({ borders = '' }) {
   const api = useContext(storeContext);
-  const cellWidth = useStore(api, "cellWidth");
-  const cellHeight = useStore(api, "cellHeight");
+  const cellWidth = useStore(api, 'cellWidth');
+  const cellHeight = useStore(api, 'cellHeight');
 
   const nodeRef = useRef(null);
   const [color, setColor] = useState('#e4e4e4');
-  
+
   useEffect(() => {
     if (typeof getComputedStyle !== 'undefined' && nodeRef.current) {
       const border = getComputedStyle(nodeRef.current).getPropertyValue(

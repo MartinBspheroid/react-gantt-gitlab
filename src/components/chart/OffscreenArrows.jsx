@@ -6,14 +6,14 @@ import './OffscreenArrows.css';
 /**
  * 標題寬度估算常數
  */
-const LABEL_CHAR_WIDTH = 7;   // 每個字元約 7px
-const LABEL_PADDING = 8;      // 標題額外 padding
+const LABEL_CHAR_WIDTH = 7; // 每個字元約 7px
+const LABEL_PADDING = 8; // 標題額外 padding
 
 /**
  * Link 轉折常數（與 Links.jsx / Bars.jsx 保持一致）
  */
-const LINK_OFFSET_MAX = 20;   // link 水平偏移距離上限
-const LABEL_GAP = 4;          // 標題與 link 轉折點之間的緩衝
+const LINK_OFFSET_MAX = 20; // link 水平偏移距離上限
+const LABEL_GAP = 4; // 標題與 link 轉折點之間的緩衝
 const ARROW_EDGE_PADDING = 4; // Padding from viewport edge
 const SCROLL_PADDING = 50; // Padding when scrolling to bar
 const DISPLAY_NAME_MAX_LENGTH = 12;
@@ -88,7 +88,8 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
       // GitLab milestones: dates stored directly on task.start/end (not in _gitlab)
       // Regular tasks: need at least dueDate in _gitlab
       // (if no startDate, system uses createdAt as fallback to display bar)
-      const isMilestone = task.$isMilestone || task._gitlab?.type === 'milestone';
+      const isMilestone =
+        task.$isMilestone || task._gitlab?.type === 'milestone';
       if (!isMilestone) {
         if (!task._gitlab?.dueDate) return;
       }
@@ -133,7 +134,11 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
   );
 
   // Don't render if no arrows to show or container rect not ready
-  if (!chartContainerRect || offscreenTasks.length === 0 || viewportWidth <= 0) {
+  if (
+    !chartContainerRect ||
+    offscreenTasks.length === 0 ||
+    viewportWidth <= 0
+  ) {
     return null;
   }
 
@@ -147,7 +152,10 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
         const fixedRight = window.innerWidth - chartContainerRect.right;
 
         // Skip if row is outside visible chart area
-        if (fixedTop < chartContainerRect.top || fixedTop + cellHeight > chartContainerRect.bottom) {
+        if (
+          fixedTop < chartContainerRect.top ||
+          fixedTop + cellHeight > chartContainerRect.bottom
+        ) {
           return null;
         }
 
@@ -158,8 +166,14 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
             style={{
               position: 'fixed',
               top: `${fixedTop}px`,
-              left: direction === 'left' ? `${fixedLeft + ARROW_EDGE_PADDING}px` : 'auto',
-              right: direction === 'right' ? `${fixedRight + ARROW_EDGE_PADDING}px` : 'auto',
+              left:
+                direction === 'left'
+                  ? `${fixedLeft + ARROW_EDGE_PADDING}px`
+                  : 'auto',
+              right:
+                direction === 'right'
+                  ? `${fixedRight + ARROW_EDGE_PADDING}px`
+                  : 'auto',
               height: `${cellHeight}px`,
               '--arrow-color': color,
               zIndex: 100,
@@ -210,7 +224,11 @@ function estimateLabelWidth(text, cellWidth) {
  * Get the bar color based on task type (same logic as Bars.jsx)
  */
 function getTaskColor(task) {
-  if (task.$isMilestone || task._gitlab?.type === 'milestone' || task.type === 'milestone') {
+  if (
+    task.$isMilestone ||
+    task._gitlab?.type === 'milestone' ||
+    task.type === 'milestone'
+  ) {
     return '#ad44ab'; // Purple for milestones
   }
   if (task.$isIssue) {
@@ -236,7 +254,10 @@ function createOffscreenTask(task, direction) {
     task,
     taskY: task.$y,
     direction,
-    displayName: truncateName(task.text || task.label || `#${task.id}`, DISPLAY_NAME_MAX_LENGTH),
+    displayName: truncateName(
+      task.text || task.label || `#${task.id}`,
+      DISPLAY_NAME_MAX_LENGTH,
+    ),
     color: getTaskColor(task),
   };
 }

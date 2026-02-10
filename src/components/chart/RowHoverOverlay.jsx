@@ -172,7 +172,11 @@ function RowHoverOverlay({
   const onMouseDown = useCallback(
     (e) => {
       // Don't start drawing if clicking on a bar or arrow
-      if (e.target.closest('.wx-bar') || e.target.closest('.wx-offscreen-arrow')) return;
+      if (
+        e.target.closest('.wx-bar') ||
+        e.target.closest('.wx-offscreen-arrow')
+      )
+        return;
       if (!chartContainerRect) return;
       handleMouseDown(e, chartContainerRect);
     },
@@ -186,7 +190,9 @@ function RowHoverOverlay({
     const drawInfo = handleMouseUp();
     if (drawInfo) {
       // Snap positions to cell boundaries before converting to dates
-      const snappedStartX = snapToCell(Math.min(drawInfo.startX, drawInfo.endX));
+      const snappedStartX = snapToCell(
+        Math.min(drawInfo.startX, drawInfo.endX),
+      );
       let snappedEndX = snapToCellEnd(Math.max(drawInfo.startX, drawInfo.endX));
 
       // Ensure at least 1 cell width (for clicks without dragging)
@@ -214,7 +220,14 @@ function RowHoverOverlay({
         });
       }
     }
-  }, [handleMouseUp, pixelToDate, snapToCell, snapToCellEnd, getLengthUnitWidth, hoverState.rowIndex]);
+  }, [
+    handleMouseUp,
+    pixelToDate,
+    snapToCell,
+    snapToCellEnd,
+    getLengthUnitWidth,
+    hoverState.rowIndex,
+  ]);
 
   // Refs to hold the latest callback functions
   const onMouseMoveRef = useRef(onMouseMove);
@@ -332,7 +345,11 @@ function RowHoverOverlay({
     }
 
     // Otherwise show live drawing preview
-    if (!hoverState.isDrawing || !hoverState.drawStartX || !hoverState.drawEndX) {
+    if (
+      !hoverState.isDrawing ||
+      !hoverState.drawStartX ||
+      !hoverState.drawEndX
+    ) {
       return null;
     }
     // Snap start to left edge of cell, end to right edge of cell
@@ -351,7 +368,8 @@ function RowHoverOverlay({
   // Determine if we should show any overlay elements
   // Show overlay when hovering a drawable row, actively drawing, or dialog is open
   const showOverlay =
-    (hoveredTask !== null && (isDrawableRow || hoverState.isDrawing)) || confirmedPreview !== null;
+    (hoveredTask !== null && (isDrawableRow || hoverState.isDrawing)) ||
+    confirmedPreview !== null;
 
   // Calculate fixed position for overlay elements (relative to viewport)
   // Use rowIndex (global task index) calculated in handleMouseMove to get exact row position
@@ -365,7 +383,13 @@ function RowHoverOverlay({
     const rowTopInChart = rowTopInContent - scrollTop;
     // Convert to viewport coordinates
     return chartContainerRect.top + rowTopInChart;
-  }, [chartContainerRect, hoverState.rowIndex, scrollTop, cellHeight, confirmedPreview]);
+  }, [
+    chartContainerRect,
+    hoverState.rowIndex,
+    scrollTop,
+    cellHeight,
+    confirmedPreview,
+  ]);
 
   const fixedLeft = useMemo(() => {
     if (!chartContainerRect) return 0;
