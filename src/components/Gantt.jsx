@@ -1,3 +1,264 @@
-{"type":"step_start","timestamp":1770765890860,"sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","part":{"id":"prt_c49df3528001roj5ImTzHVdhl7","sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","messageID":"msg_c49df1235001qjnc636SKApyQk","type":"step-start","snapshot":"614d86e9a7ad4cf5b5c79a4f45b2d5eb37089eb4"}}
-{"type":"text","timestamp":1770765927370,"sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","part":{"id":"prt_c49df4ae1001pkI4eNFvxWNTIQ","sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","messageID":"msg_c49df1235001qjnc636SKApyQk","type":"text","text":"```javascript\nimport {\n  forwardRef,\n  useEffect,\n  useMemo,\n  useRef,\n  useImperativeHandle,\n  useState,\n  useCallback,\n} from 'react';\n\n// core widgets lib\nimport { Locale } from '@svar-ui/react-core';\nimport { en } from '@svar-ui/gantt-locales';\n\n// stores\nimport { EventBusRouter } from '@svar-ui/lib-state';\nimport {\n  DataStore,\n  defaultColumns,\n  defaultTaskTypes,\n} from '@svar-ui/gantt-store';\n\n// context\nimport StoreContext from '../context';\n\n// store factory\nimport { writable } from '@svar-ui/lib-react';\n\n// ui\nimport Layout from './Layout.jsx';\n\nconst camelize = (s) =>\n  s\n    .split('-')\n    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ''))\n    .join('');\n\nconst defaultScales = [\n  { unit: 'month', step: 1, format: 'MMMM yyy' },\n  { unit: 'day', step: 1, format: 'd' },\n];\n\nconst Gantt = forwardRef(function Gantt(\n  {\n    taskTemplate = null,\n    markers = [],\n    taskTypes = defaultTaskTypes,\n    tasks = [],\n    selected = [],\n    activeTask = null,\n    links = [],\n    scales = defaultScales,\n    columns = defaultColumns,\n    start = null,\n    end = null,\n    lengthUnit = 'day',\n    durationUnit = 'day',\n    cellWidth = 100,\n    cellHeight = 38,\n    scaleHeight = 36,\n    readonly = false,\n    cellBorders = 'full',\n    zoom = false,\n    baselines = false,\n    highlightTime = null,\n    countWorkdays = null,\n    calculateEndDateByWorkdays = null,\n    calendar = null,\n    init = null,\n    autoScale = true,\n    unscheduledTasks = false,\n    colorRules = [],\n    ...restProps\n  },\n  ref,\n) {\n  // Derive workday functions from calendar if provided\n  const calendarCountWorkdays = useCallback(\n    (startDate, endDate) => {\n      if (calendar) {\n        return calendar.countWorkdays(startDate, endDate);\n      }\n      return countWorkdays ? countWorkdays(startDate, endDate) : 0;\n    },\n    [calendar, countWorkdays],\n  );\n\n  const calendarCalculateEndDate = useCallback(\n    (startDate, workdays) => {\n      if (calendar) {\n        return calendar.calculateEndDateByWorkdays(startDate, workdays);\n      }\n      return calculateEndDateByWorkdays\n        ? calculateEndDateByWorkdays(startDate, workdays)\n        : startDate;\n    },\n    [calendar, calculateEndDateByWorkdays],\n  );\n\n  const calendarHighlightTime = useCallback(\n    (date, unit) => {\n      if (calendar && unit === 'day' && calendar.isNonWorkday(date)) {\n        return 'wx-weekend';\n      }\n      return highlightTime ? highlightTime(date, unit) : '';\n    },\n    [calendar, highlightTime],\n  );\n\n  // Use calendar-derived functions or provided functions\n  const effectiveCountWorkdays = calendar\n    ? calendarCountWorkdays\n    : countWorkdays;\n  const effectiveCalculateEndDate = calendar\n    ? calendarCalculateEndDate\n    : calculateEndDateByWorkdays;\n  const effectiveHighlightTime = calendar\n    ? calendarHighlightTime\n    : highlightTime;\n\n  // keep latest rest props for event routing\n  const restPropsRef = useRef();\n  restPropsRef.current = restProps;\n\n  // init stores\n  const dataStore = useMemo(() => new DataStore(writable), []);\n  const firstInRoute = useMemo(() => dataStore.in, [dataStore]);\n\n  const lastInRouteRef = useRef(null);\n  if (lastInRouteRef.current === null) {\n    lastInRouteRef.current = new EventBusRouter((a, b) => {\n      const name = 'on' + camelize(a);\n      if (restPropsRef.current && restPropsRef.current[name]) {\n        restPropsRef.current[name](b);\n      }\n    });\n    firstInRoute.setNext(lastInRouteRef.current);\n  }\n\n  // writable prop for two-way binding tableAPI\n  const [tableAPI, setTableAPI] = useState(null);\n  const tableAPIRef = useRef(null);\n  tableAPIRef.current = tableAPI;\n\n  // public API\n  const api = useMemo(\n    () => ({\n      getState: dataStore.getState.bind(dataStore),\n      getReactiveState: dataStore.getReactive.bind(dataStore),\n      getStores: () => ({ data: dataStore }),\n      exec: firstInRoute.exec,\n      setNext: (ev) => {\n        lastInRouteRef.current = lastInRouteRef.current.setNext(ev);\n        return lastInRouteRef.current;\n      },\n      intercept: firstInRoute.intercept.bind(firstInRoute),\n      on: firstInRoute.on.bind(firstInRoute),\n      detach: firstInRoute.detach.bind(firstInRoute),\n      getTask: dataStore.getTask.bind(dataStore),\n      serialize: dataStore.serialize.bind(dataStore),\n      getTable: (waitRender) =>\n        waitRender\n          ? new Promise((res) => setTimeout(() => res(tableAPIRef.current), 1))\n          : tableAPIRef.current,\n    }),\n    [dataStore, firstInRoute],\n  );\n\n  // expose API via ref\n  useImperativeHandle(\n    ref,\n    () => ({\n      ...api,\n    }),\n    [api],\n  );\n\n  const initOnceRef = useRef(0);\n  useEffect(() => {\n    if (!initOnceRef.current) {\n      if (init) init(api);\n    } else {\n      // Preserve sort state before re-init (dataStore.init resets it)\n      const currentSort = dataStore.getState()._sort;\n\n      dataStore.init({\n        tasks,\n        links,\n        start,\n        columns,\n        end,\n        lengthUnit,\n        cellWidth,\n        cellHeight,\n        scaleHeight,\n        scales,\n        taskTypes,\n        zoom,\n        selected,\n        activeTask,\n        baselines,\n        autoScale,\n        unscheduledTasks,\n        markers,\n        durationUnit,\n      });\n\n      // Restore sort state (use setTimeout to avoid re-triggering this effect)\n      if (currentSort?.length > 0) {\n        setTimeout(() => {\n          currentSort.forEach((sortItem, index) => {\n            api.exec('sort-tasks', {\n              key: sortItem.key,\n              order: sortItem.order,\n              add: index > 0,\n            });\n          });\n        }, 0);\n      }\n    }\n    initOnceRef.current++;\n  }, [\n    tasks,\n    links,\n    start,\n    columns,\n    end,\n    lengthUnit,\n    cellWidth,\n    cellHeight,\n    scaleHeight,\n    scales,\n    taskTypes,\n    zoom,\n    selected,\n    activeTask,\n    baselines,\n    autoScale,\n    unscheduledTasks,\n    markers,\n    durationUnit,\n  ]);\n\n  if (initOnceRef.current === 0) {\n    dataStore.init({\n      tasks,\n      links,\n      start,\n      columns,\n      end,\n      lengthUnit,\n      cellWidth,\n      cellHeight,\n      scaleHeight,\n      scales,\n      taskTypes,\n      zoom,\n      selected,\n      activeTask,\n      baselines,\n      autoScale,\n      unscheduledTasks,\n      markers,\n      durationUnit,\n    });\n  }\n\n  // Custom locale with YY/MM/DD date format\n  const customLocale = useMemo(\n    () => ({\n      ...en,\n      gantt: {\n        ...en.gantt,\n        dateFormat: 'yy/MM/dd',\n      },\n      formats: {\n        ...en.formats,\n        dateFormat: 'yy/MM/dd',\n      },\n    }),\n    [],\n  );\n\n  return (\n    <Locale words={customLocale} optional={true}>\n      <StoreContext.Provider value={api}>\n        <Layout\n          taskTemplate={taskTemplate}\n          readonly={readonly}\n          cellBorders={cellBorders}\n          highlightTime={effectiveHighlightTime}\n          countWorkdays={effectiveCountWorkdays}\n          calculateEndDateByWorkdays={effectiveCalculateEndDate}\n          onTableAPIChange={setTableAPI}\n          colorRules={colorRules}\n        />\n      </StoreContext.Provider>\n    </Locale>\n  );\n});\n\nexport default Gantt;\n```","time":{"start":1770765927366,"end":1770765927366}}}
-{"type":"step_finish","timestamp":1770765927383,"sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","part":{"id":"prt_c49dfc3c9001VwLZuz49xdEv5J","sessionID":"ses_3b620ee79ffeHnHddybYZvLlJW","messageID":"msg_c49df1235001qjnc636SKApyQk","type":"step-finish","reason":"stop","snapshot":"614d86e9a7ad4cf5b5c79a4f45b2d5eb37089eb4","cost":0,"tokens":{"input":23921,"output":1994,"reasoning":0,"cache":{"read":476,"write":0}}}}
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  useState,
+} from 'react';
+
+// core widgets lib
+import { Locale } from '@svar-ui/react-core';
+import { en } from '@svar-ui/gantt-locales';
+
+// stores
+import { EventBusRouter } from '@svar-ui/lib-state';
+import {
+  DataStore,
+  defaultColumns,
+  defaultTaskTypes,
+} from '@svar-ui/gantt-store';
+
+// context
+import StoreContext from '../context';
+
+// store factory
+import { writable } from '@svar-ui/lib-react';
+
+// ui
+import Layout from './Layout.jsx';
+
+const camelize = (s) =>
+  s
+    .split('-')
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ''))
+    .join('');
+
+const defaultScales = [
+  { unit: 'month', step: 1, format: 'MMMM yyy' },
+  { unit: 'day', step: 1, format: 'd' },
+];
+
+const Gantt = forwardRef(function Gantt(
+  {
+    taskTemplate = null,
+    markers = [],
+    taskTypes = defaultTaskTypes,
+    tasks = [],
+    selected = [],
+    activeTask = null,
+    links = [],
+    scales = defaultScales,
+    columns = defaultColumns,
+    start = null,
+    end = null,
+    projectStart = null,
+    projectEnd = null,
+    lengthUnit = 'day',
+    durationUnit = 'day',
+    cellWidth = 100,
+    cellHeight = 38,
+    scaleHeight = 36,
+    readonly = false,
+    cellBorders = 'full',
+    zoom = false,
+    baselines = false,
+    highlightTime = null,
+    countWorkdays = null,
+    init = null,
+    autoScale = true,
+    unscheduledTasks = false,
+    colorRules = [],
+    ...restProps
+  },
+  ref,
+) {
+  // keep latest rest props for event routing
+  const restPropsRef = useRef();
+  restPropsRef.current = restProps;
+
+  // store project boundaries in ref for API access
+  const projectBoundariesRef = useRef({
+    projectStart,
+    projectEnd,
+  });
+  projectBoundariesRef.current = { projectStart, projectEnd };
+
+  // init stores
+  const dataStore = useMemo(() => new DataStore(writable), []);
+  const firstInRoute = useMemo(() => dataStore.in, [dataStore]);
+
+  const lastInRouteRef = useRef(null);
+  if (lastInRouteRef.current === null) {
+    lastInRouteRef.current = new EventBusRouter((a, b) => {
+      const name = 'on' + camelize(a);
+      if (restPropsRef.current && restPropsRef.current[name]) {
+        restPropsRef.current[name](b);
+      }
+    });
+    firstInRoute.setNext(lastInRouteRef.current);
+  }
+
+  // writable prop for two-way binding tableAPI
+  const [tableAPI, setTableAPI] = useState(null);
+  const tableAPIRef = useRef(null);
+  tableAPIRef.current = tableAPI;
+
+  // public API
+  const api = useMemo(
+    () => ({
+      getState: dataStore.getState.bind(dataStore),
+      getReactiveState: dataStore.getReactive.bind(dataStore),
+      getStores: () => ({ data: dataStore }),
+      exec: firstInRoute.exec,
+      setNext: (ev) => {
+        lastInRouteRef.current = lastInRouteRef.current.setNext(ev);
+        return lastInRouteRef.current;
+      },
+      intercept: firstInRoute.intercept.bind(firstInRoute),
+      on: firstInRoute.on.bind(firstInRoute),
+      detach: firstInRoute.detach.bind(firstInRoute),
+      getTask: dataStore.getTask.bind(dataStore),
+      serialize: dataStore.serialize.bind(dataStore),
+      getTable: (waitRender) =>
+        waitRender
+          ? new Promise((res) => setTimeout(() => res(tableAPIRef.current), 1))
+          : tableAPIRef.current,
+      getProjectBoundaries: () => projectBoundariesRef.current,
+    }),
+    [dataStore, firstInRoute],
+  );
+
+  // expose API via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      ...api,
+    }),
+    [api],
+  );
+
+  const initOnceRef = useRef(0);
+  useEffect(() => {
+    if (!initOnceRef.current) {
+      if (init) init(api);
+    } else {
+      // Preserve sort state before re-init (dataStore.init resets it)
+      const currentSort = dataStore.getState()._sort;
+
+      dataStore.init({
+        tasks,
+        links,
+        start,
+        columns,
+        end,
+        lengthUnit,
+        cellWidth,
+        cellHeight,
+        scaleHeight,
+        scales,
+        taskTypes,
+        zoom,
+        selected,
+        activeTask,
+        baselines,
+        autoScale,
+        unscheduledTasks,
+        markers,
+        durationUnit,
+      });
+
+      // Restore sort state (use setTimeout to avoid re-triggering this effect)
+      if (currentSort?.length > 0) {
+        setTimeout(() => {
+          currentSort.forEach((sortItem, index) => {
+            api.exec('sort-tasks', {
+              key: sortItem.key,
+              order: sortItem.order,
+              add: index > 0,
+            });
+          });
+        }, 0);
+      }
+    }
+    initOnceRef.current++;
+  }, [
+    tasks,
+    links,
+    start,
+    columns,
+    end,
+    lengthUnit,
+    cellWidth,
+    cellHeight,
+    scaleHeight,
+    scales,
+    taskTypes,
+    zoom,
+    selected,
+    activeTask,
+    baselines,
+    autoScale,
+    unscheduledTasks,
+    markers,
+    durationUnit,
+  ]);
+
+  if (initOnceRef.current === 0) {
+    dataStore.init({
+      tasks,
+      links,
+      start,
+      columns,
+      end,
+      lengthUnit,
+      cellWidth,
+      cellHeight,
+      scaleHeight,
+      scales,
+      taskTypes,
+      zoom,
+      selected,
+      activeTask,
+      baselines,
+      autoScale,
+      unscheduledTasks,
+      markers,
+      durationUnit,
+    });
+  }
+
+  // Custom locale with YY/MM/DD date format
+  const customLocale = useMemo(
+    () => ({
+      ...en,
+      gantt: {
+        ...en.gantt,
+        dateFormat: 'yy/MM/dd',
+      },
+      formats: {
+        ...en.formats,
+        dateFormat: 'yy/MM/dd',
+      },
+    }),
+    [],
+  );
+
+  return (
+    <Locale words={customLocale} optional={true}>
+      <StoreContext.Provider value={api}>
+        <Layout
+          taskTemplate={taskTemplate}
+          readonly={readonly}
+          cellBorders={cellBorders}
+          highlightTime={highlightTime}
+          countWorkdays={countWorkdays}
+          onTableAPIChange={setTableAPI}
+          colorRules={colorRules}
+        />
+      </StoreContext.Provider>
+    </Locale>
+  );
+});
+
+export default Gantt;

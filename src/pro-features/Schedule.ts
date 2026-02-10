@@ -5,6 +5,7 @@ import { isWorkday, addWorkdays, countWorkdays } from './Calendar';
 export interface IScheduleResult {
   tasks: Map<TID, { start: Date; end: Date; changed: boolean }>;
   conflicts: IScheduleConflict[];
+  affectedTaskIds: TID[];
 }
 
 export interface IScheduleConflict {
@@ -13,15 +14,35 @@ export interface IScheduleConflict {
   message: string;
 }
 
+export interface IScheduleConfig {
+  auto?: boolean;
+  projectStart?: Date;
+  projectEnd?: Date;
+  respectCalendar?: boolean;
+}
+
+export type ScheduleTaskCallback = (
+  taskId: TID,
+  newStart: Date,
+  newEnd: Date,
+) => void;
+
+function getLinkLag(link: ILink): number {
+  return (link as unknown as { lag?: number }).lag || 0;
+}
+
 export function scheduleTasks(
   tasks: ITask[],
   links: ILink[],
   calendar?: ICalendar,
   constraints?: Map<TID, ITaskConstraint[]>,
+  config?: IScheduleConfig,
+  onScheduleTask?: ScheduleTaskCallback,
 ): IScheduleResult {
   const taskMap = new Map<TID, ITask>();
   const result = new Map<TID, { start: Date; end: Date; changed: boolean }>();
   const conflicts: IScheduleConflict[] = [];
+  const affectedTaskIds: TID[] = [];
 
   tasks.forEach((task) => {
     if (task.id) {
@@ -54,8 +75,10 @@ export function scheduleTasks(
         });
       }
     });
-    return { tasks: result, conflicts };
+    return { tasks: result, conflicts, affectedTaskIds };
   }
+
+  const projectStart = config?.projectStart;
 
   sorted.forEach((taskId) => {
     const task = taskMap.get(taskId);
@@ -70,10 +93,16 @@ export function scheduleTasks(
 
       if (!predTask || !predResult) return;
 
-      let predEnd = new Date(predResult.end);
-      predEnd.setDate(predEnd.getDate() + 1);
+      const lag = getLinkLag(link);
 
-      if (calendar && !isWorkday(predEnd, calendar)) {
+      let predEnd = new Date(predResult.end);
+      predEnd.setDate(predEnd.getDate() + 1 + lag);
+
+      if (
+        calendar &&
+        config?.respectCalendar !== false &&
+        !isWorkday(predEnd, calendar)
+      ) {
         predEnd = addWorkdays(predEnd, 0, calendar);
       }
 
@@ -84,7 +113,8 @@ export function scheduleTasks(
             : predEnd;
           break;
         case 's2s': {
-          const predStart = new Date(predResult.start);
+          let predStart = new Date(predResult.start);
+          predStart.setDate(predStart.getDate() + lag);
           earliestStart = earliestStart
             ? maxDate(earliestStart, predStart)
             : predStart;
@@ -97,10 +127,22 @@ export function scheduleTasks(
     });
 
     if (!earliestStart) {
-      earliestStart = task.start ? new Date(task.start) : new Date();
+      if (projectStart) {
+        earliestStart = new Date(projectStart);
+      } else {
+        earliestStart = task.start ? new Date(task.start) : new Date();
+      }
     }
 
-    if (calendar && !isWorkday(earliestStart, calendar)) {
+    if (projectStart && earliestStart < projectStart) {
+      earliestStart = new Date(projectStart);
+    }
+
+    if (
+      calendar &&
+      config?.respectCalendar !== false &&
+      !isWorkday(earliestStart, calendar)
+    ) {
       earliestStart = addWorkdays(earliestStart, 0, calendar);
     }
 
@@ -162,9 +204,16 @@ export function scheduleTasks(
       end: scheduledEnd,
       changed,
     });
+
+    if (changed) {
+      affectedTaskIds.push(taskId);
+      if (onScheduleTask) {
+        onScheduleTask(taskId, earliestStart, scheduledEnd);
+      }
+    }
   });
 
-  return { tasks: result, conflicts };
+  return { tasks: result, conflicts, affectedTaskIds };
 }
 
 export function rescheduleFromTask(
@@ -172,7 +221,47 @@ export function rescheduleFromTask(
   tasks: ITask[],
   links: ILink[],
   calendar?: ICalendar,
+  config?: IScheduleConfig,
+  onScheduleTask?: ScheduleTaskCallback,
 ): IScheduleResult {
+  const successors = new Map<TID, TID[]>();
+  links.forEach((link) => {
+    if (!successors.has(link.source)) {
+      successors.set(link.source, []);
+    }
+    successors.get(link.source)!.push(link.target);
+  });
+
+  const affected = new Set<TID>([taskId]);
+  const queue: TID[] = [taskId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const succs = successors.get(current) || [];
+    succs.forEach((s) => {
+      if (!affected.has(s)) {
+        affected.add(s);
+        queue.push(s);
+      }
+    });
+  }
+
+  const affectedTasks = tasks.filter((t) => t.id && affected.has(t.id));
+  const relevantLinks = links.filter(
+    (l) => affected.has(l.source) && affected.has(l.target),
+  );
+
+  return scheduleTasks(
+    affectedTasks,
+    relevantLinks,
+    calendar,
+    undefined,
+    config,
+    onScheduleTask,
+  );
+}
+
+export function getAffectedSuccessors(taskId: TID, links: ILink[]): TID[] {
   const successors = new Map<TID, TID[]>();
   links.forEach((link) => {
     if (!successors.has(link.source)) {
@@ -195,12 +284,99 @@ export function rescheduleFromTask(
     });
   }
 
-  const affectedTasks = tasks.filter((t) => t.id && affected.has(t.id));
-  return scheduleTasks(
-    affectedTasks,
-    links.filter((l) => affected.has(l.source) || affected.has(l.target)),
-    calendar,
-  );
+  return Array.from(affected);
+}
+
+export function detectCircularDependencies(
+  tasks: ITask[],
+  links: ILink[],
+): TID[][] {
+  const cycles: TID[][] = [];
+  const taskIds = new Set(tasks.filter((t) => t.id).map((t) => t.id));
+
+  const successors = new Map<TID, TID[]>();
+  links.forEach((link) => {
+    if (!successors.has(link.source)) {
+      successors.set(link.source, []);
+    }
+    successors.get(link.source)!.push(link.target);
+  });
+
+  function dfs(
+    start: TID,
+    current: TID,
+    visited: Set<TID>,
+    path: TID[],
+  ): boolean {
+    if (visited.has(current)) {
+      if (current === start && path.length > 1) {
+        cycles.push([...path]);
+        return true;
+      }
+      return false;
+    }
+
+    visited.add(current);
+    path.push(current);
+
+    const succs = successors.get(current) || [];
+    for (const succ of succs) {
+      if (succ === start || !visited.has(succ)) {
+        dfs(start, succ, visited, path);
+      }
+    }
+
+    path.pop();
+    visited.delete(current);
+    return false;
+  }
+
+  taskIds.forEach((taskId) => {
+    dfs(taskId, taskId, new Set(), []);
+  });
+
+  return cycles;
+}
+
+export function removeInvalidLinks(
+  tasks: ITask[],
+  links: ILink[],
+): { validLinks: ILink[]; removedLinks: ILink[] } {
+  const taskIds = new Set(tasks.filter((t) => t.id).map((t) => t.id));
+  const validLinks: ILink[] = [];
+  const removedLinks: ILink[] = [];
+
+  const taskParents = new Map<TID, TID>();
+  tasks.forEach((task) => {
+    if (task.id && task.parent) {
+      taskParents.set(task.id, task.parent);
+    }
+  });
+
+  links.forEach((link) => {
+    const sourceExists = taskIds.has(link.source);
+    const targetExists = taskIds.has(link.target);
+    const isSelfLink = link.source === link.target;
+
+    let isSummaryToChild = false;
+    let current = link.target;
+    while (current) {
+      if (current === link.source) {
+        isSummaryToChild = true;
+        break;
+      }
+      current = taskParents.get(current) || 0;
+      if (current === 0) break;
+    }
+
+    if (!sourceExists || !targetExists || isSelfLink || isSummaryToChild) {
+      removedLinks.push(link);
+    } else {
+      validLinks.push(link);
+    }
+  });
+
+  return { validLinks, removedLinks };
 }
 
 function topologicalSort(tasks: ITask[], links: ILink[]): TID[] {
