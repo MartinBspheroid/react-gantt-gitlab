@@ -306,10 +306,17 @@ export default function Grid(props) {
         const id = locateID(e);
         const column = locateAttr(e, 'data-col-id');
         const columnObj = column && cols.find((c) => c.id == column);
-        if (!columnObj?.editor && id) api.exec('show-editor', { id });
+        if (!columnObj?.editor && id) {
+          const task = tasks.find((t) => t.id === id);
+          if (task && (task.data?.length > 0 || task.lazy)) {
+            api.exec('open-task', { id, mode: !task.open });
+          } else {
+            api.exec('show-editor', { id });
+          }
+        }
       }
     },
-    [api, readonly], // cols is defined later; relies on latest value at call time
+    [api, readonly, cols, tasks],
   );
 
   const endScroll = useCallback(() => {
