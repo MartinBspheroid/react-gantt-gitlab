@@ -62,3 +62,6 @@ export {
 
 // Backward compatibility: GitLabGantt now wraps Workspace
 export { GitLabGantt } from './components/GanttChart.jsx';
+
+// Calendar utility for working days configuration
+export { Calendar } from './utils/Calendar';

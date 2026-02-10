@@ -28,6 +28,7 @@ function Chart(props) {
     cellBorders,
     highlightTime,
     countWorkdays,
+    calculateEndDateByWorkdays,
     colorRules,
   } = props;
 
@@ -331,6 +332,7 @@ function Chart(props) {
         api={api}
         scales={scales}
         countWorkdays={countWorkdays}
+        calculateEndDateByWorkdays={calculateEndDateByWorkdays}
         areaRef={areaRef}
         chartRef={chartRef}
       />

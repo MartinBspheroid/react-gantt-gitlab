@@ -24,6 +24,7 @@ function Layout(props) {
     cellBorders,
     highlightTime,
     countWorkdays,
+    calculateEndDateByWorkdays,
     onTableAPIChange,
     colorRules,
   } = props;
@@ -323,6 +324,7 @@ function Layout(props) {
                 cellBorders={cellBorders}
                 highlightTime={highlightTime}
                 countWorkdays={countWorkdays}
+                calculateEndDateByWorkdays={calculateEndDateByWorkdays}
                 colorRules={colorRules}
               />
             </div>
