@@ -5,6 +5,7 @@ import {
   useRef,
   useImperativeHandle,
   useState,
+  useCallback,
 } from 'react';
 
 // core widgets lib
@@ -13,9 +14,13 @@ import { en } from '@svar-ui/gantt-locales';
 
 // stores
 import { EventBusRouter } from '@svar-ui/lib-state';
-import { DataStore, defaultColumns, defaultTaskTypes } from '@svar-ui/gantt-store';
+import {
+  DataStore,
+  defaultColumns,
+  defaultTaskTypes,
+} from '@svar-ui/gantt-store';
 
-// context 
+// context
 import StoreContext from '../context';
 
 // store factory
@@ -23,7 +28,6 @@ import { writable } from '@svar-ui/lib-react';
 
 // ui
 import Layout from './Layout.jsx';
-
 
 const camelize = (s) =>
   s
@@ -60,6 +64,8 @@ const Gantt = forwardRef(function Gantt(
     baselines = false,
     highlightTime = null,
     countWorkdays = null,
+    calculateEndDateByWorkdays = null,
+    calendar = null,
     init = null,
     autoScale = true,
     unscheduledTasks = false,
@@ -68,10 +74,52 @@ const Gantt = forwardRef(function Gantt(
   },
   ref,
 ) {
+  // Derive workday functions from calendar if provided
+  const calendarCountWorkdays = useCallback(
+    (startDate, endDate) => {
+      if (calendar) {
+        return calendar.countWorkdays(startDate, endDate);
+      }
+      return countWorkdays ? countWorkdays(startDate, endDate) : 0;
+    },
+    [calendar, countWorkdays],
+  );
+
+  const calendarCalculateEndDate = useCallback(
+    (startDate, workdays) => {
+      if (calendar) {
+        return calendar.calculateEndDateByWorkdays(startDate, workdays);
+      }
+      return calculateEndDateByWorkdays
+        ? calculateEndDateByWorkdays(startDate, workdays)
+        : startDate;
+    },
+    [calendar, calculateEndDateByWorkdays],
+  );
+
+  const calendarHighlightTime = useCallback(
+    (date, unit) => {
+      if (calendar && unit === 'day' && calendar.isNonWorkday(date)) {
+        return 'wx-weekend';
+      }
+      return highlightTime ? highlightTime(date, unit) : '';
+    },
+    [calendar, highlightTime],
+  );
+
+  // Use calendar-derived functions or provided functions
+  const effectiveCountWorkdays = calendar
+    ? calendarCountWorkdays
+    : countWorkdays;
+  const effectiveCalculateEndDate = calendar
+    ? calendarCalculateEndDate
+    : calculateEndDateByWorkdays;
+  const effectiveHighlightTime = calendar
+    ? calendarHighlightTime
+    : highlightTime;
   // keep latest rest props for event routing
   const restPropsRef = useRef();
   restPropsRef.current = restProps;
-
 
   // init stores
   const dataStore = useMemo(() => new DataStore(writable), []);
@@ -87,7 +135,6 @@ const Gantt = forwardRef(function Gantt(
     });
     firstInRoute.setNext(lastInRouteRef.current);
   }
-
 
   // writable prop for two-way binding tableAPI
   const [tableAPI, setTableAPI] = useState(null);
@@ -117,7 +164,6 @@ const Gantt = forwardRef(function Gantt(
     }),
     [dataStore, firstInRoute],
   );
-
 
   // expose API via ref
   useImperativeHandle(
@@ -219,17 +265,20 @@ const Gantt = forwardRef(function Gantt(
   }
 
   // Custom locale with YY/MM/DD date format
-  const customLocale = useMemo(() => ({
-    ...en,
-    gantt: {
-      ...en.gantt,
-      dateFormat: 'yy/MM/dd',
-    },
-    formats: {
-      ...en.formats,
-      dateFormat: 'yy/MM/dd',
-    },
-  }), []);
+  const customLocale = useMemo(
+    () => ({
+      ...en,
+      gantt: {
+        ...en.gantt,
+        dateFormat: 'yy/MM/dd',
+      },
+      formats: {
+        ...en.formats,
+        dateFormat: 'yy/MM/dd',
+      },
+    }),
+    [],
+  );
 
   return (
     <Locale words={customLocale} optional={true}>
@@ -238,8 +287,9 @@ const Gantt = forwardRef(function Gantt(
           taskTemplate={taskTemplate}
           readonly={readonly}
           cellBorders={cellBorders}
-          highlightTime={highlightTime}
-          countWorkdays={countWorkdays}
+          highlightTime={effectiveHighlightTime}
+          countWorkdays={effectiveCountWorkdays}
+          calculateEndDateByWorkdays={effectiveCalculateEndDate}
           onTableAPIChange={setTableAPI}
           colorRules={colorRules}
         />

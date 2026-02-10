@@ -24,18 +24,19 @@ function Layout(props) {
     cellBorders,
     highlightTime,
     countWorkdays,
+    calculateEndDateByWorkdays,
     onTableAPIChange,
     colorRules,
   } = props;
 
   const api = useContext(storeContext);
 
-  const rTasks = useStore(api, "_tasks");
-  const rScales = useStore(api, "_scales");
-  const rCellHeight = useStore(api, "cellHeight");
-  const rColumns = useStore(api, "columns");
-  const scrollTop = useStore(api, "scrollTop");
-  const rScrollTask = useStore(api, "_scrollTask");
+  const rTasks = useStore(api, '_tasks');
+  const rScales = useStore(api, '_scales');
+  const rCellHeight = useStore(api, 'cellHeight');
+  const rColumns = useStore(api, 'columns');
+  const scrollTop = useStore(api, 'scrollTop');
+  const rScrollTask = useStore(api, '_scrollTask');
 
   const [compactMode, setCompactMode] = useState(false);
   let [gridWidth, setGridWidth] = useState(0);
@@ -63,7 +64,6 @@ function Layout(props) {
     [display],
   );
 
-
   useEffect(() => {
     const ro = modeObserver(handleResize);
     ro.observe();
@@ -86,7 +86,6 @@ function Layout(props) {
     gridWidth = w;
     return w;
   }, [rColumns, compactMode, display]);
-
 
   useEffect(() => {
     setGridWidth(gridColumnWidth);
@@ -272,7 +271,6 @@ function Layout(props) {
       },
     });
 
-   
     return cleanup.destroy;
   }, [api]);
 
@@ -326,6 +324,7 @@ function Layout(props) {
                 cellBorders={cellBorders}
                 highlightTime={highlightTime}
                 countWorkdays={countWorkdays}
+                calculateEndDateByWorkdays={calculateEndDateByWorkdays}
                 colorRules={colorRules}
               />
             </div>

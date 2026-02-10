@@ -50,11 +50,7 @@ export { Workspace } from './components/Workspace';
 export { GanttView } from './components/GanttView';
 
 // Context exports
-export {
-  DataProvider,
-  useData,
-  useDataOptional,
-} from './contexts/DataContext';
+export { DataProvider, useData, useDataOptional } from './contexts/DataContext';
 
 // KanbanView exports
 export {
@@ -66,3 +62,6 @@ export {
 
 // Backward compatibility: GitLabGantt now wraps Workspace
 export { GitLabGantt } from './components/GanttChart.jsx';
+
+// Calendar utility for working days configuration
+export { Calendar } from './utils/Calendar';
