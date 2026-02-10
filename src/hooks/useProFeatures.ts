@@ -34,7 +34,14 @@ import {
   importData,
   importFromFile,
 } from '../pro-features/DataIO';
-import { scheduleTasks } from '../pro-features/Schedule';
+import {
+  scheduleTasks,
+  rescheduleFromTask,
+  getAffectedSuccessors,
+  detectCircularDependencies,
+  removeInvalidLinks,
+} from '../pro-features/Schedule';
+import type { IScheduleConfig, IScheduleOptions } from '../pro-features/types';
 
 export interface IUseCriticalPathResult {
   criticalTasks: ICriticalPathTask[];
@@ -337,38 +344,120 @@ export interface IUseAutoScheduleResult {
     tasks: ITask[],
     links: ILink[],
     calendar?: ICalendar,
-  ) => Map<TID, { start: Date; end: Date; changed: boolean }>;
+    config?: IScheduleOptions,
+    onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void,
+  ) => {
+    tasks: Map<TID, { start: Date; end: Date; changed: boolean }>;
+    conflicts: Array<{ taskId: TID; type: string; message: string }>;
+    affectedTaskIds: TID[];
+  };
   rescheduleFrom: (
     taskId: TID,
     tasks: ITask[],
     links: ILink[],
     calendar?: ICalendar,
-  ) => Map<TID, { start: Date; end: Date; changed: boolean }>;
+    config?: IScheduleOptions,
+    onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void,
+  ) => {
+    tasks: Map<TID, { start: Date; end: Date; changed: boolean }>;
+    conflicts: Array<{ taskId: TID; type: string; message: string }>;
+    affectedTaskIds: TID[];
+  };
+  getAffectedSuccessors: (taskId: TID, links: ILink[]) => TID[];
+  detectCircularDependencies: (tasks: ITask[], links: ILink[]) => TID[][];
+  removeInvalidLinks: (
+    tasks: ITask[],
+    links: ILink[],
+  ) => { validLinks: ILink[]; removedLinks: ILink[] };
 }
 
 export function useAutoSchedule(): IUseAutoScheduleResult {
   const handleSchedule = useCallback(
-    (tasks: ITask[], links: ILink[], calendar?: ICalendar) => {
-      const result = scheduleTasks(tasks, links, calendar);
-      return result.tasks;
+    (
+      tasks: ITask[],
+      links: ILink[],
+      calendar?: ICalendar,
+      config?: IScheduleOptions,
+      onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void,
+    ) => {
+      const scheduleConfig: IScheduleConfig | undefined = config
+        ? {
+            auto: config.auto,
+            projectStart: config.projectStart,
+            projectEnd: config.projectEnd,
+            respectCalendar: config.respectCalendar,
+          }
+        : undefined;
+
+      const result = scheduleTasks(
+        tasks,
+        links,
+        calendar,
+        undefined,
+        scheduleConfig,
+        onScheduleTask,
+      );
+      return {
+        tasks: result.tasks,
+        conflicts: result.conflicts,
+        affectedTaskIds: result.affectedTaskIds,
+      };
     },
     [],
   );
 
   const handleRescheduleFrom = useCallback(
-    (taskId: TID, tasks: ITask[], links: ILink[], calendar?: ICalendar) => {
-      const result = scheduleTasks(
-        tasks.filter((t) => {
-          const affected = new Set<TID>();
-          links.forEach((l) => {
-            if (l.source === taskId) affected.add(l.target);
-          });
-          return t.id === taskId || affected.has(t.id!);
-        }),
+    (
+      taskId: TID,
+      tasks: ITask[],
+      links: ILink[],
+      calendar?: ICalendar,
+      config?: IScheduleOptions,
+      onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void,
+    ) => {
+      const scheduleConfig: IScheduleConfig | undefined = config
+        ? {
+            auto: config.auto,
+            projectStart: config.projectStart,
+            projectEnd: config.projectEnd,
+            respectCalendar: config.respectCalendar,
+          }
+        : undefined;
+
+      const result = rescheduleFromTask(
+        taskId,
+        tasks,
         links,
         calendar,
+        scheduleConfig,
+        onScheduleTask,
       );
-      return result.tasks;
+      return {
+        tasks: result.tasks,
+        conflicts: result.conflicts,
+        affectedTaskIds: result.affectedTaskIds,
+      };
+    },
+    [],
+  );
+
+  const handleGetAffectedSuccessors = useCallback(
+    (taskId: TID, links: ILink[]) => {
+      return getAffectedSuccessors(taskId, links);
+    },
+    [],
+  );
+
+  const handleDetectCircularDependencies = useCallback(
+    (tasks: ITask[], links: ILink[]) => {
+      return detectCircularDependencies(tasks, links);
+    },
+    [],
+  );
+
+  const handleRemoveInvalidLinks = useCallback(
+    (tasks: ITask[], links: ILink[]) => {
+      return removeInvalidLinks(tasks, links);
     },
     [],
   );
@@ -376,6 +465,9 @@ export function useAutoSchedule(): IUseAutoScheduleResult {
   return {
     schedule: handleSchedule,
     rescheduleFrom: handleRescheduleFrom,
+    getAffectedSuccessors: handleGetAffectedSuccessors,
+    detectCircularDependencies: handleDetectCircularDependencies,
+    removeInvalidLinks: handleRemoveInvalidLinks,
   };
 }
 

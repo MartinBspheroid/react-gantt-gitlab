@@ -79,4 +79,17 @@ export interface IProFeaturesConfig {
   undoRedo?: boolean;
   splitTasks?: boolean;
   autoSchedule?: boolean;
+  schedule?: IScheduleOptions;
+}
+
+export interface IScheduleOptions {
+  auto?: boolean;
+  projectStart?: Date;
+  projectEnd?: Date;
+  respectCalendar?: boolean;
+  onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void;
+}
+
+export interface ILinkWithLag extends ILink {
+  lag?: number;
 }
