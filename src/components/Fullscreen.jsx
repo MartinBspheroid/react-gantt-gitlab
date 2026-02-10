@@ -25,15 +25,17 @@ function Fullscreen({ hotkey = null, children }) {
   });
 
   useEffect(() => {
-    if(hotkey)
-      hotkeys.subscribe(v => v.add(hotkey, toggleFullscreen.current));
+    if (hotkey)
+      hotkeys.subscribe((v) => v.add(hotkey, toggleFullscreen.current));
   }, []);
 
   useEffect(() => {
     const setFullscreenState = () => {
       setInFullscreen(document.fullscreenElement === nodeRef.current);
     };
-    document.addEventListener('fullscreenchange', setFullscreenState, { passive: true });
+    document.addEventListener('fullscreenchange', setFullscreenState, {
+      passive: true,
+    });
     return () => {
       document.removeEventListener('fullscreenchange', setFullscreenState);
     };

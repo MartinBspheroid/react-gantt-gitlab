@@ -14,11 +14,11 @@ import {
 import './GanttMinScaleUnit.css';
 
 const options = [
-    { id: 1, label: 'sprint' },
-    { id: 2, label: 'month, sprint' },
-    { id: 3, label: 'month, sprint, week' },
-    { id: 4, label: 'month, sprint, week, day' },
-  ];
+  { id: 1, label: 'sprint' },
+  { id: 2, label: 'month, sprint' },
+  { id: 3, label: 'month, sprint, week' },
+  { id: 4, label: 'month, sprint, week, day' },
+];
 
 export default function GanttMinScaleUnit({ skinSettings }) {
   const data = useMemo(() => getData(), []);
@@ -67,7 +67,7 @@ export default function GanttMinScaleUnit({ skinSettings }) {
     if (scaleOption == 3) return allScales.slice(0, 3);
     return allScales;
   }, [scaleOption, allScales]);
-  
+
   const registeredRef = useRef(false);
   if (!registeredRef.current) {
     registerScaleUnit('sprint', {

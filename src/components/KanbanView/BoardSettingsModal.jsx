@@ -95,7 +95,10 @@ export function BoardSettingsModal({
     if (newIndex < 0 || newIndex >= lists.length) return;
 
     const newLists = [...lists];
-    [newLists[index], newLists[newIndex]] = [newLists[newIndex], newLists[index]];
+    [newLists[index], newLists[newIndex]] = [
+      newLists[newIndex],
+      newLists[index],
+    ];
     setLists(newLists);
   };
 
@@ -183,7 +186,9 @@ export function BoardSettingsModal({
 
         <div className="board-settings-lists">
           {/* Others list (top) */}
-          <div className={`board-settings-list-item board-settings-list-special${showOthers ? '' : ' board-settings-list-disabled'}`}>
+          <div
+            className={`board-settings-list-item board-settings-list-special${showOthers ? '' : ' board-settings-list-disabled'}`}
+          >
             <div className="list-item-toggle">
               <input
                 type="checkbox"
@@ -194,7 +199,9 @@ export function BoardSettingsModal({
             </div>
             <div className="list-item-info">
               <span className="list-item-name">Others</span>
-              <span className="list-item-labels">Issues that don't match any list</span>
+              <span className="list-item-labels">
+                Issues that don't match any list
+              </span>
             </div>
             {showOthers && (
               <div className="list-item-sort">
@@ -205,7 +212,9 @@ export function BoardSettingsModal({
                   disabled={saving}
                 >
                   {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
                 <select
@@ -215,7 +224,9 @@ export function BoardSettingsModal({
                   disabled={saving}
                 >
                   {SORT_ORDER_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -280,7 +291,9 @@ export function BoardSettingsModal({
           )}
 
           {/* Closed list (bottom) */}
-          <div className={`board-settings-list-item board-settings-list-special${showClosed ? '' : ' board-settings-list-disabled'}`}>
+          <div
+            className={`board-settings-list-item board-settings-list-special${showClosed ? '' : ' board-settings-list-disabled'}`}
+          >
             <div className="list-item-toggle">
               <input
                 type="checkbox"
@@ -302,7 +315,9 @@ export function BoardSettingsModal({
                   disabled={saving}
                 >
                   {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
                 <select
@@ -312,7 +327,9 @@ export function BoardSettingsModal({
                   disabled={saving}
                 >
                   {SORT_ORDER_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>

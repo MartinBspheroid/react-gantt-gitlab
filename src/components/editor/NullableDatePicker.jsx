@@ -43,7 +43,7 @@ export default function NullableDatePicker(props) {
       }
       setShowPicker(false);
     },
-    [onChangeHandler]
+    [onChangeHandler],
   );
 
   // Handle clear button (in popup)
@@ -106,7 +106,9 @@ export default function NullableDatePicker(props) {
   const isNone = !hasDate;
 
   // Inline style for "None" text - using --wx-color-font-alt because --wx-color-secondary is transparent in willow theme
-  const noneStyle = isNone ? { color: 'var(--wx-color-font-alt, #9fa1ae)' } : {};
+  const noneStyle = isNone
+    ? { color: 'var(--wx-color-font-alt, #9fa1ae)' }
+    : {};
 
   if (disabled) {
     return (

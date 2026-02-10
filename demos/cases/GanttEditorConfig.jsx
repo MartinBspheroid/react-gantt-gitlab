@@ -41,14 +41,16 @@ function GanttEditorConfig({ skinSettings }) {
         links={data.links}
         scales={data.scales}
       />
-      {api && <Editor
-        api={api}
-        items={items}
-        bottomBar={bottomBar}
-        topBar={false}
-        placement="modal"
-        autoSave={false}
-      />}
+      {api && (
+        <Editor
+          api={api}
+          items={items}
+          bottomBar={bottomBar}
+          topBar={false}
+          placement="modal"
+          autoSave={false}
+        />
+      )}
     </>
   );
 }

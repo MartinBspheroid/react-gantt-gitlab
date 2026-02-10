@@ -9,7 +9,6 @@ const parseDates = (data) => {
   return data;
 };
 
-
 export default function GanttBackend() {
   const server = 'https://master--svar-gantt-go--dev.webix.io';
 
@@ -29,30 +28,26 @@ export default function GanttBackend() {
     });
   }, []);
 
-  const init = useCallback(
-    (api) => {
-      setApi(api);
+  const init = useCallback((api) => {
+    setApi(api);
 
-      api.on('request-data', (ev) => {
-        Promise.all([
-          fetch(server + `/tasks/${ev.id}`)
-            .then((res) => res.json())
-            .then((arr) => parseDates(arr)),
-          fetch(server + `/links/${ev.id}`).then((res) => res.json()),
-        ]).then(([tasks, links]) => {
-          api.exec('provide-data', {
-            id: ev.id,
-            data: {
-              tasks,
-              links,
-            },
-          });
+    api.on('request-data', (ev) => {
+      Promise.all([
+        fetch(server + `/tasks/${ev.id}`)
+          .then((res) => res.json())
+          .then((arr) => parseDates(arr)),
+        fetch(server + `/links/${ev.id}`).then((res) => res.json()),
+      ]).then(([tasks, links]) => {
+        api.exec('provide-data', {
+          id: ev.id,
+          data: {
+            tasks,
+            links,
+          },
         });
       });
-    },
-    [],
-  );
-
+    });
+  }, []);
 
   return (
     <>

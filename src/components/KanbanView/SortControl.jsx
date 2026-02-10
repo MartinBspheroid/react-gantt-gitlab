@@ -81,7 +81,7 @@ export function SortControl({
         <button
           className={`sort-control-reset-btn${specialType ? ` sort-control-reset-btn-${specialType}` : ''}`}
           onClick={handleReset}
-          title={`Reset to default (${SORT_OPTIONS.find(o => o.value === defaultSortBy)?.label || defaultSortBy})`}
+          title={`Reset to default (${SORT_OPTIONS.find((o) => o.value === defaultSortBy)?.label || defaultSortBy})`}
         >
           <i className="fas fa-rotate-left" />
         </button>
@@ -108,9 +108,15 @@ export function SortControl({
         <button
           className={`sort-control-order-btn${specialType ? ` sort-control-order-btn-${specialType}` : ''}`}
           onClick={handleSortOrderToggle}
-          title={sortOrder === 'asc' ? 'Ascending (click to reverse)' : 'Descending (click to reverse)'}
+          title={
+            sortOrder === 'asc'
+              ? 'Ascending (click to reverse)'
+              : 'Descending (click to reverse)'
+          }
         >
-          <i className={`fas fa-arrow-${sortOrder === 'asc' ? 'up' : 'down'}-short-wide`} />
+          <i
+            className={`fas fa-arrow-${sortOrder === 'asc' ? 'up' : 'down'}-short-wide`}
+          />
         </button>
       )}
     </div>

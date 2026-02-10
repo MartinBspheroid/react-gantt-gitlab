@@ -10,7 +10,7 @@ function GanttHolidays({ skinSettings }) {
       { unit: 'year', step: 1, format: 'yyyy' },
       { unit: 'month', step: 2, format: 'MMMM yyy' },
       { unit: 'week', step: 1, format: 'wo' },
-      { unit: 'day', step: 1, format: 'd, EEEE' /* , css: dayStyle */ }
+      { unit: 'day', step: 1, format: 'd, EEEE' /* , css: dayStyle */ },
     ],
     [],
   );

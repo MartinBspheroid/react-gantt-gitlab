@@ -61,14 +61,18 @@ function TreeNodeItem({
         {/* Expand/collapse icon for groups with children */}
         <span className="pb-tree-icon">
           {isGroup && hasChildren ? (
-            <span className="pb-expand-icon">{isExpanded ? '\u25BC' : '\u25B6'}</span>
+            <span className="pb-expand-icon">
+              {isExpanded ? '\u25BC' : '\u25B6'}
+            </span>
           ) : (
             <span className="pb-expand-placeholder" />
           )}
         </span>
 
         {/* Type icon */}
-        <span className="pb-type-icon">{isGroup ? '\uD83D\uDCC1' : '\uD83D\uDCC4'}</span>
+        <span className="pb-type-icon">
+          {isGroup ? '\uD83D\uDCC1' : '\uD83D\uDCC4'}
+        </span>
 
         {/* Name */}
         <span className="pb-item-name">{node.name}</span>
@@ -110,7 +114,12 @@ function TreeNodeItem({
  * @param {(item: { id: number, name: string, fullPath: string, type: 'project' | 'group' }) => void} props.onSelect - Selection callback
  * @param {string|null} [props.selectedId] - Currently selected item ID (format: "project-123" or "group-456")
  */
-export function ProjectBrowser({ proxyConfig, type, onSelect, selectedId = null }) {
+export function ProjectBrowser({
+  proxyConfig,
+  type,
+  onSelect,
+  selectedId = null,
+}) {
   // Data states
   const [projects, setProjects] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -156,11 +165,15 @@ export function ProjectBrowser({ proxyConfig, type, onSelect, selectedId = null 
           if (cancelled) return;
           setGroups(groupsData);
           setProjects(projectsData);
-          setLoadingStatus(`Loaded ${projectsData.length} projects, ${groupsData.length} groups`);
+          setLoadingStatus(
+            `Loaded ${projectsData.length} projects, ${groupsData.length} groups`,
+          );
         } else {
           // Group selection mode - only need groups
           setLoadingStatus('Loading groups...');
-          const groupsData = await fetchAccessibleGroups(proxyConfig, { signal: signal });
+          const groupsData = await fetchAccessibleGroups(proxyConfig, {
+            signal: signal,
+          });
 
           if (cancelled) return;
           setGroups(groupsData);
@@ -220,7 +233,7 @@ export function ProjectBrowser({ proxyConfig, type, onSelect, selectedId = null 
         type: node.type,
       });
     },
-    [onSelect]
+    [onSelect],
   );
 
   // Auto-expand groups when search query is present
@@ -246,7 +259,8 @@ export function ProjectBrowser({ proxyConfig, type, onSelect, selectedId = null 
 
   // Determine if tree is empty
   const isEmpty = !loading && !error && tree.length === 0;
-  const noData = !loading && !error && projects.length === 0 && groups.length === 0;
+  const noData =
+    !loading && !error && projects.length === 0 && groups.length === 0;
 
   return (
     <div className="project-browser">

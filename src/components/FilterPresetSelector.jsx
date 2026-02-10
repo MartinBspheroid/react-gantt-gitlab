@@ -11,20 +11,31 @@ import { ConfirmDialog } from './shared/dialogs/ConfirmDialog';
 /**
  * Simple dialog component for preset name input
  */
-function PresetDialog({ title, label, placeholder, value, onChange, onSubmit, onCancel, submitLabel, saving, hint }) {
+function PresetDialog({
+  title,
+  label,
+  placeholder,
+  value,
+  onChange,
+  onSubmit,
+  onCancel,
+  submitLabel,
+  saving,
+  hint,
+}) {
   return (
     <div className="preset-dialog-overlay" onClick={onCancel}>
-      <div className="preset-dialog" onClick={e => e.stopPropagation()}>
+      <div className="preset-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="dialog-header">{title}</div>
         <div className="dialog-body">
           <label>{label}</label>
           <input
             type="text"
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             autoFocus
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter') onSubmit();
               if (e.key === 'Escape') onCancel();
             }}
@@ -53,7 +64,10 @@ function PresetDialog({ title, label, placeholder, value, onChange, onSubmit, on
  * e.g., "ui/design/dark" -> { folders: ["ui", "design"], name: "dark" }
  */
 function parsePresetPath(fullName) {
-  const parts = fullName.split('/').map(p => p.trim()).filter(Boolean);
+  const parts = fullName
+    .split('/')
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (parts.length <= 1) {
     return { folders: [], name: fullName };
   }
@@ -72,7 +86,7 @@ function buildPresetTree(presets) {
 
   // First pass: identify all folder names
   const folderNames = new Set();
-  presets.forEach(preset => {
+  presets.forEach((preset) => {
     const { folders } = parsePresetPath(preset.name);
     if (folders.length > 0) {
       // Add top-level folder name
@@ -81,7 +95,7 @@ function buildPresetTree(presets) {
   });
 
   // Second pass: build the tree
-  presets.forEach(preset => {
+  presets.forEach((preset) => {
     const { folders, name } = parsePresetPath(preset.name);
 
     // If this preset has no folder path but its name matches a folder name,
@@ -101,7 +115,7 @@ function buildPresetTree(presets) {
     }
 
     let current = root;
-    folders.forEach(folderName => {
+    folders.forEach((folderName) => {
       if (!current.folders[folderName]) {
         current.folders[folderName] = { folders: {}, presets: [] };
       }
@@ -122,7 +136,14 @@ function areFiltersEqual(a, b) {
   if (!a || !b) return false;
 
   // Compare all known filter keys
-  const filterKeys = ['milestoneIds', 'epicIds', 'labels', 'assignees', 'states', 'search'];
+  const filterKeys = [
+    'milestoneIds',
+    'epicIds',
+    'labels',
+    'assignees',
+    'states',
+    'search',
+  ];
 
   for (const key of filterKeys) {
     const valA = a[key];
@@ -149,32 +170,50 @@ function areFiltersEqual(a, b) {
 function hasActiveFilters(filters) {
   if (!filters) return false;
   return (
-    (filters.milestoneIds?.length > 0) ||
-    (filters.epicIds?.length > 0) ||
-    (filters.labels?.length > 0) ||
-    (filters.assignees?.length > 0) ||
-    (filters.states?.length > 0) ||
-    (filters.search?.length > 0)
+    filters.milestoneIds?.length > 0 ||
+    filters.epicIds?.length > 0 ||
+    filters.labels?.length > 0 ||
+    filters.assignees?.length > 0 ||
+    filters.states?.length > 0 ||
+    filters.search?.length > 0
   );
 }
 
 /**
  * Folder component for tree view
  */
-function PresetFolder({ name, node, level, matchingPresetId, canEdit, onSelectPreset, onMenuToggle, menuButtonRefs, searchQuery, expandedFolders, toggleFolder }) {
+function PresetFolder({
+  name,
+  node,
+  level,
+  matchingPresetId,
+  canEdit,
+  onSelectPreset,
+  onMenuToggle,
+  menuButtonRefs,
+  searchQuery,
+  expandedFolders,
+  toggleFolder,
+}) {
   const folderPath = name;
   const isExpanded = expandedFolders.has(folderPath);
-  const hasContent = Object.keys(node.folders).length > 0 || node.presets.length > 0;
+  const hasContent =
+    Object.keys(node.folders).length > 0 || node.presets.length > 0;
 
   // Filter presets based on search
   const filteredPresets = searchQuery
-    ? node.presets.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? node.presets.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : node.presets;
 
   // Check if any child matches search (for folders)
   const hasMatchingChildren = searchQuery
-    ? filteredPresets.length > 0 || Object.entries(node.folders).some(([_, childNode]) =>
-        childNode.presets.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? filteredPresets.length > 0 ||
+      Object.entries(node.folders).some(([_, childNode]) =>
+        childNode.presets.some((p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
       )
     : true;
 
@@ -187,7 +226,9 @@ function PresetFolder({ name, node, level, matchingPresetId, canEdit, onSelectPr
         onClick={() => toggleFolder(folderPath)}
         style={{ paddingLeft: `${12 + level * 16}px` }}
       >
-        <i className={`fas fa-chevron-${isExpanded ? 'down' : 'right'} folder-arrow`}></i>
+        <i
+          className={`fas fa-chevron-${isExpanded ? 'down' : 'right'} folder-arrow`}
+        ></i>
         <i className="fas fa-folder folder-icon"></i>
         <span className="folder-name">{name}</span>
         <span className="folder-count">{node.presets.length}</span>
@@ -214,7 +255,7 @@ function PresetFolder({ name, node, level, matchingPresetId, canEdit, onSelectPr
           ))}
 
           {/* Presets in this folder */}
-          {filteredPresets.map(preset => (
+          {filteredPresets.map((preset) => (
             <PresetItem
               key={preset.id}
               preset={preset}
@@ -235,7 +276,15 @@ function PresetFolder({ name, node, level, matchingPresetId, canEdit, onSelectPr
 /**
  * Individual preset item component
  */
-function PresetItem({ preset, level, isActive, canEdit, onSelect, onMenuToggle, menuButtonRefs }) {
+function PresetItem({
+  preset,
+  level,
+  isActive,
+  canEdit,
+  onSelect,
+  onMenuToggle,
+  menuButtonRefs,
+}) {
   return (
     <div className={`preset-item ${isActive ? 'active' : ''}`}>
       <button
@@ -244,13 +293,17 @@ function PresetItem({ preset, level, isActive, canEdit, onSelect, onMenuToggle, 
         title={preset.name}
         style={{ paddingLeft: `${12 + (level || 0) * 16}px` }}
       >
-        <span className="preset-item-name">{preset.displayName || preset.name}</span>
+        <span className="preset-item-name">
+          {preset.displayName || preset.name}
+        </span>
         {isActive && <i className="fas fa-check preset-check"></i>}
       </button>
 
       {canEdit && (
         <button
-          ref={(el) => { menuButtonRefs.current[preset.id] = el; }}
+          ref={(el) => {
+            menuButtonRefs.current[preset.id] = el;
+          }}
           className="preset-menu-btn"
           onClick={(e) => onMenuToggle(e, preset.id)}
           title="More options"
@@ -309,24 +362,31 @@ export function FilterPresetSelector({
 
   // Get root-level presets (no folder)
   const rootPresets = useMemo(() => {
-    const filtered = presetTree.presets.filter(p =>
-      !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = presetTree.presets.filter(
+      (p) =>
+        !searchQuery ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
     return filtered;
   }, [presetTree, searchQuery]);
 
   // Use explicit selectedPresetId if provided (including null to indicate no selection)
   // Only fall back to filter matching if selectedPresetId is undefined (not passed)
-  const matchingPreset = selectedPresetId !== undefined
-    ? (selectedPresetId ? presets?.find(p => p.id === selectedPresetId) : null)
-    : presets?.find(p => areFiltersEqual(p.filters, currentFilters));
+  const matchingPreset =
+    selectedPresetId !== undefined
+      ? selectedPresetId
+        ? presets?.find((p) => p.id === selectedPresetId)
+        : null
+      : presets?.find((p) => areFiltersEqual(p.filters, currentFilters));
 
   // Get active preset for menu actions
-  const activePreset = activeMenuId ? presets?.find(p => p.id === activeMenuId) : null;
+  const activePreset = activeMenuId
+    ? presets?.find((p) => p.id === activeMenuId)
+    : null;
 
   // Toggle folder expansion
   const toggleFolder = useCallback((folderPath) => {
-    setExpandedFolders(prev => {
+    setExpandedFolders((prev) => {
       const next = new Set(prev);
       if (next.has(folderPath)) {
         next.delete(folderPath);
@@ -342,7 +402,7 @@ export function FilterPresetSelector({
     if (matchingPreset) {
       const { folders } = parsePresetPath(matchingPreset.name);
       if (folders.length > 0) {
-        setExpandedFolders(prev => {
+        setExpandedFolders((prev) => {
           const next = new Set(prev);
           folders.forEach((_, idx) => {
             next.add(folders.slice(0, idx + 1).join('/'));
@@ -391,18 +451,21 @@ export function FilterPresetSelector({
   }, [isOpen]);
 
   const handleToggle = useCallback(() => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
     setActiveMenuId(null);
     if (!isOpen) {
       setSearchQuery('');
     }
   }, [isOpen]);
 
-  const handleSelectPreset = useCallback((preset) => {
-    onSelectPreset(preset);
-    setIsOpen(false);
-    setSearchQuery('');
-  }, [onSelectPreset]);
+  const handleSelectPreset = useCallback(
+    (preset) => {
+      onSelectPreset(preset);
+      setIsOpen(false);
+      setSearchQuery('');
+    },
+    [onSelectPreset],
+  );
 
   const handleOpenCreateDialog = useCallback(() => {
     // If a preset is selected, use its folder path as default
@@ -424,7 +487,11 @@ export function FilterPresetSelector({
       setNewPresetName('');
     } catch (err) {
       const message = err?.message || 'Failed to save preset';
-      setErrorMessage(message.includes('403') ? 'Permission denied: You may not have write access to this project' : message);
+      setErrorMessage(
+        message.includes('403')
+          ? 'Permission denied: You may not have write access to this project'
+          : message,
+      );
       setShowCreateDialog(false);
     }
   }, [newPresetName, onCreatePreset]);
@@ -445,7 +512,11 @@ export function FilterPresetSelector({
       setNewPresetName('');
     } catch (err) {
       const message = err?.message || 'Failed to rename preset';
-      setErrorMessage(message.includes('403') ? 'Permission denied: You may not have write access to this project' : message);
+      setErrorMessage(
+        message.includes('403')
+          ? 'Permission denied: You may not have write access to this project'
+          : message,
+      );
       setShowRenameDialog(false);
     }
   }, [newPresetName, renameTarget, onRenamePreset]);
@@ -463,33 +534,42 @@ export function FilterPresetSelector({
       await onDeletePreset(presetToDelete.id);
     } catch (err) {
       const message = err?.message || 'Failed to delete preset';
-      setErrorMessage(message.includes('403') ? 'Permission denied: You may not have write access to this project' : message);
+      setErrorMessage(
+        message.includes('403')
+          ? 'Permission denied: You may not have write access to this project'
+          : message,
+      );
     }
 
     setDeleteConfirmOpen(false);
     setPresetToDelete(null);
   }, [presetToDelete, onDeletePreset]);
 
-  const handleMenuToggle = useCallback((e, presetId) => {
-    e.stopPropagation();
-    if (activeMenuId === presetId) {
-      setActiveMenuId(null);
-    } else {
-      // Calculate position based on button location
-      const button = menuButtonRefs.current[presetId];
-      if (button) {
-        const rect = button.getBoundingClientRect();
-        setMenuPosition({
-          top: rect.bottom + 2,
-          right: window.innerWidth - rect.right,
-        });
+  const handleMenuToggle = useCallback(
+    (e, presetId) => {
+      e.stopPropagation();
+      if (activeMenuId === presetId) {
+        setActiveMenuId(null);
+      } else {
+        // Calculate position based on button location
+        const button = menuButtonRefs.current[presetId];
+        if (button) {
+          const rect = button.getBoundingClientRect();
+          setMenuPosition({
+            top: rect.bottom + 2,
+            right: window.innerWidth - rect.right,
+          });
+        }
+        setActiveMenuId(presetId);
       }
-      setActiveMenuId(presetId);
-    }
-  }, [activeMenuId]);
+    },
+    [activeMenuId],
+  );
 
   // Can save if there are active client filters OR server filters, and no preset currently matches
-  const canSaveCurrentFilters = (hasActiveFilters(currentFilters) || serverFilterCount > 0) && !matchingPreset;
+  const canSaveCurrentFilters =
+    (hasActiveFilters(currentFilters) || serverFilterCount > 0) &&
+    !matchingPreset;
 
   // Get display name for the selected preset
   const selectedDisplayName = matchingPreset
@@ -509,7 +589,9 @@ export function FilterPresetSelector({
           <span className="preset-name">{selectedDisplayName}</span>
         )}
         {saving && <i className="fas fa-spinner fa-spin preset-spinner"></i>}
-        <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} preset-chevron`}></i>
+        <i
+          className={`fas fa-chevron-${isOpen ? 'up' : 'down'} preset-chevron`}
+        ></i>
       </button>
 
       {/* Error Toast - rendered via portal */}
@@ -555,22 +637,24 @@ export function FilterPresetSelector({
               {presets && presets.length > 0 ? (
                 <div className="preset-list">
                   {/* Folders */}
-                  {Object.entries(presetTree.folders).map(([folderName, node]) => (
-                    <PresetFolder
-                      key={folderName}
-                      name={folderName}
-                      node={node}
-                      level={0}
-                      matchingPresetId={matchingPreset?.id}
-                      canEdit={canEdit}
-                      onSelectPreset={handleSelectPreset}
-                      onMenuToggle={handleMenuToggle}
-                      menuButtonRefs={menuButtonRefs}
-                      searchQuery={searchQuery}
-                      expandedFolders={expandedFolders}
-                      toggleFolder={toggleFolder}
-                    />
-                  ))}
+                  {Object.entries(presetTree.folders).map(
+                    ([folderName, node]) => (
+                      <PresetFolder
+                        key={folderName}
+                        name={folderName}
+                        node={node}
+                        level={0}
+                        matchingPresetId={matchingPreset?.id}
+                        canEdit={canEdit}
+                        onSelectPreset={handleSelectPreset}
+                        onMenuToggle={handleMenuToggle}
+                        menuButtonRefs={menuButtonRefs}
+                        searchQuery={searchQuery}
+                        expandedFolders={expandedFolders}
+                        toggleFolder={toggleFolder}
+                      />
+                    ),
+                  )}
 
                   {/* Root-level presets */}
                   {rootPresets.map((preset) => (
@@ -587,9 +671,13 @@ export function FilterPresetSelector({
                   ))}
 
                   {/* No results message */}
-                  {searchQuery && rootPresets.length === 0 && Object.keys(presetTree.folders).length === 0 && (
-                    <div className="preset-empty">No presets match "{searchQuery}"</div>
-                  )}
+                  {searchQuery &&
+                    rootPresets.length === 0 &&
+                    Object.keys(presetTree.folders).length === 0 && (
+                      <div className="preset-empty">
+                        No presets match "{searchQuery}"
+                      </div>
+                    )}
                 </div>
               ) : (
                 <div className="preset-empty">No presets saved</div>
@@ -601,7 +689,13 @@ export function FilterPresetSelector({
                     className="btn-save-preset"
                     onClick={handleOpenCreateDialog}
                     disabled={!canSaveCurrentFilters && !isDirty}
-                    title={canSaveCurrentFilters ? 'Save current filters as new preset' : (isDirty ? 'Save modified filters as new preset' : 'No active filters to save')}
+                    title={
+                      canSaveCurrentFilters
+                        ? 'Save current filters as new preset'
+                        : isDirty
+                          ? 'Save modified filters as new preset'
+                          : 'No active filters to save'
+                    }
                   >
                     <i className="fas fa-plus"></i> Save as New Preset
                   </button>
@@ -636,7 +730,10 @@ export function FilterPresetSelector({
           <button onClick={() => handleOpenRenameDialog(activePreset)}>
             <i className="fas fa-edit"></i> Rename
           </button>
-          <button onClick={() => handleDeletePreset(activePreset)} className="delete">
+          <button
+            onClick={() => handleDeletePreset(activePreset)}
+            className="delete"
+          >
             <i className="fas fa-trash"></i> Delete
           </button>
         </div>

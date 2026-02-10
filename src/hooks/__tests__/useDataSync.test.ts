@@ -14,9 +14,7 @@ describe('useDataSync', () => {
   beforeEach(() => {
     mockProvider = {
       sync: vi.fn().mockResolvedValue({
-        tasks: [
-          { id: 1, title: 'Task 1', start: new Date(), end: new Date() },
-        ],
+        tasks: [{ id: 1, title: 'Task 1', start: new Date(), end: new Date() }],
         links: [],
         metadata: {},
       }),
@@ -72,7 +70,12 @@ describe('useDataSync', () => {
 
   it('should create tasks', async () => {
     const newTask = { title: 'New Task' };
-    const createdTask = { ...newTask, id: 2, start: new Date(), end: new Date() };
+    const createdTask = {
+      ...newTask,
+      id: 2,
+      start: new Date(),
+      end: new Date(),
+    };
 
     mockProvider.createTask = vi.fn().mockResolvedValue(createdTask);
 

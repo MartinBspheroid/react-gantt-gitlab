@@ -15,7 +15,12 @@ import { BaseDialog } from '../shared/dialogs/BaseDialog';
  * @param {function} props.onCreate - Callback when board is created (boardData) => void
  * @param {boolean} props.saving - Whether a save operation is in progress
  */
-export function CreateBoardDialog({ isOpen, onClose, onCreate, saving = false }) {
+export function CreateBoardDialog({
+  isOpen,
+  onClose,
+  onCreate,
+  saving = false,
+}) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 

@@ -25,11 +25,14 @@ export default function Toolbar({
   onOpenBlueprints = null,
 }) {
   const i18nCtx = useContext(context.i18n);
-  const i18nLocal = useMemo(() => (i18nCtx ? i18nCtx : locale(gitlabLocale)), [i18nCtx]);
+  const i18nLocal = useMemo(
+    () => (i18nCtx ? i18nCtx : locale(gitlabLocale)),
+    [i18nCtx],
+  );
   const _ = useMemo(() => i18nLocal.getGroup('gantt'), [i18nLocal]);
 
-  const rSelected = useStoreLater(api, "_selected");
-  const rTasks = useStoreLater(api, "_tasks");
+  const rSelected = useStoreLater(api, '_selected');
+  const rTasks = useStoreLater(api, '_tasks');
 
   const finalItems = useMemo(() => {
     const baseItems = items.map((b) => {
@@ -38,7 +41,9 @@ export default function Toolbar({
         ? (it) => {
             // Guard against null api to prevent "Cannot read properties of null (reading 'getState')" error
             if (!api) {
-              console.warn('[Toolbar] Cannot execute action: Gantt API not initialized');
+              console.warn(
+                '[Toolbar] Cannot execute action: Gantt API not initialized',
+              );
               return;
             }
             handleAction(api, it.id, null, _);
@@ -83,14 +88,17 @@ export default function Toolbar({
       // When tasks are selected, show all buttons
       return finalItems.map((item) => {
         if (!item.check) return item;
-        const isDisabled = rSelected.some(
-          (task) => !item.check(task, rTasks),
-        );
+        const isDisabled = rSelected.some((task) => !item.check(task, rTasks));
         return { ...item, disabled: isDisabled };
       });
     }
     // When no tasks are selected, show only add-task, add-milestone, and blueprints buttons
-    return finalItems.filter((item) => item.id === 'add-task' || item.id === 'add-milestone' || item.id === 'blueprints');
+    return finalItems.filter(
+      (item) =>
+        item.id === 'add-task' ||
+        item.id === 'add-milestone' ||
+        item.id === 'blueprints',
+    );
   }, [api, rSelected, rTasks, finalItems]);
 
   if (!i18nCtx) {

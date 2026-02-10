@@ -9,7 +9,7 @@ export default function GanttToolbarCustom({ skinSettings }) {
   const data = useMemo(() => getData(), []);
 
   const [api, setApi] = useState(null);
-  const selectedValue = useStoreLater(api, "selected");
+  const selectedValue = useStoreLater(api, 'selected');
 
   function handleAdd() {
     if (!api) return;
@@ -81,13 +81,15 @@ export default function GanttToolbarCustom({ skinSettings }) {
   }, [api, selectedValue, allItems]);
 
   const GanttInitialised = useMemo(() => {
-    return <Gantt
-      {...(skinSettings || {})}
-      init={setApi}
-      tasks={data.tasks}
-      links={data.links}
-      scales={data.scales}
-    />
+    return (
+      <Gantt
+        {...(skinSettings || {})}
+        init={setApi}
+        tasks={data.tasks}
+        links={data.links}
+        scales={data.scales}
+      />
+    );
   }, [skinSettings, data.tasks, data.links, data.scales]);
 
   return (

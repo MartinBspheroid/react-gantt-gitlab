@@ -53,14 +53,18 @@ export function AssigneeSelector({
       filtered = options.filter(
         (opt) =>
           opt.label.toLowerCase().includes(searchLower) ||
-          (opt.subtitle && opt.subtitle.toLowerCase().includes(searchLower))
+          (opt.subtitle && opt.subtitle.toLowerCase().includes(searchLower)),
       );
     }
 
     // 已選擇的排在前面
     if (selectedSet.size > 0) {
-      const selectedItems = filtered.filter((opt) => selectedSet.has(opt.value));
-      const unselectedItems = filtered.filter((opt) => !selectedSet.has(opt.value));
+      const selectedItems = filtered.filter((opt) =>
+        selectedSet.has(opt.value),
+      );
+      const unselectedItems = filtered.filter(
+        (opt) => !selectedSet.has(opt.value),
+      );
       return [...selectedItems, ...unselectedItems];
     }
 
@@ -73,19 +77,22 @@ export function AssigneeSelector({
   }, [filteredOptions, selectedSet]);
 
   // 切換選擇
-  const handleToggle = useCallback((value) => {
-    if (disabled) return;
+  const handleToggle = useCallback(
+    (value) => {
+      if (disabled) return;
 
-    if (multiSelect) {
-      const newSelected = selectedSet.has(value)
-        ? selected.filter((v) => v !== value)
-        : [...selected, value];
-      onChange(newSelected);
-    } else {
-      // 單選模式：切換或取消
-      onChange(selectedSet.has(value) ? [] : [value]);
-    }
-  }, [disabled, multiSelect, selected, selectedSet, onChange]);
+      if (multiSelect) {
+        const newSelected = selectedSet.has(value)
+          ? selected.filter((v) => v !== value)
+          : [...selected, value];
+        onChange(newSelected);
+      } else {
+        // 單選模式：切換或取消
+        onChange(selectedSet.has(value) ? [] : [value]);
+      }
+    },
+    [disabled, multiSelect, selected, selectedSet, onChange],
+  );
 
   // 全選（僅多選模式）
   const handleSelectAll = useCallback(() => {
@@ -176,7 +183,9 @@ export function AssigneeSelector({
               <button
                 className="as-action-btn"
                 onClick={handleSelectAll}
-                disabled={disabled || visibleSelectedCount === filteredOptions.length}
+                disabled={
+                  disabled || visibleSelectedCount === filteredOptions.length
+                }
                 type="button"
               >
                 All
@@ -192,9 +201,7 @@ export function AssigneeSelector({
             </div>
           )}
           {selected.length > 0 && (
-            <span className="as-selected-hint">
-              {selected.length} selected
-            </span>
+            <span className="as-selected-hint">{selected.length} selected</span>
           )}
         </div>
       )}

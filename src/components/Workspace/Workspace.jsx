@@ -60,7 +60,7 @@ export function Workspace({ initialConfigId, autoSync = false }) {
           onViewChange={handleViewChange}
           onSettingsClick={() => setShowSettings(true)}
           showViewOptions={showViewOptions}
-          onViewOptionsToggle={() => setShowViewOptions(prev => !prev)}
+          onViewOptionsToggle={() => setShowViewOptions((prev) => !prev)}
         />
 
         {/* View Options Container - GanttView will render its controls here via portal */}

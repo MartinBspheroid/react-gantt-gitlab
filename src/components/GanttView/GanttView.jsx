@@ -21,7 +21,11 @@ import SmartTaskContent from '../SmartTaskContent.jsx';
 import { useGitLabData } from '../../contexts/GitLabDataContext';
 import { useDateRangePreset } from '../../hooks/useDateRangePreset.ts';
 import { DataFilters } from '../../utils/DataFilters';
-import { formatDateToLocalString, createStartDate, createEndDate } from '../../utils/dateUtils.js';
+import {
+  formatDateToLocalString,
+  createStartDate,
+  createEndDate,
+} from '../../utils/dateUtils.js';
 import { ProjectSelector } from '../ProjectSelector.jsx';
 import { SyncButton } from '../SyncButton.jsx';
 import { FilterPanel } from '../FilterPanel.jsx';
@@ -42,7 +46,10 @@ import { defaultMenuOptions } from '@svar-ui/gantt-store';
 import { ConfirmDialog } from '../shared/dialogs/ConfirmDialog';
 import { CreateItemDialog } from '../shared/dialogs/CreateItemDialog';
 import { DeleteDialog } from '../shared/dialogs/DeleteDialog';
-import { isLegacyMilestoneId, migrateLegacyMilestoneId } from '../../utils/MilestoneIdUtils.ts';
+import {
+  isLegacyMilestoneId,
+  migrateLegacyMilestoneId,
+} from '../../utils/MilestoneIdUtils.ts';
 import {
   findLinkBySourceTarget,
   validateLinkGitLabMetadata,
@@ -80,7 +87,7 @@ function getTasksFromState(state) {
   }
 
   // Filter out any undefined/null entries (sparse arrays or objects)
-  return tasks.filter(task => task != null);
+  return tasks.filter((task) => task != null);
 }
 
 /**
@@ -95,7 +102,7 @@ function getChildrenForTask(taskId, allTasks) {
   const children = [];
 
   const findChildren = (parentId) => {
-    const directChildren = allTasks.filter(t => t.parent === parentId);
+    const directChildren = allTasks.filter((t) => t.parent === parentId);
     for (const child of directChildren) {
       children.push(child);
       // Recursively find grandchildren
@@ -120,21 +127,23 @@ function sortByDeletionOrder(taskIds, allTasks) {
   const depthMap = new Map();
 
   for (const id of taskIds) {
-    const task = allTasks.find(t => t.id === id);
+    const task = allTasks.find((t) => t.id === id);
     if (!task) continue;
 
     let depth = 0;
     let current = task;
     while (current.parent && current.parent !== 0) {
       depth++;
-      current = allTasks.find(t => t.id === current.parent);
+      current = allTasks.find((t) => t.id === current.parent);
       if (!current) break;
     }
     depthMap.set(id, depth);
   }
 
   // Sort by depth descending (deepest/children first)
-  return [...taskIds].sort((a, b) => (depthMap.get(b) || 0) - (depthMap.get(a) || 0));
+  return [...taskIds].sort(
+    (a, b) => (depthMap.get(b) || 0) - (depthMap.get(a) || 0),
+  );
 }
 
 /**
@@ -219,13 +228,22 @@ export function GanttView({
   const [api, setApi] = useState(null);
   // Settings modal can be controlled externally (from GitLabWorkspace) or internally
   const [internalShowSettings, setInternalShowSettings] = useState(false);
-  const showSettings = externalShowSettings !== undefined ? externalShowSettings : internalShowSettings;
+  const showSettings =
+    externalShowSettings !== undefined
+      ? externalShowSettings
+      : internalShowSettings;
   const setShowSettings = onSettingsClose
-    ? (value) => { if (!value) onSettingsClose(); else setInternalShowSettings(true); }
+    ? (value) => {
+        if (!value) onSettingsClose();
+        else setInternalShowSettings(true);
+      }
     : setInternalShowSettings;
   // View Options can be controlled externally (from GitLabWorkspace) or internally
   const [internalShowViewOptions, setInternalShowViewOptions] = useState(false);
-  const showViewOptions = externalShowViewOptions !== undefined ? externalShowViewOptions : internalShowViewOptions;
+  const showViewOptions =
+    externalShowViewOptions !== undefined
+      ? externalShowViewOptions
+      : internalShowViewOptions;
   const setShowViewOptions = setInternalShowViewOptions;
 
   // MoveInModal state
@@ -236,7 +254,8 @@ export function GanttView({
   const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
   const [showApplyBlueprintModal, setShowApplyBlueprintModal] = useState(false);
   const [showBlueprintManager, setShowBlueprintManager] = useState(false);
-  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] = useState(null);
+  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] =
+    useState(null);
 
   // Dialog states for replacing native browser dialogs
   const [createItemDialogOpen, setCreateItemDialogOpen] = useState(false);
@@ -244,7 +263,8 @@ export function GanttView({
   const [createItemDialogContext, setCreateItemDialogContext] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteDialogItems, setDeleteDialogItems] = useState([]);
-  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] = useState(false);
+  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] =
+    useState(false);
 
   // Date editing mode state (true = dates can be edited in grid cells)
   // NOTE: setDateEditable is not used yet but kept for future feature to toggle date editing
@@ -403,7 +423,10 @@ export function GanttView({
         openStateRef.current = new Map();
       }
     } catch (error) {
-      console.error('[GanttView] Failed to load fold state from localStorage:', error);
+      console.error(
+        '[GanttView] Failed to load fold state from localStorage:',
+        error,
+      );
     }
   }, [currentConfig, getStorageKey]);
 
@@ -414,7 +437,10 @@ export function GanttView({
       const stateObj = Object.fromEntries(openStateRef.current);
       localStorage.setItem(storageKey, JSON.stringify(stateObj));
     } catch (error) {
-      console.error('[GanttView] Failed to save fold state to localStorage:', error);
+      console.error(
+        '[GanttView] Failed to save fold state to localStorage:',
+        error,
+      );
     }
   }, [getStorageKey]);
 
@@ -490,7 +516,7 @@ export function GanttView({
   // Create label priority map for sorting (lower number = higher priority)
   const labelPriorityMap = useMemo(() => {
     const map = new Map();
-    (serverFilterOptions?.labels || []).forEach(label => {
+    (serverFilterOptions?.labels || []).forEach((label) => {
       if (label.priority != null) {
         map.set(label.title, label.priority);
       }
@@ -501,7 +527,7 @@ export function GanttView({
   // Create label color map for LabelCell rendering
   const labelColorMap = useMemo(() => {
     const map = new Map();
-    (serverFilterOptions?.labels || []).forEach(label => {
+    (serverFilterOptions?.labels || []).forEach((label) => {
       if (label.color) {
         map.set(label.title, label.color);
       }
@@ -512,22 +538,26 @@ export function GanttView({
   // Build assignee options for CreateItemDialog (from server members)
   const assigneeOptions = useMemo(() => {
     const members = serverFilterOptions?.members || [];
-    return members.map(member => ({
-      value: member.name,        // Use display name as value (matches task.assigned)
-      label: member.name,
-      subtitle: `@${member.username}`,
-      username: member.username,
-    })).sort((a, b) => a.label.localeCompare(b.label));
+    return members
+      .map((member) => ({
+        value: member.name, // Use display name as value (matches task.assigned)
+        label: member.name,
+        subtitle: `@${member.username}`,
+        username: member.username,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [serverFilterOptions?.members]);
 
   // Add workdays and labelPriority to tasks for sorting support
   const tasksWithWorkdays = useMemo(() => {
-    return allTasks.map(task => {
+    return allTasks.map((task) => {
       // Parse labels and find highest priority (lowest number)
-      const taskLabels = task.labels ? task.labels.split(', ').filter(Boolean) : [];
+      const taskLabels = task.labels
+        ? task.labels.split(', ').filter(Boolean)
+        : [];
       let labelPriority = Number.MAX_SAFE_INTEGER; // Default: unprioritized (sorts last)
 
-      taskLabels.forEach(labelTitle => {
+      taskLabels.forEach((labelTitle) => {
         const priority = labelPriorityMap.get(labelTitle);
         if (priority !== undefined && priority < labelPriority) {
           labelPriority = priority;
@@ -536,7 +566,8 @@ export function GanttView({
 
       return {
         ...task,
-        workdays: task.start && task.end ? countWorkdays(task.start, task.end) : 0,
+        workdays:
+          task.start && task.end ? countWorkdays(task.start, task.end) : 0,
         labelPriority,
       };
     });
@@ -614,7 +645,7 @@ export function GanttView({
         { comp: 'button', type: 'primary', text: 'Save', id: 'save' },
       ],
     }),
-    []
+    [],
   );
 
   // Blueprint hook
@@ -643,74 +674,77 @@ export function GanttView({
   }, []);
 
   // Handler for CreateItemDialog confirmation
-  const handleCreateItemConfirm = useCallback(async (items) => {
-    if (createItemDialogType === 'milestone') {
-      // Milestone creation (single mode only)
-      const { title, description } = items[0];
+  const handleCreateItemConfirm = useCallback(
+    async (items) => {
+      if (createItemDialogType === 'milestone') {
+        // Milestone creation (single mode only)
+        const { title, description } = items[0];
 
-      try {
-        const milestone = {
-          text: title,
-          details: description || '',
-          parent: 0,
-        };
-
-        await createMilestone(milestone);
-        setCreateItemDialogOpen(false);
-      } catch (error) {
-        console.error('[GanttView] Failed to create milestone:', error);
-        showToast(`Failed to create milestone: ${error.message}`, 'error');
-        throw error;
-      }
-    } else {
-      // Issue/Task creation - use the stored context from intercept
-      const context = pendingAddTaskContextRef.current;
-      if (!context) {
-        setCreateItemDialogOpen(false);
-        return;
-      }
-
-      const { baseTask, parentTask, itemType } = context;
-
-      try {
-        // Create items directly via createTask (supports batch)
-        for (const item of items) {
-          const newTask = {
-            ...baseTask,
-            text: item.title,
-            details: item.description || '',
-            // Add assignees (display names, GraphQL provider will resolve)
-            assigned: item.assignees?.join(', ') || '',
+        try {
+          const milestone = {
+            text: title,
+            details: description || '',
+            parent: 0,
           };
 
-          // If creating under a milestone, add milestone info
-          if (itemType === 'issue' && parentTask?.$isMilestone) {
-            newTask._gitlab = {
-              ...newTask._gitlab,
-              milestoneGlobalId: parentTask._gitlab.globalId,
-            };
-          }
-
-          // If creating task under an issue, set parent
-          if (itemType === 'task' && parentTask?.$isIssue) {
-            newTask.parent = parentTask.id;
-          }
-
-          await createTask(newTask);
+          await createMilestone(milestone);
+          setCreateItemDialogOpen(false);
+        } catch (error) {
+          console.error('[GanttView] Failed to create milestone:', error);
+          showToast(`Failed to create milestone: ${error.message}`, 'error');
+          throw error;
+        }
+      } else {
+        // Issue/Task creation - use the stored context from intercept
+        const context = pendingAddTaskContextRef.current;
+        if (!context) {
+          setCreateItemDialogOpen(false);
+          return;
         }
 
-        // Sync to get the newly created items
-        await sync();
+        const { baseTask, parentTask, itemType } = context;
 
-        pendingAddTaskContextRef.current = null;
-        setCreateItemDialogOpen(false);
-      } catch (error) {
-        console.error(`[GanttView] Failed to create ${itemType}:`, error);
-        showToast(`Failed to create ${itemType}: ${error.message}`, 'error');
-        throw error;
+        try {
+          // Create items directly via createTask (supports batch)
+          for (const item of items) {
+            const newTask = {
+              ...baseTask,
+              text: item.title,
+              details: item.description || '',
+              // Add assignees (display names, GraphQL provider will resolve)
+              assigned: item.assignees?.join(', ') || '',
+            };
+
+            // If creating under a milestone, add milestone info
+            if (itemType === 'issue' && parentTask?.$isMilestone) {
+              newTask._gitlab = {
+                ...newTask._gitlab,
+                milestoneGlobalId: parentTask._gitlab.globalId,
+              };
+            }
+
+            // If creating task under an issue, set parent
+            if (itemType === 'task' && parentTask?.$isIssue) {
+              newTask.parent = parentTask.id;
+            }
+
+            await createTask(newTask);
+          }
+
+          // Sync to get the newly created items
+          await sync();
+
+          pendingAddTaskContextRef.current = null;
+          setCreateItemDialogOpen(false);
+        } catch (error) {
+          console.error(`[GanttView] Failed to create ${itemType}:`, error);
+          showToast(`Failed to create ${itemType}: ${error.message}`, 'error');
+          throw error;
+        }
       }
-    }
-  }, [createItemDialogType, createMilestone, createTask, showToast, sync]);
+    },
+    [createItemDialogType, createMilestone, createTask, showToast, sync],
+  );
 
   // Handler for discard changes dialog confirmation
   const handleDiscardChangesConfirm = useCallback(() => {
@@ -723,68 +757,76 @@ export function GanttView({
   }, [api, sync]);
 
   // Handler for delete dialog confirmation
-  const handleDeleteConfirm = useCallback(async (action, options = {}) => {
-    const { recursive = false } = options;
-    let taskIds = [...pendingDeleteTaskIdsRef.current];
+  const handleDeleteConfirm = useCallback(
+    async (action, options = {}) => {
+      const { recursive = false } = options;
+      let taskIds = [...pendingDeleteTaskIdsRef.current];
 
-    if (!taskIds || taskIds.length === 0 || !api) {
-      setDeleteDialogOpen(false);
-      return;
-    }
-
-    try {
-      // If recursive, expand to include all descendants
-      if (recursive) {
-        const allItems = new Set(taskIds);
-        for (const taskId of taskIds) {
-          const children = getChildrenForTask(taskId, allTasksRef.current);
-          children.forEach(child => allItems.add(child.id));
-        }
-        taskIds = Array.from(allItems);
+      if (!taskIds || taskIds.length === 0 || !api) {
+        setDeleteDialogOpen(false);
+        return;
       }
 
-      // Sort by deletion order: children first, then parents (GitLab requirement)
-      taskIds = sortByDeletionOrder(taskIds, allTasksRef.current);
-
-      // Track already processed items to avoid duplicates
-      const processedSet = new Set();
-
-      if (action === 'delete') {
-        // Execute the delete for all items with skipHandler to avoid re-triggering the intercept
-        for (const taskId of taskIds) {
-          if (processedSet.has(taskId)) continue;
-          processedSet.add(taskId);
-          api.exec('delete-task', { id: taskId, skipHandler: true });
-        }
-      } else if (action === 'close') {
-        // Close issues/tasks by updating their state
-        for (const taskId of taskIds) {
-          if (processedSet.has(taskId)) continue;
-
-          // Skip milestones for close action (milestones cannot be closed)
-          const task = allTasksRef.current.find(t => t.id === taskId);
-          if (task?.$isMilestone || task?._gitlab?.type === 'milestone') {
-            console.log(`[GanttView] Skipping close for milestone: ${taskId}`);
-            continue;
+      try {
+        // If recursive, expand to include all descendants
+        if (recursive) {
+          const allItems = new Set(taskIds);
+          for (const taskId of taskIds) {
+            const children = getChildrenForTask(taskId, allTasksRef.current);
+            children.forEach((child) => allItems.add(child.id));
           }
-
-          processedSet.add(taskId);
-          await syncTask(taskId, { state: 'closed' });
+          taskIds = Array.from(allItems);
         }
-        // Refresh to reflect the closed state
-        await sync();
-        const closedCount = processedSet.size;
-        showToast(`${closedCount > 1 ? `${closedCount} items` : 'Item'} closed successfully`, 'success');
-      }
-    } catch (error) {
-      console.error('[GanttView] Delete/close failed:', error);
-      showToast(`Failed to ${action} items: ${error.message}`, 'error');
-    }
 
-    pendingDeleteTaskIdsRef.current = [];
-    setDeleteDialogItems([]);
-    setDeleteDialogOpen(false);
-  }, [api, syncTask, sync, showToast]);
+        // Sort by deletion order: children first, then parents (GitLab requirement)
+        taskIds = sortByDeletionOrder(taskIds, allTasksRef.current);
+
+        // Track already processed items to avoid duplicates
+        const processedSet = new Set();
+
+        if (action === 'delete') {
+          // Execute the delete for all items with skipHandler to avoid re-triggering the intercept
+          for (const taskId of taskIds) {
+            if (processedSet.has(taskId)) continue;
+            processedSet.add(taskId);
+            api.exec('delete-task', { id: taskId, skipHandler: true });
+          }
+        } else if (action === 'close') {
+          // Close issues/tasks by updating their state
+          for (const taskId of taskIds) {
+            if (processedSet.has(taskId)) continue;
+
+            // Skip milestones for close action (milestones cannot be closed)
+            const task = allTasksRef.current.find((t) => t.id === taskId);
+            if (task?.$isMilestone || task?._gitlab?.type === 'milestone') {
+              console.log(
+                `[GanttView] Skipping close for milestone: ${taskId}`,
+              );
+              continue;
+            }
+
+            processedSet.add(taskId);
+            await syncTask(taskId, { state: 'closed' });
+          }
+          // Refresh to reflect the closed state
+          await sync();
+          const closedCount = processedSet.size;
+          showToast(
+            `${closedCount > 1 ? `${closedCount} items` : 'Item'} closed successfully`,
+            'success',
+          );
+        }
+      } catch (error) {
+        console.error('[GanttView] Delete/close failed:', error);
+        showToast(`Failed to ${action} items: ${error.message}`, 'error');
+      }
+
+      pendingDeleteTaskIdsRef.current = [];
+      setDeleteDialogItems([]);
+      setDeleteDialogOpen(false);
+    },
+    [api, syncTask, sync, showToast],
+  );
 
   // ============================================
   // Move In... Feature - Context Menu Integration
@@ -849,86 +891,95 @@ export function GanttView({
   }, []);
 
   // Handle context menu click events
-  const handleContextMenuClick = useCallback(({ action, context: ctx }) => {
-    if (action?.id === 'move-in') {
-      // Capture selected tasks at the moment the menu is clicked
-      const tasks = getSelectedTasks();
-      setSelectedTasksForModal(tasks);
-      // Open the Move In modal
-      setShowMoveInModal(true);
-    } else if (action?.id === 'save-as-blueprint') {
-      // Save milestone as Blueprint
-      if (ctx?._gitlab?.type === 'milestone') {
-        setSelectedMilestoneForBlueprint(ctx);
-        setShowSaveBlueprintModal(true);
+  const handleContextMenuClick = useCallback(
+    ({ action, context: ctx }) => {
+      if (action?.id === 'move-in') {
+        // Capture selected tasks at the moment the menu is clicked
+        const tasks = getSelectedTasks();
+        setSelectedTasksForModal(tasks);
+        // Open the Move In modal
+        setShowMoveInModal(true);
+      } else if (action?.id === 'save-as-blueprint') {
+        // Save milestone as Blueprint
+        if (ctx?._gitlab?.type === 'milestone') {
+          setSelectedMilestoneForBlueprint(ctx);
+          setShowSaveBlueprintModal(true);
+        }
+      } else if (action?.id === 'create-from-blueprint') {
+        // Open Apply Blueprint modal
+        setShowApplyBlueprintModal(true);
       }
-    } else if (action?.id === 'create-from-blueprint') {
-      // Open Apply Blueprint modal
-      setShowApplyBlueprintModal(true);
-    }
-  }, [getSelectedTasks]);
+    },
+    [getSelectedTasks],
+  );
 
   // Handle Move In action
-  const handleMoveIn = useCallback(async (type, targetId, items) => {
-    if (!provider || items.length === 0) return;
+  const handleMoveIn = useCallback(
+    async (type, targetId, items) => {
+      if (!provider || items.length === 0) return;
 
-    setMoveInProcessing(true);
+      setMoveInProcessing(true);
 
-    try {
-      const iids = items.map(item => Number(item.id));
-      let result;
+      try {
+        const iids = items.map((item) => Number(item.id));
+        let result;
 
-      switch (type) {
-        case 'parent':
-          // Move Tasks to an Issue (set parent)
-          result = await provider.batchUpdateParent(iids, targetId);
-          break;
-        case 'milestone':
-          // Move Issues/Tasks to a Milestone
-          result = await provider.batchUpdateMilestone(iids, targetId);
-          break;
-        case 'epic':
-          // Move Issues to an Epic
-          result = await provider.batchUpdateEpic(iids, targetId);
-          break;
-        default:
-          throw new Error(`Unknown move type: ${type}`);
+        switch (type) {
+          case 'parent':
+            // Move Tasks to an Issue (set parent)
+            result = await provider.batchUpdateParent(iids, targetId);
+            break;
+          case 'milestone':
+            // Move Issues/Tasks to a Milestone
+            result = await provider.batchUpdateMilestone(iids, targetId);
+            break;
+          case 'epic':
+            // Move Issues to an Epic
+            result = await provider.batchUpdateEpic(iids, targetId);
+            break;
+          default:
+            throw new Error(`Unknown move type: ${type}`);
+        }
+
+        // Show result notification
+        if (result.success.length > 0 && result.failed.length === 0) {
+          showToast(
+            `Successfully moved ${result.success.length} item(s)`,
+            'success',
+          );
+        } else if (result.success.length > 0 && result.failed.length > 0) {
+          showToast(
+            `Moved ${result.success.length} item(s), ${result.failed.length} failed`,
+            'warning',
+          );
+        } else if (result.failed.length > 0) {
+          // Show each failed item as a separate toast for better visibility
+          result.failed.forEach((f) => {
+            showToast(`#${f.iid}: ${f.error}`, 'error');
+          });
+          throw new Error('Move operation failed');
+        }
+
+        // Trigger data refresh to reflect changes
+        // NOTE: This is a simple approach - trigger a sync to refresh data from GitLab
+        // In a more optimized implementation, we could update local state directly
+        if (result.success.length > 0) {
+          // Close modal first
+          setShowMoveInModal(false);
+          // Trigger re-sync to get updated data
+          // The sync will update the tasks with new parent/milestone/epic relationships
+          await sync();
+        }
+      } catch (error) {
+        console.error('[GanttView] Move In failed:', error);
+        showToast(`Move failed: ${error.message}`, 'error');
+        throw error; // Re-throw so modal knows operation failed
+      } finally {
+        setMoveInProcessing(false);
       }
-
-      // Show result notification
-      if (result.success.length > 0 && result.failed.length === 0) {
-        showToast(`Successfully moved ${result.success.length} item(s)`, 'success');
-      } else if (result.success.length > 0 && result.failed.length > 0) {
-        showToast(
-          `Moved ${result.success.length} item(s), ${result.failed.length} failed`,
-          'warning'
-        );
-      } else if (result.failed.length > 0) {
-        // Show each failed item as a separate toast for better visibility
-        result.failed.forEach(f => {
-          showToast(`#${f.iid}: ${f.error}`, 'error');
-        });
-        throw new Error('Move operation failed');
-      }
-
-      // Trigger data refresh to reflect changes
-      // NOTE: This is a simple approach - trigger a sync to refresh data from GitLab
-      // In a more optimized implementation, we could update local state directly
-      if (result.success.length > 0) {
-        // Close modal first
-        setShowMoveInModal(false);
-        // Trigger re-sync to get updated data
-        // The sync will update the tasks with new parent/milestone/epic relationships
-        await sync();
-      }
-    } catch (error) {
-      console.error('[GanttView] Move In failed:', error);
-      showToast(`Move failed: ${error.message}`, 'error');
-      throw error; // Re-throw so modal knows operation failed
-    } finally {
-      setMoveInProcessing(false);
-    }
-  }, [provider, showToast, sync]);
+    },
+    [provider, showToast, sync],
+  );
 
   // Use refs to store latest workdays functions for use in intercept closure
   // This prevents stale closure issues when holidays/workdays change
@@ -966,10 +1017,11 @@ export function GanttView({
           const _scales = state._scales || [];
           const start = state.start;
 
-
           if (start) {
             // Calculate days from timeline start to today
-            const daysDiff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+            const daysDiff = Math.floor(
+              (today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+            );
             const scrollLeft = Math.max(0, daysDiff * cellWidth);
 
             // Use scroll-chart command to set scroll position
@@ -1012,8 +1064,10 @@ export function GanttView({
 
         // Disable browser extensions (like Grammarly) on editor inputs
         setTimeout(() => {
-          const editorInputs = document.querySelectorAll('.wx-editor input, .wx-editor textarea');
-          editorInputs.forEach(input => {
+          const editorInputs = document.querySelectorAll(
+            '.wx-editor input, .wx-editor textarea',
+          );
+          editorInputs.forEach((input) => {
             input.setAttribute('data-gramm', 'false');
             input.setAttribute('data-gramm_editor', 'false');
             input.setAttribute('data-enable-grammarly', 'false');
@@ -1025,7 +1079,6 @@ export function GanttView({
       // Handle editor button clicks
       ganttApi.on('action', async (ev) => {
         if (ev.action === 'save') {
-
           // Sync pending changes
           const taskId = currentEditingTaskRef.current;
           const changes = pendingEditorChangesRef.current.get(taskId);
@@ -1056,7 +1109,6 @@ export function GanttView({
             ganttApi.exec('close-editor');
           }
         } else if (ev.action === 'close') {
-
           // Check if there are unsaved changes
           const taskId = currentEditingTaskRef.current;
           const changes = pendingEditorChangesRef.current.get(taskId);
@@ -1077,7 +1129,6 @@ export function GanttView({
         isEditorOpenRef.current = false;
         currentEditingTaskRef.current = null;
       });
-
 
       /**
        * Workdays Preservation on Drag
@@ -1120,7 +1171,10 @@ export function GanttView({
           const originalEnd = task.end;
 
           if (originalStart && originalEnd) {
-            const originalWorkdays = countWorkdaysRef.current(originalStart, originalEnd);
+            const originalWorkdays = countWorkdaysRef.current(
+              originalStart,
+              originalEnd,
+            );
 
             if (originalWorkdays > 0) {
               // Store for Phase 2
@@ -1153,7 +1207,7 @@ export function GanttView({
           // Calculate what end date should be to preserve workdays
           const adjustedEnd = calculateEndDateByWorkdaysRef.current(
             task.start,
-            state.originalWorkdays
+            state.originalWorkdays,
           );
 
           // Only correct if needed (end date changed due to weekends/holidays)
@@ -1211,29 +1265,40 @@ export function GanttView({
           return;
         }
 
-
         // If this task has a parent and dates changed, update parent's baseline
-        if (!ev.skipBaselineDrag && (ev.task.start !== undefined || ev.task.end !== undefined)) {
+        if (
+          !ev.skipBaselineDrag &&
+          (ev.task.start !== undefined || ev.task.end !== undefined)
+        ) {
           const currentTask = ganttApi.getTask(ev.id);
 
           if (currentTask.parent && currentTask.parent !== 0) {
             // Get all siblings from ganttApi to ensure we have the latest data
             const allTasks = allTasksRef.current;
-            const siblingIds = allTasks.filter(t => t && t.parent === currentTask.parent).map(t => t.id);
-
+            const siblingIds = allTasks
+              .filter((t) => t && t.parent === currentTask.parent)
+              .map((t) => t.id);
 
             if (siblingIds.length > 0) {
               // Get fresh data from ganttApi for each sibling
-              const siblings = siblingIds.map(id => ganttApi.getTask(id)).filter(t => t);
+              const siblings = siblingIds
+                .map((id) => ganttApi.getTask(id))
+                .filter((t) => t);
 
-              const childStarts = siblings.map(c => c.start).filter(s => s !== undefined);
-              const childEnds = siblings.map(c => c.end).filter(e => e !== undefined);
-
+              const childStarts = siblings
+                .map((c) => c.start)
+                .filter((s) => s !== undefined);
+              const childEnds = siblings
+                .map((c) => c.end)
+                .filter((e) => e !== undefined);
 
               if (childStarts.length > 0 && childEnds.length > 0) {
-                const spanStart = new Date(Math.min(...childStarts.map(d => d.getTime())));
-                const spanEnd = new Date(Math.max(...childEnds.map(d => d.getTime())));
-
+                const spanStart = new Date(
+                  Math.min(...childStarts.map((d) => d.getTime())),
+                );
+                const spanEnd = new Date(
+                  Math.max(...childEnds.map((d) => d.getTime())),
+                );
 
                 // Update parent's baseline
                 ganttApi.exec('update-task', {
@@ -1262,8 +1327,7 @@ export function GanttView({
           ev.task.duration !== undefined;
 
         const hasTextChange =
-          ev.task.text !== undefined ||
-          ev.task.details !== undefined;
+          ev.task.text !== undefined || ev.task.details !== undefined;
 
         if (isEditorOpenRef.current && hasTextChange && !hasDateChange) {
           // Editor is open and ONLY text fields changed - save for later
@@ -1302,20 +1366,33 @@ export function GanttView({
           // For Editor/Grid, we use the _original* fields to preserve null values
           // (svar merges ev.task with store, overwriting nulls with existing values)
 
-          const isFromEditor = ev._originalDateValues && Object.keys(ev._originalDateValues).length > 0;
+          const isFromEditor =
+            ev._originalDateValues &&
+            Object.keys(ev._originalDateValues).length > 0;
           const isFromGrid = !!ev._originalDateChange;
 
           // Determine actual values - prefer _original* sources for null preservation
           let startValue, endValue;
-          let hasStartChange = false, hasEndChange = false;
+          let hasStartChange = false,
+            hasEndChange = false;
 
           if (isFromEditor) {
             // Editor provides explicit list of changed fields
-            if (Object.prototype.hasOwnProperty.call(ev._originalDateValues, 'start')) {
+            if (
+              Object.prototype.hasOwnProperty.call(
+                ev._originalDateValues,
+                'start',
+              )
+            ) {
               startValue = ev._originalDateValues.start;
               hasStartChange = true;
             }
-            if (Object.prototype.hasOwnProperty.call(ev._originalDateValues, 'end')) {
+            if (
+              Object.prototype.hasOwnProperty.call(
+                ev._originalDateValues,
+                'end',
+              )
+            ) {
               endValue = ev._originalDateValues.end;
               hasEndChange = true;
             }
@@ -1345,7 +1422,8 @@ export function GanttView({
             const normalizedStart = createStartDate(startValue);
             taskChanges.start = normalizedStart; // can be null
             ev.task.start = normalizedStart;
-            if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
+            if (!taskChanges._gitlab)
+              taskChanges._gitlab = { ...currentTask._gitlab };
             taskChanges._gitlab.startDate = formatDateToLocalString(startValue);
           }
 
@@ -1354,7 +1432,8 @@ export function GanttView({
             const normalizedEnd = createEndDate(endValue);
             taskChanges.end = normalizedEnd; // can be null
             ev.task.end = normalizedEnd;
-            if (!taskChanges._gitlab) taskChanges._gitlab = { ...currentTask._gitlab };
+            if (!taskChanges._gitlab)
+              taskChanges._gitlab = { ...currentTask._gitlab };
             taskChanges._gitlab.dueDate = formatDateToLocalString(endValue);
           }
 
@@ -1368,8 +1447,9 @@ export function GanttView({
           }
 
           // Check if any date was cleared (set to null)
-          const hasDateCleared = (hasStartChange && startValue === null) ||
-                                  (hasEndChange && endValue === null);
+          const hasDateCleared =
+            (hasStartChange && startValue === null) ||
+            (hasEndChange && endValue === null);
 
           (async () => {
             try {
@@ -1401,7 +1481,8 @@ export function GanttView({
           // Check if parent is a milestone
           if (parentTask && parentTask.$isMilestone) {
             // Creating issue under milestone - show CreateItemDialog
-            const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : '';
+            const defaultTitle =
+              ev.task.text && ev.task.text !== 'New Task' ? ev.task.text : '';
 
             // Store context for dialog confirmation
             pendingAddTaskContextRef.current = {
@@ -1421,10 +1502,14 @@ export function GanttView({
           // Check if parent is a GitLab Task (subtask)
           // Only GitLab Tasks cannot have children (third level not allowed)
           // Issues under milestones CAN have children (Tasks)
-          const isParentGitLabTask = parentTask && !parentTask.$isIssue && !parentTask.$isMilestone;
+          const isParentGitLabTask =
+            parentTask && !parentTask.$isIssue && !parentTask.$isMilestone;
 
           if (isParentGitLabTask) {
-            showToast('Cannot create subtasks under a GitLab Task. Only Issues can have Tasks as children.', 'warning');
+            showToast(
+              'Cannot create subtasks under a GitLab Task. Only Issues can have Tasks as children.',
+              'warning',
+            );
             return false;
           }
 
@@ -1433,7 +1518,8 @@ export function GanttView({
 
           if (isParentGitLabIssue) {
             // Creating task under issue - show CreateItemDialog
-            const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : '';
+            const defaultTitle =
+              ev.task.text && ev.task.text !== 'New Task' ? ev.task.text : '';
 
             // Store context for dialog confirmation
             pendingAddTaskContextRef.current = {
@@ -1452,7 +1538,8 @@ export function GanttView({
         }
 
         // Creating top-level issue (no parent) - show CreateItemDialog
-        const defaultTitle = (ev.task.text && ev.task.text !== 'New Task') ? ev.task.text : '';
+        const defaultTitle =
+          ev.task.text && ev.task.text !== 'New Task' ? ev.task.text : '';
 
         // Store context for dialog confirmation
         pendingAddTaskContextRef.current = {
@@ -1496,7 +1583,6 @@ export function GanttView({
 
           // Check if this is an issue being created under a milestone
           if (ev.task._assignToMilestone) {
-
             // Issues under milestones should not use hierarchy (parent=0)
             // The milestone relationship is managed via GitLab's milestone widget
             ev.task.parent = 0;
@@ -1541,12 +1627,15 @@ export function GanttView({
               });
             }, 50);
           }
-
         } catch (error) {
           console.error('Failed to create task:', error);
           showToast(`Failed to create task: ${error.message}`, 'error');
           // Remove the temporary task
-          ganttApi.exec('delete-task', { id: ev.id, skipHandler: true, skipGitLabDelete: true });
+          ganttApi.exec('delete-task', {
+            id: ev.id,
+            skipHandler: true,
+            skipGitLabDelete: true,
+          });
         }
       });
 
@@ -1573,20 +1662,29 @@ export function GanttView({
         const children = getChildrenForTask(ev.id, allTasksRef.current);
 
         // Accumulate task IDs for batch deletion
-        pendingDeleteTaskIdsRef.current = [...pendingDeleteTaskIdsRef.current, ev.id];
+        pendingDeleteTaskIdsRef.current = [
+          ...pendingDeleteTaskIdsRef.current,
+          ev.id,
+        ];
 
         // Accumulate items for dialog display
-        setDeleteDialogItems(prev => [...prev, {
-          id: ev.id,
-          title: taskTitle,
-          type: itemType,
-          children: children.map(child => ({
-            id: child.id,
-            title: child.text,
-            type: child.$isMilestone ? 'Milestone' :
-                  child._gitlab?.workItemType === 'Task' ? 'Task' : 'Issue',
-          })),
-        }]);
+        setDeleteDialogItems((prev) => [
+          ...prev,
+          {
+            id: ev.id,
+            title: taskTitle,
+            type: itemType,
+            children: children.map((child) => ({
+              id: child.id,
+              title: child.text,
+              type: child.$isMilestone
+                ? 'Milestone'
+                : child._gitlab?.workItemType === 'Task'
+                  ? 'Task'
+                  : 'Issue',
+            })),
+          },
+        ]);
         setDeleteDialogOpen(true);
 
         // Block the delete - dialog will handle it
@@ -1613,7 +1711,7 @@ export function GanttView({
 
           // If task from ganttApi doesn't have _gitlab info, try to find it in allTasksRef
           if (!task?._gitlab) {
-            const taskFromRef = allTasksRef.current.find(t => t.id === ev.id);
+            const taskFromRef = allTasksRef.current.find((t) => t.id === ev.id);
             if (taskFromRef?._gitlab) {
               task = taskFromRef;
             }
@@ -1625,7 +1723,9 @@ export function GanttView({
             // Find all pending deletes that are children of this milestone
             const childDeletePromises = [];
             for (const [childId, promise] of pendingDeletes.entries()) {
-              const childTask = allTasksRef.current.find(t => t.id === childId);
+              const childTask = allTasksRef.current.find(
+                (t) => t.id === childId,
+              );
               if (childTask && childTask.parent === ev.id) {
                 childDeletePromises.push(promise);
               }
@@ -1633,10 +1733,12 @@ export function GanttView({
 
             // Wait for all children to be deleted first
             if (childDeletePromises.length > 0) {
-              console.log(`[GanttView] Waiting for ${childDeletePromises.length} child items to be deleted before milestone...`);
+              console.log(
+                `[GanttView] Waiting for ${childDeletePromises.length} child items to be deleted before milestone...`,
+              );
               await Promise.allSettled(childDeletePromises);
               // Small delay to ensure GitLab has processed the deletions
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
             }
           }
 
@@ -1674,20 +1776,29 @@ export function GanttView({
         }
 
         // Extract type information once
-        const movedType = movedTask._gitlab?.workItemType || movedTask._gitlab?.type || 'unknown';
+        const movedType =
+          movedTask._gitlab?.workItemType ||
+          movedTask._gitlab?.type ||
+          'unknown';
         // NOTE: targetType is used for debugging purposes
         // eslint-disable-next-line no-unused-vars
-        const _targetType = targetTask._gitlab?.workItemType || targetTask._gitlab?.type || 'unknown';
+        const _targetType =
+          targetTask._gitlab?.workItemType ||
+          targetTask._gitlab?.type ||
+          'unknown';
 
         const parentId = movedTask.parent || 0;
         const allTasks = allTasksRef.current;
-        let siblings = allTasks.filter(t => t && (t.parent || 0) === parentId);
+        let siblings = allTasks.filter(
+          (t) => t && (t.parent || 0) === parentId,
+        );
 
         // Sort siblings by current displayOrder
         siblings.sort((a, b) => {
           const orderA = a.$custom?.displayOrder;
           const orderB = b.$custom?.displayOrder;
-          if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+          if (orderA !== undefined && orderB !== undefined)
+            return orderA - orderB;
           if (orderA !== undefined) return -1;
           if (orderB !== undefined) return 1;
           // Fallback: compare IDs as strings to handle both numeric and string IDs (e.g., "m-1")
@@ -1697,7 +1808,7 @@ export function GanttView({
         // Special case: When dragging to first position, Gantt sets ev.id === ev.target
         if (ev.id === ev.target) {
           // Find the current first task (excluding the moved task)
-          const currentFirstTask = siblings.find(s => s.id !== ev.id);
+          const currentFirstTask = siblings.find((s) => s.id !== ev.id);
 
           if (currentFirstTask) {
             // Move before the current first task to become the new first
@@ -1711,7 +1822,10 @@ export function GanttView({
 
         try {
           // Re-get target task if it was changed (for move to first position)
-          const finalTargetTask = ev.target !== targetTask.id ? ganttApi.getTask(ev.target) : targetTask;
+          const finalTargetTask =
+            ev.target !== targetTask.id
+              ? ganttApi.getTask(ev.target)
+              : targetTask;
 
           // Get GitLab IIDs from the task objects
           const movedIid = movedTask._gitlab?.iid;
@@ -1719,46 +1833,60 @@ export function GanttView({
 
           // Check if both tasks have valid GitLab IIDs
           if (!movedIid) {
-            console.error(`[GitLab] Cannot reorder: moved task ${ev.id} has no GitLab IID`);
+            console.error(
+              `[GitLab] Cannot reorder: moved task ${ev.id} has no GitLab IID`,
+            );
             return;
           }
 
           // Use the type information we already extracted at the beginning
-          const finalTargetType = finalTargetTask._gitlab?.workItemType || finalTargetTask._gitlab?.type || 'unknown';
+          const finalTargetType =
+            finalTargetTask._gitlab?.workItemType ||
+            finalTargetTask._gitlab?.type ||
+            'unknown';
 
           // Milestones are special - they can't be used for reordering at all
-          const targetIsMilestone = finalTargetTask.$isMilestone || finalTargetType === 'milestone';
+          const targetIsMilestone =
+            finalTargetTask.$isMilestone || finalTargetType === 'milestone';
 
           // Check if types are compatible for reordering
           // Issues can only reorder relative to other Issues
           // Tasks can only reorder relative to other Tasks (within same parent)
-          const typesIncompatible = targetIsMilestone || (movedType !== finalTargetType);
+          const typesIncompatible =
+            targetIsMilestone || movedType !== finalTargetType;
 
           if (typesIncompatible) {
-
             // For milestones, we need special logic since they appear at the top visually
             // but might be at the end of the siblings array due to missing displayOrder
-            const isMilestoneTarget = finalTargetTask.$isMilestone || finalTargetType === 'milestone';
+            const isMilestoneTarget =
+              finalTargetTask.$isMilestone || finalTargetType === 'milestone';
 
             if (isMilestoneTarget) {
               // When dragging to a milestone, move before the first compatible Issue
-              const firstCompatibleIssue = siblings.find(s => {
+              const firstCompatibleIssue = siblings.find((s) => {
                 if (s.id === ev.id) return false; // Skip self
-                const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+                const siblingType =
+                  s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
                 if (s.$isMilestone || siblingType === 'milestone') return false;
                 return movedType === siblingType && s._gitlab?.iid;
               });
 
               if (firstCompatibleIssue) {
-                await provider.reorderWorkItem(movedIid, firstCompatibleIssue._gitlab.iid, 'before');
+                await provider.reorderWorkItem(
+                  movedIid,
+                  firstCompatibleIssue._gitlab.iid,
+                  'before',
+                );
               } else {
-                console.error(`[GitLab] No compatible ${movedType} found to reorder relative to`);
+                console.error(
+                  `[GitLab] No compatible ${movedType} found to reorder relative to`,
+                );
               }
               return;
             }
 
             // Get the target's position in siblings array
-            const targetIndex = siblings.findIndex(s => s.id === ev.target);
+            const targetIndex = siblings.findIndex((s) => s.id === ev.target);
 
             // Find compatible siblings before and after the target
             let compatibleBefore = null;
@@ -1768,7 +1896,8 @@ export function GanttView({
             for (let i = targetIndex - 1; i >= 0; i--) {
               const s = siblings[i];
               if (s.id === ev.id) continue; // Skip self
-              const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+              const siblingType =
+                s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
               if (s.$isMilestone || siblingType === 'milestone') continue; // Skip milestones
               if (movedType === siblingType && s._gitlab?.iid) {
                 compatibleBefore = s;
@@ -1780,7 +1909,8 @@ export function GanttView({
             for (let i = targetIndex + 1; i < siblings.length; i++) {
               const s = siblings[i];
               if (s.id === ev.id) continue; // Skip self
-              const siblingType = s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
+              const siblingType =
+                s._gitlab?.workItemType || s._gitlab?.type || 'unknown';
               if (s.$isMilestone || siblingType === 'milestone') continue; // Skip milestones
               if (movedType === siblingType && s._gitlab?.iid) {
                 compatibleAfter = s;
@@ -1798,7 +1928,10 @@ export function GanttView({
                 useTarget = compatibleAfter;
                 useMode = 'before';
               }
-            } else if (targetIndex === siblings.length - 1 || !compatibleAfter) {
+            } else if (
+              targetIndex === siblings.length - 1 ||
+              !compatibleAfter
+            ) {
               // Target is last or no compatible after - use before with 'after' mode
               if (compatibleBefore) {
                 useTarget = compatibleBefore;
@@ -1816,15 +1949,23 @@ export function GanttView({
             }
 
             if (useTarget) {
-              await provider.reorderWorkItem(movedIid, useTarget._gitlab.iid, useMode);
+              await provider.reorderWorkItem(
+                movedIid,
+                useTarget._gitlab.iid,
+                useMode,
+              );
             } else {
-              console.error(`[GitLab] No compatible ${movedType} found to reorder relative to`);
+              console.error(
+                `[GitLab] No compatible ${movedType} found to reorder relative to`,
+              );
             }
             return;
           }
 
           if (!targetIid) {
-            console.error(`[GitLab] Cannot reorder: target task ${ev.target} has no GitLab IID`);
+            console.error(
+              `[GitLab] Cannot reorder: target task ${ev.target} has no GitLab IID`,
+            );
             return;
           }
 
@@ -1835,7 +1976,9 @@ export function GanttView({
           // The Gantt chart maintains correct visual state after drag operation
           // Order has been saved to GitLab via reorderWorkItem() API
         } catch (error) {
-          console.error(`[GitLab] Failed to reorder ${movedTask.text}: ${error.message}`);
+          console.error(
+            `[GitLab] Failed to reorder ${movedTask.text}: ${error.message}`,
+          );
         }
       });
 
@@ -1864,7 +2007,9 @@ export function GanttView({
 
           // If source/target not in event, we can't proceed
           if (!sourceId || !targetId) {
-            console.warn('[delete-link] No source/target in event, cannot find link');
+            console.warn(
+              '[delete-link] No source/target in event, cannot find link',
+            );
             return;
           }
 
@@ -1872,7 +2017,9 @@ export function GanttView({
           const link = findLinkBySourceTarget(currentLinks, sourceId, targetId);
 
           if (!link) {
-            console.warn('[delete-link] Link not found in React state, skipping API call');
+            console.warn(
+              '[delete-link] Link not found in React state, skipping API call',
+            );
             return;
           }
 
@@ -1892,7 +2039,7 @@ export function GanttView({
               link.id,
               validation.apiSourceIid,
               validation.linkedWorkItemGlobalId,
-              options
+              options,
             );
           } else if (link._gitlab === undefined) {
             // Link exists but no _gitlab metadata - newly created and not yet synced
@@ -1935,7 +2082,8 @@ export function GanttView({
         const calculateStartFromLink = (link, sourceData) => {
           const { newStart, newEnd } = sourceData;
           switch (link.type) {
-            case 'e2s': { // End-to-Start: target starts day after source ends
+            case 'e2s': {
+              // End-to-Start: target starts day after source ends
               const next = new Date(newEnd);
               next.setDate(next.getDate() + 1);
               return next;
@@ -1963,64 +2111,93 @@ export function GanttView({
         try {
           // 1. Calculate parent new dates
           const parentOriginalStart = new Date(parentTask.start);
-          const parentWorkdays = countWorkdaysRef.current(parentTask.start, parentTask.end);
+          const parentWorkdays = countWorkdaysRef.current(
+            parentTask.start,
+            parentTask.end,
+          );
           const newParentStart = new Date(parentOriginalStart);
           newParentStart.setDate(newParentStart.getDate() + diff);
-          const newParentEnd = calculateEndDateByWorkdaysRef.current(newParentStart, parentWorkdays);
+          const newParentEnd = calculateEndDateByWorkdaysRef.current(
+            newParentStart,
+            parentWorkdays,
+          );
 
           // 2. Collect all descendants and calculate original offset
           const descendants = getAllDescendants(parentId);
           const currentLinks = links || [];
-          const descendantIds = new Set(descendants.map(d => d.id));
+          const descendantIds = new Set(descendants.map((d) => d.id));
           descendantIds.add(parentId); // Include parent in the set for link calculation
 
-          const childData = descendants.map(child => {
-            const childTask = ganttApi.getTask(child.id);
-            if (!childTask || !childTask.start) return null;
+          const childData = descendants
+            .map((child) => {
+              const childTask = ganttApi.getTask(child.id);
+              if (!childTask || !childTask.start) return null;
 
-            const offsetMs = childTask.start.getTime() - parentOriginalStart.getTime();
-            const offsetDays = Math.round(offsetMs / (1000 * 60 * 60 * 24));
-            const workdays = countWorkdaysRef.current(childTask.start, childTask.end);
+              const offsetMs =
+                childTask.start.getTime() - parentOriginalStart.getTime();
+              const offsetDays = Math.round(offsetMs / (1000 * 60 * 60 * 24));
+              const workdays = countWorkdaysRef.current(
+                childTask.start,
+                childTask.end,
+              );
 
-            // Find inbound links from other cascade members to this task
-            const inboundLinks = currentLinks.filter(link =>
-              link.target === child.id && descendantIds.has(link.source)
-            );
+              // Find inbound links from other cascade members to this task
+              const inboundLinks = currentLinks.filter(
+                (link) =>
+                  link.target === child.id && descendantIds.has(link.source),
+              );
 
-            return {
-              id: child.id,
-              offsetDays,
-              workdays,
-              inboundLinks,
-              _gitlab: childTask._gitlab,
-            };
-          }).filter(Boolean);
+              return {
+                id: child.id,
+                offsetDays,
+                workdays,
+                inboundLinks,
+                _gitlab: childTask._gitlab,
+              };
+            })
+            .filter(Boolean);
 
           // 3. Sort by start date (earliest first)
           childData.sort((a, b) => a.offsetDays - b.offsetDays);
 
           // 4. Process each child
           const processed = new Map(); // id -> { newStart, newEnd }
-          processed.set(parentId, { newStart: newParentStart, newEnd: newParentEnd });
+          processed.set(parentId, {
+            newStart: newParentStart,
+            newEnd: newParentEnd,
+          });
 
           const updates = [];
           for (const child of childData) {
             let newStart;
 
             // Check if there's a processed link source
-            const linkedSource = child.inboundLinks.find(l => processed.has(l.source));
+            const linkedSource = child.inboundLinks.find((l) =>
+              processed.has(l.source),
+            );
             if (linkedSource) {
               // Use link to calculate new start
-              newStart = calculateStartFromLink(linkedSource, processed.get(linkedSource.source));
+              newStart = calculateStartFromLink(
+                linkedSource,
+                processed.get(linkedSource.source),
+              );
             } else {
               // Preserve original offset from parent
               newStart = new Date(newParentStart);
               newStart.setDate(newStart.getDate() + child.offsetDays);
             }
 
-            const newEnd = calculateEndDateByWorkdaysRef.current(newStart, child.workdays);
+            const newEnd = calculateEndDateByWorkdaysRef.current(
+              newStart,
+              child.workdays,
+            );
             processed.set(child.id, { newStart, newEnd });
-            updates.push({ id: child.id, start: newStart, end: newEnd, _gitlab: child._gitlab });
+            updates.push({
+              id: child.id,
+              start: newStart,
+              end: newEnd,
+              _gitlab: child._gitlab,
+            });
           }
 
           // 5. Batch update UI (skip workdays adjust since we calculated correctly)
@@ -2041,10 +2218,18 @@ export function GanttView({
           }
 
           // 6. Batch sync to GitLab
-          await syncTask(parentId, { start: newParentStart, end: newParentEnd, _gitlab: parentTask._gitlab });
+          await syncTask(parentId, {
+            start: newParentStart,
+            end: newParentEnd,
+            _gitlab: parentTask._gitlab,
+          });
 
           for (const u of updates) {
-            await syncTask(u.id, { start: u.start, end: u.end, _gitlab: u._gitlab });
+            await syncTask(u.id, {
+              start: u.start,
+              end: u.end,
+              _gitlab: u._gitlab,
+            });
           }
 
           showToast(`Moved ${updates.length + 1} items`, 'success');
@@ -2056,7 +2241,18 @@ export function GanttView({
       });
     },
     // Note: countWorkdays/calculateEndDateByWorkdays not needed here as we use refs (countWorkdaysRef, calculateEndDateByWorkdaysRef)
-    [syncTask, createTask, createMilestone, deleteTask, createLink, deleteLink, links, sync, provider, showToast]
+    [
+      syncTask,
+      createTask,
+      createMilestone,
+      deleteTask,
+      createLink,
+      deleteLink,
+      links,
+      sync,
+      provider,
+      showToast,
+    ],
   );
 
   // Today marker - ensure correct date without timezone issues
@@ -2065,7 +2261,7 @@ export function GanttView({
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return [
       {
-        start: today,  // IMarker uses 'start' not 'date'
+        start: today, // IMarker uses 'start' not 'date'
         css: 'today-marker',
       },
     ];
@@ -2085,12 +2281,21 @@ export function GanttView({
       const hasGitLabDate = row._gitlab?.[gitlabFieldName];
 
       if (!hasGitLabDate) {
-        return <span style={{ color: 'var(--wx-color-secondary, #6e6e73)' }}>None</span>;
+        return (
+          <span style={{ color: 'var(--wx-color-secondary, #6e6e73)' }}>
+            None
+          </span>
+        );
       }
     }
 
     const date = row[column.id];
-    if (!date) return <span style={{ color: 'var(--wx-color-secondary, #6e6e73)' }}>None</span>;
+    if (!date)
+      return (
+        <span style={{ color: 'var(--wx-color-secondary, #6e6e73)' }}>
+          None
+        </span>
+      );
 
     const d = date instanceof Date ? date : new Date(date);
     const yy = String(d.getFullYear()).slice(-2);
@@ -2101,11 +2306,14 @@ export function GanttView({
 
   // Workdays cell - dynamically calculates workdays from row's current start/end
   // This ensures the display updates immediately when user drags to resize the bar
-  const WorkdaysCell = useCallback(({ row }) => {
-    if (!row.start || !row.end) return '';
-    const days = countWorkdays(row.start, row.end);
-    return days ? `${days}d` : '';
-  }, [countWorkdays]);
+  const WorkdaysCell = useCallback(
+    ({ row }) => {
+      if (!row.start || !row.end) return '';
+      const days = countWorkdays(row.start, row.end);
+      return days ? `${days}d` : '';
+    },
+    [countWorkdays],
+  );
 
   // Custom cell component for Task Title with icons
   const TaskTitleCell = useCallback(({ row }) => {
@@ -2137,20 +2345,23 @@ export function GanttView({
   }, []);
 
   // Handler for date changes from Grid DateEditCell
-  const handleGridDateChange = useCallback((rowId, columnId, value) => {
-    if (!api) return;
+  const handleGridDateChange = useCallback(
+    (rowId, columnId, value) => {
+      if (!api) return;
 
-    // Trigger update-task event which will be handled by the existing sync logic
-    // IMPORTANT: Pass _originalDateChange to preserve null values, because svar merges
-    // ev.task with the gantt store, overwriting our null with the existing date
-    api.exec('update-task', {
-      id: rowId,
-      task: {
-        [columnId]: value, // value can be Date or null (cleared)
-      },
-      _originalDateChange: { column: columnId, value }, // Preserve original value
-    });
-  }, [api]);
+      // Trigger update-task event which will be handled by the existing sync logic
+      // IMPORTANT: Pass _originalDateChange to preserve null values, because svar merges
+      // ev.task with the gantt store, overwriting our null with the existing date
+      api.exec('update-task', {
+        id: rowId,
+        task: {
+          [columnId]: value, // value can be Date or null (cleared)
+        },
+        _originalDateChange: { column: columnId, value }, // Preserve original value
+      });
+    },
+    [api],
+  );
 
   // Columns configuration with visibility and order control
   const columns = useMemo(() => {
@@ -2182,7 +2393,16 @@ export function GanttView({
         width: 50,
       },
     ];
-  }, [DateCell, TaskTitleCell, WorkdaysCell, columnSettings, labelColorMap, labelPriorityMap, dateEditable, handleGridDateChange]);
+  }, [
+    DateCell,
+    TaskTitleCell,
+    WorkdaysCell,
+    columnSettings,
+    labelColorMap,
+    labelPriorityMap,
+    dateEditable,
+    handleGridDateChange,
+  ]);
 
   // Editor items configuration - customized for GitLab
   // Use 'nullable-date' comp type for date fields to support clearing dates to null
@@ -2219,7 +2439,9 @@ export function GanttView({
         />
         <div className="empty-message">
           <h3>No GitLab project configured</h3>
-          <p>Please add a GitLab project or group configuration to get started.</p>
+          <p>
+            Please add a GitLab project or group configuration to get started.
+          </p>
         </div>
       </div>
     );
@@ -2231,160 +2453,175 @@ export function GanttView({
 
       {/* Header section - hidden when hideSharedToolbar is true (e.g., embedded in unified toolbar) */}
       {!hideSharedToolbar && (
-      <div className="gitlab-gantt-header">
-        <div className="project-switcher">
-          <select
-            value={currentConfig?.id || ''}
-            onChange={(e) => handleQuickSwitch(e.target.value)}
-            className="project-select-compact"
-          >
-            <option value="">Select Project...</option>
-            {configs.map((config) => (
-              <option key={config.id} value={config.id}>
-                {config.name}
-              </option>
-            ))}
-          </select>
+        <div className="gitlab-gantt-header">
+          <div className="project-switcher">
+            <select
+              value={currentConfig?.id || ''}
+              onChange={(e) => handleQuickSwitch(e.target.value)}
+              className="project-select-compact"
+            >
+              <option value="">Select Project...</option>
+              {configs.map((config) => (
+                <option key={config.id} value={config.id}>
+                  {config.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="btn-settings"
+              title="Settings"
+            >
+              <i className="fas fa-cog"></i>
+            </button>
+          </div>
+
           <button
-            onClick={() => setShowSettings(true)}
-            className="btn-settings"
-            title="Settings"
+            onClick={() => setShowViewOptions(!showViewOptions)}
+            className="btn-view-options"
           >
-            <i className="fas fa-cog"></i>
+            <i className="fas fa-sliders-h"></i>
+            <i
+              className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}
+            ></i>
           </button>
-        </div>
 
-        <button
-          onClick={() => setShowViewOptions(!showViewOptions)}
-          className="btn-view-options"
-        >
-          <i className="fas fa-sliders-h"></i>
-          <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}></i>
-        </button>
-
-        <SyncButton
-          onSync={sync}
-          syncState={syncState}
-          filterOptions={filterOptions}
-        />
-        <div className="stats-panel">
-          <div className="stat-item">
-            <span className="stat-label">Total:</span>
-            <span className="stat-value">{stats.total}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Completed:</span>
-            <span className="stat-value stat-completed">{stats.completed}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">In Progress:</span>
-            <span className="stat-value stat-progress">{stats.inProgress}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Not Started:</span>
-            <span className="stat-value">{stats.notStarted}</span>
-          </div>
-          {stats.overdue > 0 && (
+          <SyncButton
+            onSync={sync}
+            syncState={syncState}
+            filterOptions={filterOptions}
+          />
+          <div className="stats-panel">
             <div className="stat-item">
-              <span className="stat-label">Overdue:</span>
-              <span className="stat-value stat-overdue">{stats.overdue}</span>
+              <span className="stat-label">Total:</span>
+              <span className="stat-value">{stats.total}</span>
             </div>
-          )}
+            <div className="stat-item">
+              <span className="stat-label">Completed:</span>
+              <span className="stat-value stat-completed">
+                {stats.completed}
+              </span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">In Progress:</span>
+              <span className="stat-value stat-progress">
+                {stats.inProgress}
+              </span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Not Started:</span>
+              <span className="stat-value">{stats.notStarted}</span>
+            </div>
+            {stats.overdue > 0 && (
+              <div className="stat-item">
+                <span className="stat-label">Overdue:</span>
+                <span className="stat-value stat-overdue">{stats.overdue}</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* View Controls - render via portal when in workspace mode, otherwise inline */}
-      {showViewOptions && (() => {
-        const viewControlsContent = (
-          <div className="view-controls">
-            <label className="control-label">
-              Range:
-              <select
-                value={dateRangePreset}
-                onChange={(e) => setDateRangePreset(e.target.value)}
-                className="unit-select"
-              >
-                <option value="1m">1 Month</option>
-                <option value="3m">3 Months</option>
-                <option value="6m">6 Months</option>
-                <option value="1y">1 Year</option>
-                <option value="2y">2 Years</option>
-                <option value="custom">Custom</option>
-              </select>
-            </label>
-            {dateRangePreset === 'custom' && (
-              <>
-                <label className="control-label">
-                  From:
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="date-input"
-                  />
-                </label>
-                <label className="control-label">
-                  To:
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="date-input"
-                  />
-                </label>
-              </>
-            )}
-            <label className="control-label">
-              Width:
-              <input
-                type="range"
-                min="20"
-                max="100"
-                value={cellWidthDisplay}
-                onChange={(e) => handleCellWidthChange(Number(e.target.value))}
-                className="slider"
-                disabled={lengthUnit !== 'day'}
-              />
-              <span className="control-value">{lengthUnit === 'day' ? cellWidthDisplay : effectiveCellWidth}</span>
-            </label>
-            <label className="control-label">
-              Height:
-              <input
-                type="range"
-                min="20"
-                max="60"
-                value={cellHeightDisplay}
-                onChange={(e) => handleCellHeightChange(Number(e.target.value))}
-                className="slider"
-              />
-              <span className="control-value">{cellHeightDisplay}</span>
-            </label>
-            <label className="control-label">
-              Unit:
-              <select
-                value={lengthUnit}
-                onChange={(e) => setLengthUnit(e.target.value)}
-                className="unit-select"
-              >
-                <option value="hour">Hour</option>
-                <option value="day">Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="quarter">Quarter</option>
-              </select>
-            </label>
-          </div>
-        );
+      {showViewOptions &&
+        (() => {
+          const viewControlsContent = (
+            <div className="view-controls">
+              <label className="control-label">
+                Range:
+                <select
+                  value={dateRangePreset}
+                  onChange={(e) => setDateRangePreset(e.target.value)}
+                  className="unit-select"
+                >
+                  <option value="1m">1 Month</option>
+                  <option value="3m">3 Months</option>
+                  <option value="6m">6 Months</option>
+                  <option value="1y">1 Year</option>
+                  <option value="2y">2 Years</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+              {dateRangePreset === 'custom' && (
+                <>
+                  <label className="control-label">
+                    From:
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </label>
+                  <label className="control-label">
+                    To:
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </label>
+                </>
+              )}
+              <label className="control-label">
+                Width:
+                <input
+                  type="range"
+                  min="20"
+                  max="100"
+                  value={cellWidthDisplay}
+                  onChange={(e) =>
+                    handleCellWidthChange(Number(e.target.value))
+                  }
+                  className="slider"
+                  disabled={lengthUnit !== 'day'}
+                />
+                <span className="control-value">
+                  {lengthUnit === 'day' ? cellWidthDisplay : effectiveCellWidth}
+                </span>
+              </label>
+              <label className="control-label">
+                Height:
+                <input
+                  type="range"
+                  min="20"
+                  max="60"
+                  value={cellHeightDisplay}
+                  onChange={(e) =>
+                    handleCellHeightChange(Number(e.target.value))
+                  }
+                  className="slider"
+                />
+                <span className="control-value">{cellHeightDisplay}</span>
+              </label>
+              <label className="control-label">
+                Unit:
+                <select
+                  value={lengthUnit}
+                  onChange={(e) => setLengthUnit(e.target.value)}
+                  className="unit-select"
+                >
+                  <option value="hour">Hour</option>
+                  <option value="day">Day</option>
+                  <option value="week">Week</option>
+                  <option value="month">Month</option>
+                  <option value="quarter">Quarter</option>
+                </select>
+              </label>
+            </div>
+          );
 
-        // If embedded in workspace, render via portal to the container above FilterPanel
-        const portalContainer = document.getElementById('view-options-container');
-        if (hideSharedToolbar && portalContainer) {
-          return createPortal(viewControlsContent, portalContainer);
-        }
-        // Otherwise render inline
-        return viewControlsContent;
-      })()}
+          // If embedded in workspace, render via portal to the container above FilterPanel
+          const portalContainer = document.getElementById(
+            'view-options-container',
+          );
+          if (hideSharedToolbar && portalContainer) {
+            return createPortal(viewControlsContent, portalContainer);
+          }
+          // Otherwise render inline
+          return viewControlsContent;
+        })()}
 
       {showSettings && (
         <div
@@ -2396,132 +2633,146 @@ export function GanttView({
             }
           }}
         >
-          <div className="settings-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="settings-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="settings-modal-header">
               <h3>Settings</h3>
-              <button onClick={() => setShowSettings(false)} className="modal-close-btn">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="modal-close-btn"
+              >
                 &times;
               </button>
             </div>
 
             <div className="settings-modal-body">
-            <div className="settings-section">
-              <h4>GitLab Project</h4>
-              <ProjectSelector
-                onProjectChange={(config) => {
-                  handleConfigChange(config);
-                  setShowSettings(false);
-                }}
-                currentConfigId={currentConfig?.id}
-                onConfigsChange={reloadConfigs}
-              />
-            </div>
+              <div className="settings-section">
+                <h4>GitLab Project</h4>
+                <ProjectSelector
+                  onProjectChange={(config) => {
+                    handleConfigChange(config);
+                    setShowSettings(false);
+                  }}
+                  currentConfigId={currentConfig?.id}
+                  onConfigsChange={reloadConfigs}
+                />
+              </div>
 
-            <div className="settings-section">
-              <h4 className="settings-section-header">
-                Holidays
-                {!canEditHolidays && (
-                  <span className="permission-warning">
-                    <i className="fas fa-lock"></i>
-                    {currentConfig?.type === 'group'
-                      ? ' Not available for Groups (GitLab limitation)'
-                      : ' Create Snippet permission required'}
-                  </span>
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Holidays
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                  {holidaysSaving && (
+                    <span className="saving-indicator">
+                      <i className="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">
+                  Add holiday dates (one per line, formats: YYYY-MM-DD or
+                  YYYY/M/D, optional name after space)
+                </p>
+                {holidaysError && (
+                  <div className="holidays-error">
+                    <i className="fas fa-exclamation-triangle"></i>{' '}
+                    {holidaysError}
+                  </div>
                 )}
-                {holidaysSaving && (
-                  <span className="saving-indicator">
-                    <i className="fas fa-spinner fa-spin"></i> Saving...
-                  </span>
+                <textarea
+                  value={holidaysText}
+                  onChange={(e) => setHolidaysText(e.target.value)}
+                  placeholder="2025-01-01 New Year&#10;2025/2/28&#10;2025-12-25 Christmas"
+                  className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
+                  rows={6}
+                  disabled={!canEditHolidays || holidaysLoading}
+                />
+                {canEditHolidays && (
+                  <div className="holiday-presets">
+                    <button
+                      onClick={() => setHolidaysText('')}
+                      className="preset-btn preset-btn-clear"
+                      disabled={holidaysLoading}
+                    >
+                      Clear All
+                    </button>
+                  </div>
                 )}
-              </h4>
-              <p className="settings-hint">Add holiday dates (one per line, formats: YYYY-MM-DD or YYYY/M/D, optional name after space)</p>
-              {holidaysError && (
-                <div className="holidays-error">
-                  <i className="fas fa-exclamation-triangle"></i> {holidaysError}
-                </div>
-              )}
-              <textarea
-                value={holidaysText}
-                onChange={(e) => setHolidaysText(e.target.value)}
-                placeholder="2025-01-01 New Year&#10;2025/2/28&#10;2025-12-25 Christmas"
-                className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
-                rows={6}
-                disabled={!canEditHolidays || holidaysLoading}
-              />
-              {canEditHolidays && (
-                <div className="holiday-presets">
-                  <button
-                    onClick={() => setHolidaysText('')}
-                    className="preset-btn preset-btn-clear"
-                    disabled={holidaysLoading}
-                  >
-                    Clear All
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="settings-section">
-              <h4 className="settings-section-header">
-                Extra Working Days
-                {!canEditHolidays && (
-                  <span className="permission-warning">
-                    <i className="fas fa-lock"></i>
-                    {currentConfig?.type === 'group'
-                      ? ' Not available for Groups (GitLab limitation)'
-                      : ' Create Snippet permission required'}
-                  </span>
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Extra Working Days
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">
+                  Add extra working days on weekends (one per line, formats:
+                  YYYY-MM-DD or YYYY/M/D)
+                </p>
+                <textarea
+                  value={workdaysText}
+                  onChange={(e) => setWorkdaysText(e.target.value)}
+                  placeholder="2025/1/25&#10;2025-02-08"
+                  className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
+                  rows={6}
+                  disabled={!canEditHolidays || holidaysLoading}
+                />
+                {canEditHolidays && (
+                  <div className="holiday-presets">
+                    <button
+                      onClick={() => setWorkdaysText('')}
+                      className="preset-btn preset-btn-clear"
+                      disabled={holidaysLoading}
+                    >
+                      Clear All
+                    </button>
+                  </div>
                 )}
-              </h4>
-              <p className="settings-hint">Add extra working days on weekends (one per line, formats: YYYY-MM-DD or YYYY/M/D)</p>
-              <textarea
-                value={workdaysText}
-                onChange={(e) => setWorkdaysText(e.target.value)}
-                placeholder="2025/1/25&#10;2025-02-08"
-                className={`holidays-textarea ${!canEditHolidays ? 'disabled' : ''}`}
-                rows={6}
-                disabled={!canEditHolidays || holidaysLoading}
-              />
-              {canEditHolidays && (
-                <div className="holiday-presets">
-                  <button
-                    onClick={() => setWorkdaysText('')}
-                    className="preset-btn preset-btn-clear"
-                    disabled={holidaysLoading}
-                  >
-                    Clear All
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="settings-section">
-              <h4 className="settings-section-header">
-                Color Rules
-                {!canEditHolidays && (
-                  <span className="permission-warning">
-                    <i className="fas fa-lock"></i>
-                    {currentConfig?.type === 'group'
-                      ? ' Not available for Groups (GitLab limitation)'
-                      : ' Create Snippet permission required'}
-                  </span>
-                )}
-                {holidaysSaving && (
-                  <span className="saving-indicator">
-                    <i className="fas fa-spinner fa-spin"></i> Saving...
-                  </span>
-                )}
-              </h4>
-              <p className="settings-hint">
-                Highlight time bars with diagonal stripes based on issue title matching conditions
-              </p>
-              <ColorRulesEditor
-                rules={colorRules}
-                onRulesChange={setColorRules}
-                canEdit={canEditHolidays}
-                saving={holidaysSaving}
-              />
-            </div>
+              <div className="settings-section">
+                <h4 className="settings-section-header">
+                  Color Rules
+                  {!canEditHolidays && (
+                    <span className="permission-warning">
+                      <i className="fas fa-lock"></i>
+                      {currentConfig?.type === 'group'
+                        ? ' Not available for Groups (GitLab limitation)'
+                        : ' Create Snippet permission required'}
+                    </span>
+                  )}
+                  {holidaysSaving && (
+                    <span className="saving-indicator">
+                      <i className="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                  )}
+                </h4>
+                <p className="settings-hint">
+                  Highlight time bars with diagonal stripes based on issue title
+                  matching conditions
+                </p>
+                <ColorRulesEditor
+                  rules={colorRules}
+                  onRulesChange={setColorRules}
+                  canEdit={canEditHolidays}
+                  saving={holidaysSaving}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -2573,7 +2824,11 @@ export function GanttView({
             onToggleColumn={toggleColumn}
             onReorderColumns={reorderColumns}
           />
-          <Toolbar api={api} onAddMilestone={handleAddMilestone} onOpenBlueprints={() => setShowBlueprintManager(true)} />
+          <Toolbar
+            api={api}
+            onAddMilestone={handleAddMilestone}
+            onOpenBlueprints={() => setShowBlueprintManager(true)}
+          />
         </div>
         <div className="gantt-chart-container">
           {syncState.isLoading ? (
@@ -2581,111 +2836,148 @@ export function GanttView({
               <p>Loading GitLab data...</p>
             </div>
           ) : (
-            <ContextMenu api={api} options={contextMenuOptions} onClick={handleContextMenuClick}>
+            <ContextMenu
+              api={api}
+              options={contextMenuOptions}
+              onClick={handleContextMenuClick}
+            >
               {(() => {
-
                 // Validate tasks structure before passing to Gantt
-                const invalidTasks = filteredTasks.filter(task => {
+                const invalidTasks = filteredTasks.filter((task) => {
                   return !task.id || !task.text || !task.start;
                 });
 
                 if (invalidTasks.length > 0) {
-                  console.error('[GanttView RENDER] Found invalid tasks:', invalidTasks);
+                  console.error(
+                    '[GanttView RENDER] Found invalid tasks:',
+                    invalidTasks,
+                  );
                 }
 
                 // Log all tasks with their parent relationships to find the problematic structure
 
                 // Check for orphaned children (parent doesn't exist in the list)
-                const taskIds = new Set(filteredTasks.map(t => t.id));
-                const orphanedTasks = filteredTasks.filter(task => {
-                  return task.parent && task.parent !== 0 && !taskIds.has(task.parent);
+                const taskIds = new Set(filteredTasks.map((t) => t.id));
+                const orphanedTasks = filteredTasks.filter((task) => {
+                  return (
+                    task.parent &&
+                    task.parent !== 0 &&
+                    !taskIds.has(task.parent)
+                  );
                 });
 
                 if (orphanedTasks.length > 0) {
                   // Separate Issues with Epic parents from other orphaned tasks
-                  const issuesWithEpicParent = orphanedTasks.filter(task => {
+                  const issuesWithEpicParent = orphanedTasks.filter((task) => {
                     // Check if this Issue has Epic parent stored in metadata
                     return task._gitlab?.epicParentId;
                   });
 
-                  const tasksWithMissingParent = orphanedTasks.filter(task => {
-                    // Everything else: Tasks with missing parents, or Issues with missing milestones
-                    return !task._gitlab?.epicParentId;
-                  });
+                  const tasksWithMissingParent = orphanedTasks.filter(
+                    (task) => {
+                      // Everything else: Tasks with missing parents, or Issues with missing milestones
+                      return !task._gitlab?.epicParentId;
+                    },
+                  );
 
                   if (issuesWithEpicParent.length > 0) {
                     // Get unique Epic IDs
-                    const epicIds = new Set(issuesWithEpicParent.map(t => t._gitlab?.epicParentId));
+                    const epicIds = new Set(
+                      issuesWithEpicParent.map((t) => t._gitlab?.epicParentId),
+                    );
 
                     // These are Issues with Epic parents - Epics are not supported yet
-                    console.info('[GanttView] Some issues belong to Epics (not supported):', {
-                      epicIds: Array.from(epicIds),
-                      affectedIssues: issuesWithEpicParent.length,
-                      note: 'Epic support is not implemented. These issues will appear at root level.'
-                    });
+                    console.info(
+                      '[GanttView] Some issues belong to Epics (not supported):',
+                      {
+                        epicIds: Array.from(epicIds),
+                        affectedIssues: issuesWithEpicParent.length,
+                        note: 'Epic support is not implemented. These issues will appear at root level.',
+                      },
+                    );
                   }
 
                   if (tasksWithMissingParent.length > 0) {
                     // This is an actual error - Tasks with missing parents
                     // Collect unique missing parent IDs
-                    const missingParentIds = new Set(tasksWithMissingParent.map(t => t.parent));
-                    console.error('[GanttView RENDER] Found orphaned tasks (parent does not exist):', {
-                      count: tasksWithMissingParent.length,
-                      orphanedTaskIds: tasksWithMissingParent.map(t => ({
-                        id: t.id,
-                        parent: t.parent,
-                        text: t.text,
-                        type: t.type,
-                        _gitlab: t._gitlab?.type
-                      })),
-                      missingParentIds: Array.from(missingParentIds)
-                    });
+                    const missingParentIds = new Set(
+                      tasksWithMissingParent.map((t) => t.parent),
+                    );
+                    console.error(
+                      '[GanttView RENDER] Found orphaned tasks (parent does not exist):',
+                      {
+                        count: tasksWithMissingParent.length,
+                        orphanedTaskIds: tasksWithMissingParent.map((t) => ({
+                          id: t.id,
+                          parent: t.parent,
+                          text: t.text,
+                          type: t.type,
+                          _gitlab: t._gitlab?.type,
+                        })),
+                        missingParentIds: Array.from(missingParentIds),
+                      },
+                    );
                   }
                 }
 
                 try {
                   return (
                     <Gantt
-                    key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
-                    init={(api) => {
-                      try {
-                        const result = init(api);
-                        return result;
-                      } catch (error) {
-                        console.error('[Gantt init] ERROR in init callback:', error);
-                        console.error('[Gantt init] ERROR name:', error.name);
-                        console.error('[Gantt init] ERROR message:', error.message);
-                        console.error('[Gantt init] ERROR stack:', error.stack);
-                        throw error;
-                      }
-                    }}
-                    tasks={filteredTasks}
-                    links={links}
-              markers={markers}
-              scales={scales}
-              lengthUnit={lengthUnit}
-              start={dateRange.start}
-              end={dateRange.end}
-              columns={columns}
-              cellWidth={effectiveCellWidth}
-              cellHeight={cellHeight}
-              highlightTime={highlightTime}
-              countWorkdays={countWorkdays}
-              readonly={false}
-              baselines={true}
-              taskTemplate={SmartTaskContent}
-              autoScale={false}
-              colorRules={colorRules}
-                  />
-                );
-              } catch (error) {
-                console.error('[GanttView RENDER] ERROR rendering Gantt:', error);
-                console.error('[GanttView RENDER] ERROR name:', error.name);
-                console.error('[GanttView RENDER] ERROR message:', error.message);
-                console.error('[GanttView RENDER] ERROR stack:', error.stack);
-                throw error;
-              }
-            })()}
+                      key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
+                      init={(api) => {
+                        try {
+                          const result = init(api);
+                          return result;
+                        } catch (error) {
+                          console.error(
+                            '[Gantt init] ERROR in init callback:',
+                            error,
+                          );
+                          console.error('[Gantt init] ERROR name:', error.name);
+                          console.error(
+                            '[Gantt init] ERROR message:',
+                            error.message,
+                          );
+                          console.error(
+                            '[Gantt init] ERROR stack:',
+                            error.stack,
+                          );
+                          throw error;
+                        }
+                      }}
+                      tasks={filteredTasks}
+                      links={links}
+                      markers={markers}
+                      scales={scales}
+                      lengthUnit={lengthUnit}
+                      start={dateRange.start}
+                      end={dateRange.end}
+                      columns={columns}
+                      cellWidth={effectiveCellWidth}
+                      cellHeight={cellHeight}
+                      highlightTime={highlightTime}
+                      countWorkdays={countWorkdays}
+                      readonly={false}
+                      baselines={true}
+                      taskTemplate={SmartTaskContent}
+                      autoScale={false}
+                      colorRules={colorRules}
+                    />
+                  );
+                } catch (error) {
+                  console.error(
+                    '[GanttView RENDER] ERROR rendering Gantt:',
+                    error,
+                  );
+                  console.error('[GanttView RENDER] ERROR name:', error.name);
+                  console.error(
+                    '[GanttView RENDER] ERROR message:',
+                    error.message,
+                  );
+                  console.error('[GanttView RENDER] ERROR stack:', error.stack);
+                  throw error;
+                }
+              })()}
             </ContextMenu>
           )}
         </div>

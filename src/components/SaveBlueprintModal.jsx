@@ -121,13 +121,16 @@ export function SaveBlueprintModal({
     }
   }, []);
 
-  const handleOverlayClick = useCallback((e) => {
-    // 只有 mousedown 和 click 都在 overlay 上時才關閉
-    if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
-      onClose();
-    }
-    mouseDownOnOverlay.current = false;
-  }, [onClose]);
+  const handleOverlayClick = useCallback(
+    (e) => {
+      // 只有 mousedown 和 click 都在 overlay 上時才關閉
+      if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
+        onClose();
+      }
+      mouseDownOnOverlay.current = false;
+    },
+    [onClose],
+  );
 
   if (!isOpen) {
     return null;
@@ -141,7 +144,9 @@ export function SaveBlueprintModal({
     >
       <div
         className="blueprint-modal"
-        onMouseDown={(e) => { mouseDownOnOverlay.current = false; }}
+        onMouseDown={(e) => {
+          mouseDownOnOverlay.current = false;
+        }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
@@ -182,10 +187,14 @@ export function SaveBlueprintModal({
                 />
                 <div className="option-content">
                   <span className="option-title">Local Storage</span>
-                  <span className="option-desc">Personal use only, stored in browser</span>
+                  <span className="option-desc">
+                    Personal use only, stored in browser
+                  </span>
                 </div>
               </label>
-              <label className={`storage-option ${!canUseSnippet ? 'disabled' : ''}`}>
+              <label
+                className={`storage-option ${!canUseSnippet ? 'disabled' : ''}`}
+              >
                 <input
                   type="radio"
                   name="storage-type"
@@ -232,7 +241,11 @@ export function SaveBlueprintModal({
                 <div className="preview-items">
                   {preview.items.slice(0, 5).map((item, index) => (
                     <div key={index} className="preview-item">
-                      <i className={item.type === 'Task' ? 'fas fa-check' : 'fas fa-file'} />
+                      <i
+                        className={
+                          item.type === 'Task' ? 'fas fa-check' : 'fas fa-file'
+                        }
+                      />
                       <span className="item-title">{item.title}</span>
                       <span className="item-type">{item.type}</span>
                     </div>
@@ -253,7 +266,11 @@ export function SaveBlueprintModal({
 
         {/* Footer */}
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+          <button
+            className="btn btn-secondary"
+            onClick={onClose}
+            disabled={saving}
+          >
             Cancel
           </button>
           <button

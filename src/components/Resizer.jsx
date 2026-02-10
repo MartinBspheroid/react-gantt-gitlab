@@ -16,7 +16,7 @@ function Resizer(props) {
 
   const [value, setValue] = useWritableProp(props.value ?? 0);
   const [display, setDisplay] = useWritableProp(props.display ?? 'all');
-  
+
   function getBox(val) {
     let offset = 0;
     if (position == 'center') offset = size / 2;
@@ -50,7 +50,7 @@ function Resizer(props) {
       (!maxValue || maxValue >= newPos)
     ) {
       setValue(newPos);
-      onMove(newPos)
+      onMove(newPos);
     }
   }, []);
 
@@ -122,25 +122,21 @@ function Resizer(props) {
       onMouseDown={down}
       style={{ width: b.size[0], height: b.size[1], cursor }}
     >
-      <div className='wx-pFykzMlT wx-button-expand-box'>
-        <div
-          className='wx-pFykzMlT wx-button-expand-content wx-button-expand-left'
-        >
+      <div className="wx-pFykzMlT wx-button-expand-box">
+        <div className="wx-pFykzMlT wx-button-expand-content wx-button-expand-left">
           <i
-            className='wx-pFykzMlT wxi-menu-left'
+            className="wx-pFykzMlT wxi-menu-left"
             onClick={handleExpandLeft}
           ></i>
         </div>
-        <div
-          className='wx-pFykzMlT wx-button-expand-content wx-button-expand-right'
-        >
+        <div className="wx-pFykzMlT wx-button-expand-content wx-button-expand-right">
           <i
-            className='wx-pFykzMlT wxi-menu-right'
+            className="wx-pFykzMlT wxi-menu-right"
             onClick={handleExpandRight}
           ></i>
         </div>
       </div>
-      <div className='wx-pFykzMlT wx-resizer-line'></div>
+      <div className="wx-pFykzMlT wx-resizer-line"></div>
     </div>
   );
 }

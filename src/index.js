@@ -50,11 +50,7 @@ export { Workspace } from './components/Workspace';
 export { GanttView } from './components/GanttView';
 
 // Context exports
-export {
-  DataProvider,
-  useData,
-  useDataOptional,
-} from './contexts/DataContext';
+export { DataProvider, useData, useDataOptional } from './contexts/DataContext';
 
 // KanbanView exports
 export {

@@ -22,7 +22,10 @@ export default function Router({ onRouteChange }) {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/gitlab-integration/willow" replace />} />
+      <Route
+        path="/"
+        element={<Navigate to="/gitlab-integration/willow" replace />}
+      />
       {links
         .filter(([, , Component]) => Component !== null)
         .map(([path, , Component]) => (

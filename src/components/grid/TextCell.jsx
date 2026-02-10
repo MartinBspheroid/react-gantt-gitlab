@@ -48,7 +48,9 @@ function TextCell({ row, column }) {
             <span
               key={rule.id}
               className="wx-color-indicator"
-              style={{ backgroundColor: toRgba(rule.color, (rule.opacity ?? 1) * 0.7) }}
+              style={{
+                backgroundColor: toRgba(rule.color, (rule.opacity ?? 1) * 0.7),
+              }}
               title={rule.name}
             />
           ))}

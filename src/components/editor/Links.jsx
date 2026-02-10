@@ -8,8 +8,8 @@ export default function Links({ api, autoSave, onLinksChange }) {
   const i18n = useContext(context.i18n);
   const _ = i18n.getGroup('gantt');
 
-  const activeTask = useStore(api,"activeTask");
-  const links = useStore(api,"_links");
+  const activeTask = useStore(api, 'activeTask');
+  const links = useStore(api, '_links');
 
   const [linksData, setLinksData] = useState();
 

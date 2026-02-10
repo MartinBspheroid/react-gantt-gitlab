@@ -52,7 +52,7 @@ export default function WorkdaysInput({
         onChangeHandler({ value: clampedValue });
       }
     },
-    [min, max, onChangeHandler]
+    [min, max, onChangeHandler],
   );
 
   const handleInputChange = useCallback(
@@ -66,12 +66,13 @@ export default function WorkdaysInput({
       // Clamp and update locally (don't notify parent until blur)
       setLocalValue(Math.max(min, Math.min(max, parsed)));
     },
-    [min, max]
+    [min, max],
   );
 
   const handleBlur = useCallback(() => {
     // On blur, ensure valid value and notify parent
-    const finalValue = typeof localValue === 'number' && localValue >= min ? localValue : min;
+    const finalValue =
+      typeof localValue === 'number' && localValue >= min ? localValue : min;
     if (finalValue !== value) {
       updateValue(finalValue);
     } else {
@@ -92,7 +93,7 @@ export default function WorkdaysInput({
         updateValue((localValue || 0) - 1);
       }
     },
-    [localValue, updateValue]
+    [localValue, updateValue],
   );
 
   const increment = useCallback(() => {

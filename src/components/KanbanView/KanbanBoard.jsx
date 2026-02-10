@@ -50,14 +50,16 @@ export function KanbanBoard({
   sortOverrides = {},
   onSortOverridesChange,
 }) {
-
   // Handle sort change from list header UI (temporary, not persisted)
-  const handleListSortChange = useCallback((listId, newSortBy, newSortOrder) => {
-    onSortOverridesChange?.((prev) => ({
-      ...prev,
-      [listId]: { sortBy: newSortBy, sortOrder: newSortOrder },
-    }));
-  }, [onSortOverridesChange]);
+  const handleListSortChange = useCallback(
+    (listId, newSortBy, newSortOrder) => {
+      onSortOverridesChange?.((prev) => ({
+        ...prev,
+        [listId]: { sortBy: newSortBy, sortOrder: newSortOrder },
+      }));
+    },
+    [onSortOverridesChange],
+  );
 
   // Middle mouse button panning
   const boardRef = useRef(null);
@@ -79,15 +81,18 @@ export function KanbanBoard({
     };
   }, []);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!isPanning) return;
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isPanning) return;
 
-    const board = boardRef.current;
-    if (!board) return;
+      const board = boardRef.current;
+      if (!board) return;
 
-    const dx = e.clientX - panStartRef.current.x;
-    board.scrollLeft = panStartRef.current.scrollLeft - dx;
-  }, [isPanning]);
+      const dx = e.clientX - panStartRef.current.x;
+      board.scrollLeft = panStartRef.current.scrollLeft - dx;
+    },
+    [isPanning],
+  );
 
   const handleMouseUp = useCallback((e) => {
     if (e.button === 1) {
@@ -227,7 +232,9 @@ export function KanbanBoard({
           labelColorMap={labelColorMap}
           specialType={list.specialType}
           onCardDoubleClick={onCardDoubleClick}
-          onSortChange={(newSortBy, newSortOrder) => handleListSortChange(list.id, newSortBy, newSortOrder)}
+          onSortChange={(newSortBy, newSortOrder) =>
+            handleListSortChange(list.id, newSortBy, newSortOrder)
+          }
           activeTaskId={activeTaskId}
           isOver={overListId === list.id}
           isDragEnabled={(list.sortBy || 'position') === 'position'}
