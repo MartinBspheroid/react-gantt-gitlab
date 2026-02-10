@@ -49,10 +49,14 @@ export function CreateItemDialog({
   // 取得項目類型的顯示名稱
   const itemTypeName = useMemo(() => {
     switch (itemType) {
-      case 'milestone': return 'Milestone';
-      case 'issue': return 'Issue';
-      case 'task': return 'Task';
-      default: return 'Item';
+      case 'milestone':
+        return 'Milestone';
+      case 'issue':
+        return 'Issue';
+      case 'task':
+        return 'Task';
+      default:
+        return 'Item';
     }
   }, [itemType]);
 
@@ -88,9 +92,9 @@ export function CreateItemDialog({
     if (!batchTitles.trim()) return [];
     return batchTitles
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(title => ({ title, description: '' }));
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((title) => ({ title, description: '' }));
   }, [batchTitles]);
 
   // 處理確認
@@ -104,18 +108,20 @@ export function CreateItemDialog({
         setError('Please enter a title');
         return;
       }
-      items = [{
-        title: title.trim(),
-        description: description.trim(),
-        assignees,
-      }];
+      items = [
+        {
+          title: title.trim(),
+          description: description.trim(),
+          assignees,
+        },
+      ];
     } else {
       if (parsedBatchItems.length === 0) {
         setError('Please enter at least one title');
         return;
       }
       // Batch 模式：所有 items 共用相同的 assignees
-      items = parsedBatchItems.map(item => ({
+      items = parsedBatchItems.map((item) => ({
         ...item,
         assignees,
       }));
@@ -132,15 +138,26 @@ export function CreateItemDialog({
     } finally {
       setProcessing(false);
     }
-  }, [mode, title, description, assignees, parsedBatchItems, onConfirm, onClose]);
+  }, [
+    mode,
+    title,
+    description,
+    assignees,
+    parsedBatchItems,
+    onConfirm,
+    onClose,
+  ]);
 
   // Enter 鍵處理（僅在單一模式且 focus 在 title 輸入框時）
-  const handleTitleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' && !processing && title.trim()) {
-      e.preventDefault();
-      handleConfirm();
-    }
-  }, [handleConfirm, processing, title]);
+  const handleTitleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Enter' && !processing && title.trim()) {
+        e.preventDefault();
+        handleConfirm();
+      }
+    },
+    [handleConfirm, processing, title],
+  );
 
   // 建立按鈕文字
   const confirmButtonText = useMemo(() => {
@@ -184,7 +201,10 @@ export function CreateItemDialog({
       <button
         className="dialog-btn dialog-btn-primary"
         onClick={handleConfirm}
-        disabled={processing || (mode === 'single' ? !title.trim() : parsedBatchItems.length === 0)}
+        disabled={
+          processing ||
+          (mode === 'single' ? !title.trim() : parsedBatchItems.length === 0)
+        }
         type="button"
       >
         {confirmButtonText}
@@ -301,8 +321,7 @@ export function CreateItemDialog({
               <span className="preview-count">
                 {parsedBatchItems.length > 0
                   ? `${parsedBatchItems.length} item${parsedBatchItems.length > 1 ? 's' : ''} to create:`
-                  : 'Preview'
-                }
+                  : 'Preview'}
               </span>
             </div>
             <div className="preview-list">

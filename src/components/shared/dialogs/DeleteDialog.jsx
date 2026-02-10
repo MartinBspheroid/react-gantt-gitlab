@@ -19,12 +19,7 @@ import './BaseDialog.css'; // 使用共用樣式
  * @param {Function} props.onConfirm - 確認回調 (action: 'close' | 'delete', options: { recursive: boolean }) => Promise
  * @param {Array} props.items - 要刪除的項目 [{id, title, type: 'milestone'|'issue'|'task', children?: [...]}]
  */
-export function DeleteDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-  items = [],
-}) {
+export function DeleteDialog({ isOpen, onClose, onConfirm, items = [] }) {
   const [action, setAction] = useState('delete'); // 'close' | 'delete'
   const [recursive, setRecursive] = useState(false); // 是否遞迴刪除子項目
   const [processing, setProcessing] = useState(false);
@@ -32,7 +27,7 @@ export function DeleteDialog({
 
   // 檢查是否有可以 close 的項目（Issue 或 Task，大小寫不敏感）
   const hasClosableItems = useMemo(() => {
-    return items.some(item => {
+    return items.some((item) => {
       const type = item.type?.toLowerCase();
       return type === 'issue' || type === 'task';
     });
@@ -40,7 +35,7 @@ export function DeleteDialog({
 
   // 檢查是否全部都是可 close 的項目
   const allClosable = useMemo(() => {
-    return items.every(item => {
+    return items.every((item) => {
       const type = item.type?.toLowerCase();
       return type === 'issue' || type === 'task';
     });
@@ -48,7 +43,7 @@ export function DeleteDialog({
 
   // 檢查是否有子項目（可以遞迴刪除）
   const hasChildren = useMemo(() => {
-    return items.some(item => item.children && item.children.length > 0);
+    return items.some((item) => item.children && item.children.length > 0);
   }, [items]);
 
   // 計算子項目總數和類型統計
@@ -68,8 +63,10 @@ export function DeleteDialog({
     }
 
     const parts = [];
-    if (issueCount > 0) parts.push(`${issueCount} issue${issueCount > 1 ? 's' : ''}`);
-    if (taskCount > 0) parts.push(`${taskCount} task${taskCount > 1 ? 's' : ''}`);
+    if (issueCount > 0)
+      parts.push(`${issueCount} issue${issueCount > 1 ? 's' : ''}`);
+    if (taskCount > 0)
+      parts.push(`${taskCount} task${taskCount > 1 ? 's' : ''}`);
 
     return parts.join(', ');
   }, [items, hasChildren]);
@@ -118,10 +115,14 @@ export function DeleteDialog({
   // 取得項目類型的顯示名稱（大小寫不敏感）
   const getTypeName = (type) => {
     switch (type?.toLowerCase()) {
-      case 'milestone': return 'Milestone';
-      case 'issue': return 'Issue';
-      case 'task': return 'Task';
-      default: return 'Item';
+      case 'milestone':
+        return 'Milestone';
+      case 'issue':
+        return 'Issue';
+      case 'task':
+        return 'Task';
+      default:
+        return 'Item';
     }
   };
 
@@ -156,9 +157,10 @@ export function DeleteDialog({
     </>
   );
 
-  const title = items.length === 1
-    ? `${action === 'close' ? 'Close' : 'Delete'} ${getTypeName(items[0].type)}`
-    : `${action === 'close' ? 'Close' : 'Delete'} ${items.length} items`;
+  const title =
+    items.length === 1
+      ? `${action === 'close' ? 'Close' : 'Delete'} ${getTypeName(items[0].type)}`
+      : `${action === 'close' ? 'Close' : 'Delete'} ${items.length} items`;
 
   return (
     <BaseDialog
@@ -177,10 +179,15 @@ export function DeleteDialog({
           const typeLower = item.type?.toLowerCase();
           return (
             <div key={item.id || index} className="delete-item">
-              <i className={`fas ${
-                typeLower === 'milestone' ? 'fa-flag' :
-                typeLower === 'issue' ? 'fa-file' : 'fa-check'
-              }`} />
+              <i
+                className={`fas ${
+                  typeLower === 'milestone'
+                    ? 'fa-flag'
+                    : typeLower === 'issue'
+                      ? 'fa-file'
+                      : 'fa-check'
+                }`}
+              />
               <span className="delete-item-title">{item.title}</span>
               <span className="delete-item-type">{getTypeName(item.type)}</span>
             </div>
@@ -225,7 +232,9 @@ export function DeleteDialog({
             />
             <div className="option-content">
               <span className="option-title">Delete</span>
-              <span className="option-desc">Permanently remove from GitLab</span>
+              <span className="option-desc">
+                Permanently remove from GitLab
+              </span>
             </div>
           </label>
         </div>
@@ -254,8 +263,12 @@ export function DeleteDialog({
       )}
 
       {/* 警告訊息 */}
-      <div className={`delete-warning ${action === 'delete' ? 'danger' : 'info'}`}>
-        <i className={`fas ${action === 'delete' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`} />
+      <div
+        className={`delete-warning ${action === 'delete' ? 'danger' : 'info'}`}
+      >
+        <i
+          className={`fas ${action === 'delete' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`}
+        />
         <span>
           {action === 'delete'
             ? 'This action cannot be undone. The item(s) will be permanently deleted from GitLab.'

@@ -13,7 +13,8 @@ import './shared/TodayMarker.css';
  * Calculate task position and width based on dates and scale
  */
 function calculateTaskPosition(task, startDate, cellWidth, lengthUnit) {
-  const taskStart = task.start instanceof Date ? task.start : new Date(task.start);
+  const taskStart =
+    task.start instanceof Date ? task.start : new Date(task.start);
 
   // Determine task end date with proper fallback for tasks without end dates
   let taskEnd;
@@ -57,7 +58,10 @@ function calculateTaskPosition(task, startDate, cellWidth, lengthUnit) {
   }
 
   const x = startDiff * cellWidth * unitMultiplier;
-  const width = Math.max(cellWidth * 0.5, duration * cellWidth * unitMultiplier);
+  const width = Math.max(
+    cellWidth * 0.5,
+    duration * cellWidth * unitMultiplier,
+  );
 
   return { x, width };
 }
@@ -79,7 +83,8 @@ function assignTasksToRows(tasks) {
   const rowEndTimes = [];
 
   for (const task of sorted) {
-    const taskStart = task.start instanceof Date ? task.start : new Date(task.start);
+    const taskStart =
+      task.start instanceof Date ? task.start : new Date(task.start);
 
     // Determine task end date with proper fallback for tasks without end dates
     let taskEnd;
@@ -98,7 +103,8 @@ function assignTasksToRows(tasks) {
       }
     }
 
-    const effectiveEnd = taskEnd >= taskStart ? taskEnd : new Date(taskStart.getTime() + 86400000);
+    const effectiveEnd =
+      taskEnd >= taskStart ? taskEnd : new Date(taskStart.getTime() + 86400000);
 
     // Find first row where this task doesn't overlap
     let rowIndex = -1;
@@ -130,7 +136,12 @@ function assignTasksToRows(tasks) {
  * @param {Array} selectedLabels - Selected label names
  * @param {boolean} showOthers - Whether to show "Others" category for uncategorized tasks
  */
-function groupTasks(allTasks, selectedAssignees, selectedLabels, showOthers = false) {
+function groupTasks(
+  allTasks,
+  selectedAssignees,
+  selectedLabels,
+  showOthers = false,
+) {
   const groups = [];
 
   // Filter work items only
@@ -147,14 +158,15 @@ function groupTasks(allTasks, selectedAssignees, selectedLabels, showOthers = fa
   for (const assignee of selectedAssignees) {
     const assigneeTasks = workItems.filter((task) => {
       if (!task.assigned) return false;
-      const taskAssignees = typeof task.assigned === 'string'
-        ? task.assigned.split(',').map(a => a.trim())
-        : [String(task.assigned)];
+      const taskAssignees =
+        typeof task.assigned === 'string'
+          ? task.assigned.split(',').map((a) => a.trim())
+          : [String(task.assigned)];
       return taskAssignees.includes(assignee);
     });
 
     // Track categorized tasks
-    assigneeTasks.forEach(task => categorizedTaskIds.add(task.id));
+    assigneeTasks.forEach((task) => categorizedTaskIds.add(task.id));
 
     const rows = assignTasksToRows(assigneeTasks);
     groups.push({
@@ -170,14 +182,17 @@ function groupTasks(allTasks, selectedAssignees, selectedLabels, showOthers = fa
   for (const label of selectedLabels) {
     const labelTasks = workItems.filter((task) => {
       if (!task.labels) return false;
-      const taskLabels = typeof task.labels === 'string'
-        ? task.labels.split(',').map(l => l.trim())
-        : Array.isArray(task.labels) ? task.labels : [];
+      const taskLabels =
+        typeof task.labels === 'string'
+          ? task.labels.split(',').map((l) => l.trim())
+          : Array.isArray(task.labels)
+            ? task.labels
+            : [];
       return taskLabels.includes(label);
     });
 
     // Track categorized tasks
-    labelTasks.forEach(task => categorizedTaskIds.add(task.id));
+    labelTasks.forEach((task) => categorizedTaskIds.add(task.id));
 
     const rows = assignTasksToRows(labelTasks);
     groups.push({
@@ -190,8 +205,13 @@ function groupTasks(allTasks, selectedAssignees, selectedLabels, showOthers = fa
   }
 
   // Add "Others" group for uncategorized tasks
-  if (showOthers && (selectedAssignees.length > 0 || selectedLabels.length > 0)) {
-    const otherTasks = workItems.filter(task => !categorizedTaskIds.has(task.id));
+  if (
+    showOthers &&
+    (selectedAssignees.length > 0 || selectedLabels.length > 0)
+  ) {
+    const otherTasks = workItems.filter(
+      (task) => !categorizedTaskIds.has(task.id),
+    );
 
     if (otherTasks.length > 0) {
       const rows = assignTasksToRows(otherTasks);
@@ -228,7 +248,8 @@ export function WorkloadChart({
   const [dragState, setDragState] = useState(null);
 
   // Middle mouse drag to scroll
-  const { isDragging: isMiddleMouseDragging, onMouseDown: onMiddleMouseDown } = useMiddleMouseDrag(chartScrollRef);
+  const { isDragging: isMiddleMouseDragging, onMouseDown: onMiddleMouseDown } =
+    useMiddleMouseDrag(chartScrollRef);
   const [dropTargetGroup, setDropTargetGroup] = useState(null);
 
   // Optimistic updates - store local date overrides until server confirms
@@ -238,7 +259,7 @@ export function WorkloadChart({
   const tasksWithLocalUpdates = useMemo(() => {
     if (Object.keys(localUpdates).length === 0) return tasks;
 
-    return tasks.map(task => {
+    return tasks.map((task) => {
       const update = localUpdates[task.id];
       if (update) {
         return { ...task, start: update.start, end: update.end };
@@ -255,14 +276,18 @@ export function WorkloadChart({
     let hasChanges = false;
 
     for (const [taskId, update] of Object.entries(localUpdates)) {
-      const task = tasks.find(t => String(t.id) === String(taskId));
+      const task = tasks.find((t) => String(t.id) === String(taskId));
       if (task) {
-        const taskStart = task.start instanceof Date ? task.start : new Date(task.start);
-        const taskEnd = task.end instanceof Date ? task.end : new Date(task.end);
+        const taskStart =
+          task.start instanceof Date ? task.start : new Date(task.start);
+        const taskEnd =
+          task.end instanceof Date ? task.end : new Date(task.end);
 
         // If server data now matches our update, remove the local override
-        if (Math.abs(taskStart.getTime() - update.start.getTime()) < 86400000 &&
-            Math.abs(taskEnd.getTime() - update.end.getTime()) < 86400000) {
+        if (
+          Math.abs(taskStart.getTime() - update.start.getTime()) < 86400000 &&
+          Math.abs(taskEnd.getTime() - update.end.getTime()) < 86400000
+        ) {
           delete newLocalUpdates[taskId];
           hasChanges = true;
         }
@@ -276,7 +301,12 @@ export function WorkloadChart({
 
   // Group tasks (use tasks with local updates)
   const groups = useMemo(() => {
-    return groupTasks(tasksWithLocalUpdates, selectedAssignees, selectedLabels, showOthers);
+    return groupTasks(
+      tasksWithLocalUpdates,
+      selectedAssignees,
+      selectedLabels,
+      showOthers,
+    );
   }, [tasksWithLocalUpdates, selectedAssignees, selectedLabels, showOthers]);
 
   // Spacing between groups
@@ -302,14 +332,17 @@ export function WorkloadChart({
   }, [groups, cellHeight, groupSpacing]);
 
   // Find group at Y position (relative to chart content)
-  const findGroupAtY = useCallback((y) => {
-    for (const boundary of groupBoundaries) {
-      if (y >= boundary.startY && y < boundary.endY) {
-        return boundary.group;
+  const findGroupAtY = useCallback(
+    (y) => {
+      for (const boundary of groupBoundaries) {
+        if (y >= boundary.startY && y < boundary.endY) {
+          return boundary.group;
+        }
       }
-    }
-    return null;
-  }, [groupBoundaries]);
+      return null;
+    },
+    [groupBoundaries],
+  );
 
   // Calculate chart dimensions
   const chartDimensions = useMemo(() => {
@@ -318,11 +351,20 @@ export function WorkloadChart({
 
     let unitMultiplier = 1;
     switch (lengthUnit) {
-      case 'hour': unitMultiplier = 24; break;
-      case 'week': unitMultiplier = 1 / 7; break;
-      case 'month': unitMultiplier = 1 / 30; break;
-      case 'quarter': unitMultiplier = 1 / 90; break;
-      default: unitMultiplier = 1;
+      case 'hour':
+        unitMultiplier = 24;
+        break;
+      case 'week':
+        unitMultiplier = 1 / 7;
+        break;
+      case 'month':
+        unitMultiplier = 1 / 30;
+        break;
+      case 'quarter':
+        unitMultiplier = 1 / 90;
+        break;
+      default:
+        unitMultiplier = 1;
     }
 
     const width = totalDays * cellWidth * unitMultiplier;
@@ -333,13 +375,21 @@ export function WorkloadChart({
       totalRows += Math.max(1, group.rows.length); // Task rows only
     }
     // Add spacing between groups (n-1 spacings for n groups)
-    const totalSpacing = groups.length > 1 ? (groups.length - 1) * groupSpacing : 0;
+    const totalSpacing =
+      groups.length > 1 ? (groups.length - 1) * groupSpacing : 0;
 
     const height = totalRows * cellHeight + totalSpacing;
 
     return { width, height, totalDays };
-  }, [startDate, endDate, cellWidth, cellHeight, lengthUnit, groups, groupSpacing]);
-
+  }, [
+    startDate,
+    endDate,
+    cellWidth,
+    cellHeight,
+    lengthUnit,
+    groups,
+    groupSpacing,
+  ]);
 
   // Handle task mouse down for dragging
   const handleTaskMouseDown = useCallback((e, task, group) => {
@@ -369,8 +419,10 @@ export function WorkloadChart({
       startY: e.clientY,
       chartTop: chartRect?.top || 0,
       scrollTop,
-      originalStart: task.start instanceof Date ? task.start : new Date(task.start),
-      originalEnd: task.end instanceof Date ? task.end : new Date(task.end || task.start),
+      originalStart:
+        task.start instanceof Date ? task.start : new Date(task.start),
+      originalEnd:
+        task.end instanceof Date ? task.end : new Date(task.end || task.start),
     });
 
     e.preventDefault();
@@ -386,11 +438,20 @@ export function WorkloadChart({
 
       let unitMultiplier = 1;
       switch (lengthUnit) {
-        case 'hour': unitMultiplier = 24; break;
-        case 'week': unitMultiplier = 1 / 7; break;
-        case 'month': unitMultiplier = 1 / 30; break;
-        case 'quarter': unitMultiplier = 1 / 90; break;
-        default: unitMultiplier = 1;
+        case 'hour':
+          unitMultiplier = 24;
+          break;
+        case 'week':
+          unitMultiplier = 1 / 7;
+          break;
+        case 'month':
+          unitMultiplier = 1 / 30;
+          break;
+        case 'quarter':
+          unitMultiplier = 1 / 90;
+          break;
+        default:
+          unitMultiplier = 1;
       }
 
       const daysDelta = Math.round(dx / (cellWidth * unitMultiplier));
@@ -412,7 +473,10 @@ export function WorkloadChart({
         if (targetGroup && targetGroup.id !== dragState.group.id) {
           // Allow dropping on "Others" group - this removes assignee/label from task
           // But only if dragging FROM an assignee or label group (not from Others itself)
-          if (targetGroup.type === 'others' && dragState.group.type === 'others') {
+          if (
+            targetGroup.type === 'others' &&
+            dragState.group.type === 'others'
+          ) {
             setDropTargetGroup(null);
           } else {
             setDropTargetGroup(targetGroup);
@@ -432,7 +496,7 @@ export function WorkloadChart({
         }
       }
 
-      setDragState(prev => ({
+      setDragState((prev) => ({
         ...prev,
         currentStart: newStart,
         currentEnd: newEnd,
@@ -449,11 +513,12 @@ export function WorkloadChart({
         finalEnd.getTime() !== dragState.originalEnd.getTime();
 
       // Check if group changed (cross-group drag)
-      const groupChanged = dropTargetGroup && dropTargetGroup.id !== dragState.group.id;
+      const groupChanged =
+        dropTargetGroup && dropTargetGroup.id !== dragState.group.id;
 
       if (dateChanged) {
         // Apply optimistic update immediately so UI doesn't snap back
-        setLocalUpdates(prev => ({
+        setLocalUpdates((prev) => ({
           ...prev,
           [dragState.task.id]: { start: finalStart, end: finalEnd },
         }));
@@ -486,27 +551,40 @@ export function WorkloadChart({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragState, cellWidth, lengthUnit, onTaskDrag, onGroupChange, findGroupAtY, dropTargetGroup]);
+  }, [
+    dragState,
+    cellWidth,
+    lengthUnit,
+    onTaskDrag,
+    onGroupChange,
+    findGroupAtY,
+    dropTargetGroup,
+  ]);
 
   // Render a single task bar
   const renderTaskBar = (task, group, rowIndex) => {
     // Check if this task is being dragged
     const isDragging = dragState && dragState.task.id === task.id;
-    const displayStart = isDragging && dragState.currentStart ? dragState.currentStart : task.start;
-    const displayEnd = isDragging && dragState.currentEnd ? dragState.currentEnd : task.end;
+    const displayStart =
+      isDragging && dragState.currentStart
+        ? dragState.currentStart
+        : task.start;
+    const displayEnd =
+      isDragging && dragState.currentEnd ? dragState.currentEnd : task.end;
 
     const { x, width } = calculateTaskPosition(
       { ...task, start: displayStart, end: displayEnd },
       startDate,
       cellWidth,
-      lengthUnit
+      lengthUnit,
     );
 
     const isTask = task._gitlab?.workItemType === 'Task';
     const barColor = isTask ? '#00ba94' : '#428fdc';
 
     // Generate tooltip text with proper date handling
-    const startDateStr = displayStart?.toLocaleDateString?.() || 'No start date';
+    const startDateStr =
+      displayStart?.toLocaleDateString?.() || 'No start date';
     let endDateStr;
     let dateRangeNote = '';
 
@@ -527,7 +605,7 @@ export function WorkloadChart({
     // Build comprehensive tooltip
     const tooltipParts = [
       task.text,
-      `${startDateStr} - ${endDateStr}${dateRangeNote}`
+      `${startDateStr} - ${endDateStr}${dateRangeNote}`,
     ];
 
     // Add assignee info if present
@@ -537,7 +615,9 @@ export function WorkloadChart({
 
     // Add labels if present
     if (task.labels) {
-      const labelStr = Array.isArray(task.labels) ? task.labels.join(', ') : task.labels;
+      const labelStr = Array.isArray(task.labels)
+        ? task.labels.join(', ')
+        : task.labels;
       tooltipParts.push(`Labels: ${labelStr}`);
     }
 
@@ -580,7 +660,9 @@ export function WorkloadChart({
     while (current < endDate) {
       const dayOfWeek = current.getDay();
       const isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6;
-      const isHolidayDay = highlightTime ? highlightTime(current, 'day') === 'wx-weekend' : false;
+      const isHolidayDay = highlightTime
+        ? highlightTime(current, 'day') === 'wx-weekend'
+        : false;
 
       // Track month changes
       const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
@@ -590,11 +672,15 @@ export function WorkloadChart({
           const isJanuary = monthDate.getMonth() === 0;
           const year = monthDate.getFullYear();
           // Show year on January or if it's the first month and year changed
-          const showYear = isJanuary || (months.length === 0 && year !== lastYear);
+          const showYear =
+            isJanuary || (months.length === 0 && year !== lastYear);
           months.push({
             key: currentMonth,
             label: showYear
-              ? monthDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+              ? monthDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                })
               : monthDate.toLocaleDateString('en-US', { month: 'short' }),
             startIdx: monthStartIdx,
             days: cells.length - monthStartIdx,
@@ -619,11 +705,14 @@ export function WorkloadChart({
       const monthDate = new Date(cells[monthStartIdx].date);
       const isJanuary = monthDate.getMonth() === 0;
       const year = monthDate.getFullYear();
-      const showYear = isJanuary || (months.length === 0) || (year !== lastYear);
+      const showYear = isJanuary || months.length === 0 || year !== lastYear;
       months.push({
         key: currentMonth,
         label: showYear
-          ? monthDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+          ? monthDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+            })
           : monthDate.toLocaleDateString('en-US', { month: 'short' }),
         startIdx: monthStartIdx,
         days: cells.length - monthStartIdx,
@@ -672,11 +761,20 @@ export function WorkloadChart({
 
       let unitMultiplier = 1;
       switch (lengthUnit) {
-        case 'hour': unitMultiplier = 24; break;
-        case 'week': unitMultiplier = 1 / 7; break;
-        case 'month': unitMultiplier = 1 / 30; break;
-        case 'quarter': unitMultiplier = 1 / 90; break;
-        default: unitMultiplier = 1;
+        case 'hour':
+          unitMultiplier = 24;
+          break;
+        case 'week':
+          unitMultiplier = 1 / 7;
+          break;
+        case 'month':
+          unitMultiplier = 1 / 30;
+          break;
+        case 'quarter':
+          unitMultiplier = 1 / 90;
+          break;
+        default:
+          unitMultiplier = 1;
       }
 
       const todayPosition = daysDiff * cellWidth * unitMultiplier;
@@ -712,7 +810,10 @@ export function WorkloadChart({
         <div className="time-scale-row">
           <div className="time-scale-spacer">Year / Month</div>
           <div className="time-scale-scroll" ref={timeScaleMonthRef}>
-            <div className="time-scale-months" style={{ width: `${chartDimensions.width}px` }}>
+            <div
+              className="time-scale-months"
+              style={{ width: `${chartDimensions.width}px` }}
+            >
               {monthHeaders.map((month) => (
                 <div
                   key={month.key}
@@ -729,7 +830,10 @@ export function WorkloadChart({
         <div className="time-scale-row">
           <div className="time-scale-spacer">Day</div>
           <div className="time-scale-scroll" ref={timeScaleDayRef}>
-            <div className="time-scale-content" style={{ width: `${chartDimensions.width}px` }}>
+            <div
+              className="time-scale-content"
+              style={{ width: `${chartDimensions.width}px` }}
+            >
               {timeScaleCells.map((cell, idx) => (
                 <div
                   key={idx}
@@ -747,13 +851,19 @@ export function WorkloadChart({
       {/* Chart body */}
       <div className="workload-chart-body">
         {/* Left sidebar (group labels) */}
-        <div className="workload-sidebar-column" ref={sidebarRef} onScroll={handleSidebarScroll}>
+        <div
+          className="workload-sidebar-column"
+          ref={sidebarRef}
+          onScroll={handleSidebarScroll}
+        >
           {groups.map((group, groupIdx) => {
             const rowCount = Math.max(1, group.rows.length);
             const isLastGroup = groupIdx === groups.length - 1;
             // Add spacing after each group except the last one
-            const groupHeight = rowCount * cellHeight + (isLastGroup ? 0 : groupSpacing);
-            const isDropTarget = dropTargetGroup && dropTargetGroup.id === group.id;
+            const groupHeight =
+              rowCount * cellHeight + (isLastGroup ? 0 : groupSpacing);
+            const isDropTarget =
+              dropTargetGroup && dropTargetGroup.id === group.id;
             return (
               <div
                 key={group.id}
@@ -770,15 +880,26 @@ export function WorkloadChart({
                       <>
                         <span className="group-icon">
                           {group.type === 'assignee' ? (
-                            <i className="fas fa-user" style={{ color: '#6b4fbb' }}></i>
+                            <i
+                              className="fas fa-user"
+                              style={{ color: '#6b4fbb' }}
+                            ></i>
                           ) : group.type === 'label' ? (
-                            <i className="fas fa-tag" style={{ color: '#fc6d26' }}></i>
+                            <i
+                              className="fas fa-tag"
+                              style={{ color: '#fc6d26' }}
+                            ></i>
                           ) : (
-                            <i className="fas fa-folder-open" style={{ color: '#6c757d' }}></i>
+                            <i
+                              className="fas fa-folder-open"
+                              style={{ color: '#6c757d' }}
+                            ></i>
                           )}
                         </span>
                         <span className="group-name">{group.name}</span>
-                        <span className="group-task-count">({group.taskCount})</span>
+                        <span className="group-task-count">
+                          ({group.taskCount})
+                        </span>
                       </>
                     ) : null}
                   </div>
@@ -838,7 +959,9 @@ export function WorkloadChart({
                         height: `${cellHeight}px`,
                       }}
                     >
-                      {(group.rows[rowIdx] || []).map(task => renderTaskBar(task, group, rowIdx))}
+                      {(group.rows[rowIdx] || []).map((task) =>
+                        renderTaskBar(task, group, rowIdx),
+                      )}
                     </div>
                   ))}
                 </div>

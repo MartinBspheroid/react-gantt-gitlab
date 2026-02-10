@@ -148,7 +148,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
     const issuesOnly = tasksWithPriority.filter(
       (task) =>
         (task.$isIssue || task._gitlab?.type === 'issue') &&
-        task._gitlab?.workItemType !== 'Task'
+        task._gitlab?.workItemType !== 'Task',
     );
     return DataFilters.applyFilters(issuesOnly, filterOptions);
   }, [tasksWithPriority, filterOptions]);
@@ -189,14 +189,18 @@ export function KanbanView({ showSettings, onSettingsClose }) {
 
       try {
         // Sync to GitLab
-        await provider.reorderWorkItem(task._gitlab.iid, targetTask._gitlab.iid, position);
+        await provider.reorderWorkItem(
+          task._gitlab.iid,
+          targetTask._gitlab.iid,
+          position,
+        );
       } catch (error) {
         // Rollback on failure
         rollback();
         throw error;
       }
     },
-    [provider, filteredTasks, reorderTaskLocal]
+    [provider, filteredTasks, reorderTaskLocal],
   );
 
   // Refresh tasks by triggering a sync
@@ -218,11 +222,11 @@ export function KanbanView({ showSettings, onSettingsClose }) {
     (task) => {
       showToast(
         `Opening editor for #${task._gitlab?.iid || task.id}...`,
-        'info'
+        'info',
       );
       // TODO: Implement editor integration
     },
-    [showToast]
+    [showToast],
   );
 
   // Board management handlers
@@ -234,7 +238,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
         showToast(`Board "${newBoard.name}" created`, 'success');
       }
     },
-    [createBoard, showToast]
+    [createBoard, showToast],
   );
 
   const handleSaveBoard = useCallback(
@@ -243,7 +247,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
       setShowSettingsModal(false);
       showToast('Board settings saved', 'success');
     },
-    [updateBoard, showToast]
+    [updateBoard, showToast],
   );
 
   const handleDeleteBoard = useCallback(async () => {
@@ -274,7 +278,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
       }
       setEditingList(null);
     },
-    [editingList, addList, updateList, showToast]
+    [editingList, addList, updateList, showToast],
   );
 
   // Render loading state
@@ -376,7 +380,10 @@ export function KanbanView({ showSettings, onSettingsClose }) {
             }
           }}
         >
-          <div className="settings-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="settings-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="settings-modal-header">
               <h3>Settings</h3>
               <button onClick={onSettingsClose} className="modal-close-btn">
@@ -414,10 +421,14 @@ export function KanbanView({ showSettings, onSettingsClose }) {
                     </span>
                   )}
                 </h4>
-                <p className="settings-hint">Add holiday dates (one per line, formats: YYYY-MM-DD or YYYY/M/D, optional name after space)</p>
+                <p className="settings-hint">
+                  Add holiday dates (one per line, formats: YYYY-MM-DD or
+                  YYYY/M/D, optional name after space)
+                </p>
                 {holidaysError && (
                   <div className="holidays-error">
-                    <i className="fas fa-exclamation-triangle"></i> {holidaysError}
+                    <i className="fas fa-exclamation-triangle"></i>{' '}
+                    {holidaysError}
                   </div>
                 )}
                 <textarea
@@ -453,7 +464,10 @@ export function KanbanView({ showSettings, onSettingsClose }) {
                     </span>
                   )}
                 </h4>
-                <p className="settings-hint">Add extra working days on weekends (one per line, formats: YYYY-MM-DD or YYYY/M/D)</p>
+                <p className="settings-hint">
+                  Add extra working days on weekends (one per line, formats:
+                  YYYY-MM-DD or YYYY/M/D)
+                </p>
                 <textarea
                   value={workdaysText}
                   onChange={(e) => setWorkdaysText(e.target.value)}
@@ -493,7 +507,8 @@ export function KanbanView({ showSettings, onSettingsClose }) {
                   )}
                 </h4>
                 <p className="settings-hint">
-                  Highlight time bars with diagonal stripes based on issue title matching conditions
+                  Highlight time bars with diagonal stripes based on issue title
+                  matching conditions
                 </p>
                 <ColorRulesEditor
                   rules={colorRules}

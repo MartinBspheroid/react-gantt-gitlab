@@ -33,16 +33,16 @@ function Chart(props) {
 
   const api = useContext(storeContext);
 
-  const [selected, selectedCounter] = useStoreWithCounter(api, "_selected");
-  const rTasksValue = useStore(api, "_tasks");
-  const rScrollLeft = useStore(api, "scrollLeft");
-  const rScrollTop = useStore(api, "scrollTop");
-  const cellHeight = useStore(api, "cellHeight");
-  const cellWidth = useStore(api, "cellWidth");
-  const scales = useStore(api, "_scales");
-  const markers = useStore(api, "_markers");
-  const rScrollTask = useStore(api, "_scrollTask");
-  const zoom = useStore(api, "zoom");
+  const [selected, selectedCounter] = useStoreWithCounter(api, '_selected');
+  const rTasksValue = useStore(api, '_tasks');
+  const rScrollLeft = useStore(api, 'scrollLeft');
+  const rScrollTop = useStore(api, 'scrollTop');
+  const cellHeight = useStore(api, 'cellHeight');
+  const cellWidth = useStore(api, 'cellWidth');
+  const scales = useStore(api, '_scales');
+  const markers = useStore(api, '_markers');
+  const rScrollTask = useStore(api, '_scrollTask');
+  const zoom = useStore(api, 'zoom');
 
   const [chartHeight, setChartHeight] = useState();
   const [chartWidth, setChartWidth] = useState(0);
@@ -63,7 +63,6 @@ function Chart(props) {
   const { isDragging, onMouseDown } = useMiddleMouseDrag(chartRef);
 
   const extraRows = 1;
-
 
   const selectStyle = useMemo(() => {
     const t = [];
@@ -162,7 +161,6 @@ function Chart(props) {
     showTask(rScrollTask);
   }, [rScrollTask, showTask]);
 
-
   function onWheel(e) {
     if (zoom && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -228,7 +226,7 @@ function Chart(props) {
       if (typeof cleanup === 'function') cleanup();
     };
   }, [chartRef.current]);
-  
+
   useEffect(() => {
     const node = chartRef.current;
     if (!node) return;
@@ -239,7 +237,7 @@ function Chart(props) {
     return () => {
       node.removeEventListener('wheel', handler);
     };
-  }, [onWheel, zoom])
+  }, [onWheel, zoom]);
 
   return (
     <div
@@ -307,7 +305,11 @@ function Chart(props) {
           : null}
 
         <Links />
-        <Bars readonly={readonly} taskTemplate={taskTemplate} colorRules={colorRules} />
+        <Bars
+          readonly={readonly}
+          taskTemplate={taskTemplate}
+          colorRules={colorRules}
+        />
       </div>
 
       {/* Off-screen arrows - placed at chart level to avoid overflow clipping */}

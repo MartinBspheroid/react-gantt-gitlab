@@ -13,31 +13,37 @@ export default function GanttSummariesConvert({ skinSettings }) {
   const data = useMemo(() => getData(), []);
   const gApi = useRef(null);
 
-  const toSummary = useCallback((id, self) => {
-    const api = gApi.current;
-    if (!api) return;
-    const task = api.getTask(id);
-    if (!self) id = task.parent;
+  const toSummary = useCallback(
+    (id, self) => {
+      const api = gApi.current;
+      if (!api) return;
+      const task = api.getTask(id);
+      if (!self) id = task.parent;
 
-    if (id && task.type !== 'summary') {
-      api.exec('update-task', {
-        id,
-        task: { type: 'summary' },
-      });
-    }
-  }, [gApi]);
+      if (id && task.type !== 'summary') {
+        api.exec('update-task', {
+          id,
+          task: { type: 'summary' },
+        });
+      }
+    },
+    [gApi],
+  );
 
-  const toTask = useCallback((id) => {
-    const api = gApi.current;
-    if (!api) return;
-    const obj = api.getTask(id);
-    if (obj && !obj.data?.length) {
-      api.exec('update-task', {
-        id,
-        task: { type: 'task' },
-      });
-    }
-  }, [gApi]);
+  const toTask = useCallback(
+    (id) => {
+      const api = gApi.current;
+      if (!api) return;
+      const obj = api.getTask(id);
+      if (obj && !obj.data?.length) {
+        api.exec('update-task', {
+          id,
+          task: { type: 'task' },
+        });
+      }
+    },
+    [gApi],
+  );
 
   const init = useCallback(
     (api) => {
@@ -66,7 +72,7 @@ export default function GanttSummariesConvert({ skinSettings }) {
     [toSummary, toTask],
   );
 
-  const activeTaskId = useStoreLater(gApi.current, "activeTask");
+  const activeTaskId = useStoreLater(gApi.current, 'activeTask');
 
   const items = useMemo(() => {
     const api = gApi.current;

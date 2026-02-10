@@ -26,9 +26,9 @@ const PREDEFINED_COLORS = [
  * Generate a UUID v4
  */
 function generateId() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -78,7 +78,9 @@ function testRuleMatch(rule, testTitle, testLabels) {
     return matchPattern(testTitle, rule.pattern, rule.matchType);
   } else {
     // label: 任一 label 符合即可
-    return testLabels.some(label => matchPattern(label, rule.pattern, rule.matchType));
+    return testLabels.some((label) =>
+      matchPattern(label, rule.pattern, rule.matchType),
+    );
   }
 }
 
@@ -103,7 +105,10 @@ export function ColorRulesEditor({
 
   // Parse test labels string to array
   const testLabelsArray = testLabels
-    ? testLabels.split(',').map(l => l.trim()).filter(Boolean)
+    ? testLabels
+        .split(',')
+        .map((l) => l.trim())
+        .filter(Boolean)
     : [];
 
   // Add a new rule
@@ -135,44 +140,77 @@ export function ColorRulesEditor({
   }, [newRule, rules, onRulesChange]);
 
   // Delete a rule
-  const handleDeleteRule = useCallback((id) => {
-    onRulesChange(rules.filter(r => r.id !== id));
-  }, [rules, onRulesChange]);
+  const handleDeleteRule = useCallback(
+    (id) => {
+      onRulesChange(rules.filter((r) => r.id !== id));
+    },
+    [rules, onRulesChange],
+  );
 
   // Toggle rule enabled state
-  const handleToggleEnabled = useCallback((id) => {
-    onRulesChange(rules.map(r =>
-      r.id === id ? { ...r, enabled: !r.enabled } : r
-    ));
-  }, [rules, onRulesChange]);
+  const handleToggleEnabled = useCallback(
+    (id) => {
+      onRulesChange(
+        rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
+      );
+    },
+    [rules, onRulesChange],
+  );
 
   // Update a rule
-  const handleUpdateRule = useCallback((id, updates) => {
-    onRulesChange(rules.map(r =>
-      r.id === id ? { ...r, name: updates.name, pattern: updates.pattern, matchType: updates.matchType, conditionType: updates.conditionType, color: updates.color, opacity: updates.opacity } : r
-    ));
-    setEditingRule(null);
-  }, [rules, onRulesChange]);
+  const handleUpdateRule = useCallback(
+    (id, updates) => {
+      onRulesChange(
+        rules.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                name: updates.name,
+                pattern: updates.pattern,
+                matchType: updates.matchType,
+                conditionType: updates.conditionType,
+                color: updates.color,
+                opacity: updates.opacity,
+              }
+            : r,
+        ),
+      );
+      setEditingRule(null);
+    },
+    [rules, onRulesChange],
+  );
 
   // Move rule up in priority
-  const handleMoveUp = useCallback((index) => {
-    if (index <= 0) return;
-    const newRules = [...rules];
-    [newRules[index - 1], newRules[index]] = [newRules[index], newRules[index - 1]];
-    // Update priorities
-    newRules.forEach((r, i) => r.priority = i);
-    onRulesChange(newRules);
-  }, [rules, onRulesChange]);
+  const handleMoveUp = useCallback(
+    (index) => {
+      if (index <= 0) return;
+      const newRules = [...rules];
+      [newRules[index - 1], newRules[index]] = [
+        newRules[index],
+        newRules[index - 1],
+      ];
+      // Update priorities
+      newRules.forEach((r, i) => (r.priority = i));
+      onRulesChange(newRules);
+    },
+    [rules, onRulesChange],
+  );
 
   // Move rule down in priority
-  const handleMoveDown = useCallback((index) => {
-    if (index >= rules.length - 1) return;
-    const newRules = [...rules];
-    [newRules[index], newRules[index + 1]] = [newRules[index + 1], newRules[index]];
-    // Update priorities
-    newRules.forEach((r, i) => r.priority = i);
-    onRulesChange(newRules);
-  }, [rules, onRulesChange]);
+  const handleMoveDown = useCallback(
+    (index) => {
+      if (index >= rules.length - 1) return;
+      const newRules = [...rules];
+      [newRules[index], newRules[index + 1]] = [
+        newRules[index + 1],
+        newRules[index],
+      ];
+      // Update priorities
+      newRules.forEach((r, i) => (r.priority = i));
+      onRulesChange(newRules);
+    },
+    [rules, onRulesChange],
+  );
 
   // Start editing a rule
   const startEditing = useCallback((rule) => {
@@ -212,18 +250,21 @@ export function ColorRulesEditor({
         {(testTitle || testLabels) && (
           <div className="color-rules-test-results">
             Matched rules:
-            {rules.filter(r => testRuleMatch(r, testTitle, testLabelsArray)).map(r => (
-              <span
-                key={r.id}
-                className="matched-rule-tag"
-                style={{ backgroundColor: hexToRgba(r.color, r.opacity ?? 1) }}
-              >
-                {r.name}
-              </span>
-            ))}
-            {rules.filter(r => testRuleMatch(r, testTitle, testLabelsArray)).length === 0 && (
-              <span className="no-match">No match</span>
-            )}
+            {rules
+              .filter((r) => testRuleMatch(r, testTitle, testLabelsArray))
+              .map((r) => (
+                <span
+                  key={r.id}
+                  className="matched-rule-tag"
+                  style={{
+                    backgroundColor: hexToRgba(r.color, r.opacity ?? 1),
+                  }}
+                >
+                  {r.name}
+                </span>
+              ))}
+            {rules.filter((r) => testRuleMatch(r, testTitle, testLabelsArray))
+              .length === 0 && <span className="no-match">No match</span>}
           </div>
         )}
       </div>
@@ -242,12 +283,20 @@ export function ColorRulesEditor({
             >
               <div
                 className="color-rule-color-preview"
-                style={{ backgroundColor: hexToRgba(rule.color, rule.opacity ?? 1) }}
+                style={{
+                  backgroundColor: hexToRgba(rule.color, rule.opacity ?? 1),
+                }}
               />
               <div className="color-rule-info">
                 <div className="color-rule-name">{rule.name}</div>
                 <div className="color-rule-pattern">
-                  <span className="condition-type">[{(rule.conditionType || 'title') === 'title' ? 'Title' : 'Label'}]</span>
+                  <span className="condition-type">
+                    [
+                    {(rule.conditionType || 'title') === 'title'
+                      ? 'Title'
+                      : 'Label'}
+                    ]
+                  </span>
                   {rule.matchType === 'regex' ? (
                     <span className="pattern-type">regex:</span>
                   ) : (
@@ -280,7 +329,9 @@ export function ColorRulesEditor({
                     onClick={() => handleToggleEnabled(rule.id)}
                     title={rule.enabled ? 'Disable' : 'Enable'}
                   >
-                    <i className={`fas ${rule.enabled ? 'fa-eye' : 'fa-eye-slash'}`} />
+                    <i
+                      className={`fas ${rule.enabled ? 'fa-eye' : 'fa-eye-slash'}`}
+                    />
                   </button>
                   <button
                     className="color-rule-btn"
@@ -313,7 +364,9 @@ export function ColorRulesEditor({
                 <input
                   type="text"
                   value={newRule.name}
-                  onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, name: e.target.value })
+                  }
                   placeholder="e.g., Urgent Tasks"
                 />
               </div>
@@ -321,7 +374,9 @@ export function ColorRulesEditor({
                 <label>Condition</label>
                 <select
                   value={newRule.conditionType}
-                  onChange={(e) => setNewRule({ ...newRule, conditionType: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, conditionType: e.target.value })
+                  }
                 >
                   <option value="title">Title</option>
                   <option value="label">Label</option>
@@ -331,7 +386,9 @@ export function ColorRulesEditor({
                 <label>Match Type</label>
                 <select
                   value={newRule.matchType}
-                  onChange={(e) => setNewRule({ ...newRule, matchType: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, matchType: e.target.value })
+                  }
                 >
                   <option value="contains">Contains Text</option>
                   <option value="regex">Regular Expression</option>
@@ -342,17 +399,24 @@ export function ColorRulesEditor({
                 <input
                   type="text"
                   value={newRule.pattern}
-                  onChange={(e) => setNewRule({ ...newRule, pattern: e.target.value })}
-                  placeholder={newRule.conditionType === 'label'
-                    ? (newRule.matchType === 'regex' ? 'e.g., ^bug.*' : 'e.g., bug')
-                    : (newRule.matchType === 'regex' ? 'e.g., \\[urgent\\]' : 'e.g., [urgent]')
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, pattern: e.target.value })
+                  }
+                  placeholder={
+                    newRule.conditionType === 'label'
+                      ? newRule.matchType === 'regex'
+                        ? 'e.g., ^bug.*'
+                        : 'e.g., bug'
+                      : newRule.matchType === 'regex'
+                        ? 'e.g., \\[urgent\\]'
+                        : 'e.g., [urgent]'
                   }
                 />
               </div>
               <div className="form-row">
                 <label>Stripe Color</label>
                 <div className="color-picker">
-                  {PREDEFINED_COLORS.map(color => (
+                  {PREDEFINED_COLORS.map((color) => (
                     <button
                       key={color}
                       className={`color-option ${newRule.color === color ? 'selected' : ''}`}
@@ -363,7 +427,9 @@ export function ColorRulesEditor({
                   <input
                     type="color"
                     value={newRule.color}
-                    onChange={(e) => setNewRule({ ...newRule, color: e.target.value })}
+                    onChange={(e) =>
+                      setNewRule({ ...newRule, color: e.target.value })
+                    }
                     className="color-input"
                   />
                 </div>
@@ -377,12 +443,22 @@ export function ColorRulesEditor({
                     max="1"
                     step="0.1"
                     value={newRule.opacity}
-                    onChange={(e) => setNewRule({ ...newRule, opacity: parseFloat(e.target.value) })}
+                    onChange={(e) =>
+                      setNewRule({
+                        ...newRule,
+                        opacity: parseFloat(e.target.value),
+                      })
+                    }
                     className="opacity-slider"
                   />
                   <div
                     className="opacity-preview"
-                    style={{ backgroundColor: hexToRgba(newRule.color, newRule.opacity) }}
+                    style={{
+                      backgroundColor: hexToRgba(
+                        newRule.color,
+                        newRule.opacity,
+                      ),
+                    }}
                   />
                 </div>
               </div>
@@ -415,11 +491,20 @@ export function ColorRulesEditor({
 
       {/* Edit Rule Modal */}
       {editingRule && (
-        <div className="color-rule-modal-overlay" onClick={() => setEditingRule(null)}>
-          <div className="color-rule-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="color-rule-modal-overlay"
+          onClick={() => setEditingRule(null)}
+        >
+          <div
+            className="color-rule-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Edit Rule</h3>
-              <button className="modal-close-btn" onClick={() => setEditingRule(null)}>
+              <button
+                className="modal-close-btn"
+                onClick={() => setEditingRule(null)}
+              >
                 &times;
               </button>
             </div>
@@ -429,14 +514,21 @@ export function ColorRulesEditor({
                 <input
                   type="text"
                   value={editingRule.name}
-                  onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditingRule({ ...editingRule, name: e.target.value })
+                  }
                 />
               </div>
               <div className="form-row">
                 <label>Condition</label>
                 <select
                   value={editingRule.conditionType}
-                  onChange={(e) => setEditingRule({ ...editingRule, conditionType: e.target.value })}
+                  onChange={(e) =>
+                    setEditingRule({
+                      ...editingRule,
+                      conditionType: e.target.value,
+                    })
+                  }
                 >
                   <option value="title">Title</option>
                   <option value="label">Label</option>
@@ -446,7 +538,12 @@ export function ColorRulesEditor({
                 <label>Match Type</label>
                 <select
                   value={editingRule.matchType}
-                  onChange={(e) => setEditingRule({ ...editingRule, matchType: e.target.value })}
+                  onChange={(e) =>
+                    setEditingRule({
+                      ...editingRule,
+                      matchType: e.target.value,
+                    })
+                  }
                 >
                   <option value="contains">Contains Text</option>
                   <option value="regex">Regular Expression</option>
@@ -457,13 +554,15 @@ export function ColorRulesEditor({
                 <input
                   type="text"
                   value={editingRule.pattern}
-                  onChange={(e) => setEditingRule({ ...editingRule, pattern: e.target.value })}
+                  onChange={(e) =>
+                    setEditingRule({ ...editingRule, pattern: e.target.value })
+                  }
                 />
               </div>
               <div className="form-row">
                 <label>Stripe Color</label>
                 <div className="color-picker">
-                  {PREDEFINED_COLORS.map(color => (
+                  {PREDEFINED_COLORS.map((color) => (
                     <button
                       key={color}
                       className={`color-option ${editingRule.color === color ? 'selected' : ''}`}
@@ -474,7 +573,9 @@ export function ColorRulesEditor({
                   <input
                     type="color"
                     value={editingRule.color}
-                    onChange={(e) => setEditingRule({ ...editingRule, color: e.target.value })}
+                    onChange={(e) =>
+                      setEditingRule({ ...editingRule, color: e.target.value })
+                    }
                     className="color-input"
                   />
                 </div>
@@ -488,12 +589,22 @@ export function ColorRulesEditor({
                     max="1"
                     step="0.1"
                     value={editingRule.opacity}
-                    onChange={(e) => setEditingRule({ ...editingRule, opacity: parseFloat(e.target.value) })}
+                    onChange={(e) =>
+                      setEditingRule({
+                        ...editingRule,
+                        opacity: parseFloat(e.target.value),
+                      })
+                    }
                     className="opacity-slider"
                   />
                   <div
                     className="opacity-preview"
-                    style={{ backgroundColor: hexToRgba(editingRule.color, editingRule.opacity) }}
+                    style={{
+                      backgroundColor: hexToRgba(
+                        editingRule.color,
+                        editingRule.opacity,
+                      ),
+                    }}
                   />
                 </div>
               </div>

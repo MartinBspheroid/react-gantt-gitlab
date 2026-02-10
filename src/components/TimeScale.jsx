@@ -7,8 +7,8 @@ function TimeScale(props) {
   const { highlightTime } = props;
 
   const api = useContext(storeContext);
-  const scales = useStore(api, "_scales");
-  const scrollLeft = useStore(api, "scrollLeft");
+  const scales = useStore(api, '_scales');
+  const scrollLeft = useStore(api, 'scrollLeft');
 
   const containerStyle = {
     width: `${(scales && scales.width) != null ? scales.width : 0}px`,

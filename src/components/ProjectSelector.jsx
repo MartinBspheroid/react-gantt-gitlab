@@ -12,7 +12,10 @@
 
 import { useState, useEffect } from 'react';
 import './shared/modal-close-button.css';
-import { gitlabConfigManager, GitLabConfigManager } from '../config/DataSourceConfigManager';
+import {
+  gitlabConfigManager,
+  GitLabConfigManager,
+} from '../config/DataSourceConfigManager';
 import {
   gitlabCredentialManager,
   GitLabCredentialManager,
@@ -21,7 +24,11 @@ import { CredentialManager } from './CredentialManager';
 import { ProjectBrowser } from './ProjectBrowser';
 import { ConfirmDialog } from './shared/dialogs/ConfirmDialog';
 
-export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsChange }) {
+export function ProjectSelector({
+  onProjectChange,
+  currentConfigId,
+  onConfigsChange,
+}) {
   const [configs, setConfigs] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
@@ -66,7 +73,8 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
   const [showEditBrowser, setShowEditBrowser] = useState(false);
 
   // Check for missing credentials
-  const [configsWithMissingCredentials, setConfigsWithMissingCredentials] = useState(new Set());
+  const [configsWithMissingCredentials, setConfigsWithMissingCredentials] =
+    useState(new Set());
 
   const loadCredentials = () => {
     setCredentials(gitlabCredentialManager.getAllCredentials());
@@ -134,7 +142,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
   const handleEdit = (config) => {
     setEditingConfig(config);
     // For editing, we'll get the credential info
-    const configWithCred = gitlabConfigManager.getConfigWithCredential(config.id);
+    const configWithCred = gitlabConfigManager.getConfigWithCredential(
+      config.id,
+    );
     setFormData({
       name: config.name,
       gitlabUrl: configWithCred?.credential?.gitlabUrl || '',
@@ -199,9 +209,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
         if (!trimmedInput) {
           setConnectionStatus({
             success: false,
-            error: formData.type === 'project'
-              ? 'Please enter project ID or path'
-              : 'Please enter group ID or path',
+            error:
+              formData.type === 'project'
+                ? 'Please enter project ID or path'
+                : 'Please enter group ID or path',
           });
           return;
         }
@@ -228,7 +239,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
         if (!selectedProject) {
           setConnectionStatus({
             success: false,
-            error: formData.type === 'project' ? 'Please select a project' : 'Please select a group',
+            error:
+              formData.type === 'project'
+                ? 'Please select a project'
+                : 'Please select a group',
           });
           return;
         }
@@ -268,7 +282,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
       // Auto-fill name from domain if successful and name is empty
       if (result.success && !newCredentialData.name.trim()) {
         const domainName = GitLabCredentialManager.extractDomainName(
-          newCredentialData.gitlabUrl
+          newCredentialData.gitlabUrl,
         );
         setNewCredentialData((prev) => ({
           ...prev,
@@ -430,7 +444,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
     return (
       <div className="wizard-steps">
         {steps.map((step, idx) => (
-          <div key={step.num} className={`step ${wizardStep === step.num ? 'active' : ''} ${wizardStep > step.num ? 'completed' : ''}`}>
+          <div
+            key={step.num}
+            className={`step ${wizardStep === step.num ? 'active' : ''} ${wizardStep > step.num ? 'completed' : ''}`}
+          >
             <span className="step-number">{step.num}</span>
             <span className="step-label">{step.label}</span>
             {idx < steps.length - 1 && <span className="step-connector" />}
@@ -450,7 +467,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
             <div className="form-group">
               <label>Select Type *</label>
               <div className="radio-group">
-                <label className={`radio-option ${formData.type === 'project' ? 'selected' : ''}`}>
+                <label
+                  className={`radio-option ${formData.type === 'project' ? 'selected' : ''}`}
+                >
                   <input
                     type="radio"
                     name="type"
@@ -460,10 +479,15 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                   />
                   <span className="radio-label">
                     <span className="radio-title">Project</span>
-                    <span className="radio-desc">A single GitLab project (gitlab.com/namespace/project-name)</span>
+                    <span className="radio-desc">
+                      A single GitLab project
+                      (gitlab.com/namespace/project-name)
+                    </span>
                   </span>
                 </label>
-                <label className={`radio-option ${formData.type === 'group' ? 'selected' : ''}`}>
+                <label
+                  className={`radio-option ${formData.type === 'group' ? 'selected' : ''}`}
+                >
                   <input
                     type="radio"
                     name="type"
@@ -473,7 +497,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                   />
                   <span className="radio-label">
                     <span className="radio-title">Group</span>
-                    <span className="radio-desc">All projects within a GitLab group (gitlab.com/group-name)</span>
+                    <span className="radio-desc">
+                      All projects within a GitLab group (gitlab.com/group-name)
+                    </span>
                   </span>
                 </label>
               </div>
@@ -481,8 +507,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                 <small className="type-warning">
                   <i className="fas fa-exclamation-triangle"></i>
                   <span>
-                    Group mode has limited functionality: Holidays, Color Rules, and Filter Presets
-                    are not available because GitLab does not support Group Snippets.
+                    Group mode has limited functionality: Holidays, Color Rules,
+                    and Filter Presets are not available because GitLab does not
+                    support Group Snippets.
                   </span>
                 </small>
               )}
@@ -523,8 +550,12 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                   {selectedCredentialId && (
                     <div className="selected-info">
                       {(() => {
-                        const cred = credentials.find((c) => c.id === selectedCredentialId);
-                        return cred ? `Selected: ${cred.name} (${cred.gitlabUrl})` : '';
+                        const cred = credentials.find(
+                          (c) => c.id === selectedCredentialId,
+                        );
+                        return cred
+                          ? `Selected: ${cred.name} (${cred.gitlabUrl})`
+                          : '';
                       })()}
                     </div>
                   )}
@@ -537,7 +568,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                       type="text"
                       value={newCredentialData.name}
                       onChange={(e) =>
-                        setNewCredentialData((prev) => ({ ...prev, name: e.target.value }))
+                        setNewCredentialData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
                       }
                       placeholder="e.g., Company GitLab"
                     />
@@ -549,7 +583,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                       type="text"
                       value={newCredentialData.gitlabUrl}
                       onChange={(e) =>
-                        setNewCredentialData((prev) => ({ ...prev, gitlabUrl: e.target.value }))
+                        setNewCredentialData((prev) => ({
+                          ...prev,
+                          gitlabUrl: e.target.value,
+                        }))
                       }
                       placeholder="https://gitlab.com"
                     />
@@ -561,11 +598,16 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                       type="password"
                       value={newCredentialData.token}
                       onChange={(e) =>
-                        setNewCredentialData((prev) => ({ ...prev, token: e.target.value }))
+                        setNewCredentialData((prev) => ({
+                          ...prev,
+                          token: e.target.value,
+                        }))
                       }
                       placeholder="glpat-xxxxxxxxxxxxxxxxxxxx"
                     />
-                    <small>Requires a Personal Access Token with api scope</small>
+                    <small>
+                      Requires a Personal Access Token with api scope
+                    </small>
                   </div>
 
                   <div className="form-group">
@@ -597,7 +639,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                     >
                       Cancel
                     </button>
-                    <button onClick={handleNewCredentialSave} className="btn-save-small">
+                    <button
+                      onClick={handleNewCredentialSave}
+                      className="btn-save-small"
+                    >
                       Save Credential
                     </button>
                   </div>
@@ -624,7 +669,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           <div className="wizard-content">
             <div className="form-group">
               <div className="select-mode-toggle">
-                <label>Select {formData.type === 'project' ? 'Project' : 'Group'} *</label>
+                <label>
+                  Select {formData.type === 'project' ? 'Project' : 'Group'} *
+                </label>
                 <button
                   type="button"
                   className="btn-toggle-mode"
@@ -658,7 +705,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
               ) : selectedCredentialId ? (
                 // Browser mode
                 <ProjectBrowser
-                  proxyConfig={getProxyConfigForCredential(selectedCredentialId)}
+                  proxyConfig={getProxyConfigForCredential(
+                    selectedCredentialId,
+                  )}
                   type={formData.type}
                   onSelect={handleProjectSelect}
                   selectedId={
@@ -668,7 +717,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                   }
                 />
               ) : (
-                <div className="pb-status pb-error">Missing credential settings</div>
+                <div className="pb-status pb-error">
+                  Missing credential settings
+                </div>
               )}
             </div>
             {connectionStatus && (
@@ -701,27 +752,37 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
               <h4>Summary</h4>
               <div className="summary-item">
                 <span className="summary-label">Type:</span>
-                <span className="summary-value">{formData.type === 'project' ? 'Project' : 'Group'}</span>
+                <span className="summary-value">
+                  {formData.type === 'project' ? 'Project' : 'Group'}
+                </span>
               </div>
               <div className="summary-item">
                 <span className="summary-label">Credential:</span>
                 <span className="summary-value">
                   {(() => {
-                    const cred = credentials.find((c) => c.id === selectedCredentialId);
+                    const cred = credentials.find(
+                      (c) => c.id === selectedCredentialId,
+                    );
                     return cred ? `${cred.name} (${cred.gitlabUrl})` : '-';
                   })()}
                 </span>
               </div>
               <div className="summary-item">
-                <span className="summary-label">{formData.type === 'project' ? 'Project' : 'Group'}:</span>
+                <span className="summary-label">
+                  {formData.type === 'project' ? 'Project' : 'Group'}:
+                </span>
                 <span className="summary-value">
-                  {selectedProject ? `${selectedProject.name} (${selectedProject.fullPath})` : '-'}
+                  {selectedProject
+                    ? `${selectedProject.name} (${selectedProject.fullPath})`
+                    : '-'}
                 </span>
               </div>
               <div className="summary-item">
                 <span className="summary-label">ID:</span>
                 <span className="summary-value">
-                  {formData.type === 'project' ? formData.projectId : formData.groupId}
+                  {formData.type === 'project'
+                    ? formData.projectId
+                    : formData.groupId}
                 </span>
               </div>
             </div>
@@ -762,7 +823,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
         </select>
         {!selectedCredentialId && formData.gitlabUrl && (
           <small className="type-warning">
-            <span>This configuration uses legacy format. Please select or add a credential to update.</span>
+            <span>
+              This configuration uses legacy format. Please select or add a
+              credential to update.
+            </span>
           </small>
         )}
       </div>
@@ -785,8 +849,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           <small className="type-warning">
             <i className="fas fa-exclamation-triangle"></i>
             <span>
-              Group mode has limited functionality: Holidays, Color Rules, and Filter Presets
-              are not available because GitLab does not support Group Snippets.
+              Group mode has limited functionality: Holidays, Color Rules, and
+              Filter Presets are not available because GitLab does not support
+              Group Snippets.
             </span>
           </small>
         )}
@@ -794,7 +859,9 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
 
       <div className="form-group">
         <div className="select-mode-toggle">
-          <label>{formData.type === 'project' ? 'Project' : 'Group'} ID *</label>
+          <label>
+            {formData.type === 'project' ? 'Project' : 'Group'} ID *
+          </label>
           {selectedCredentialId && (
             <button
               type="button"
@@ -826,11 +893,15 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           <>
             <input
               type="text"
-              value={formData.type === 'project' ? formData.projectId : formData.groupId}
+              value={
+                formData.type === 'project'
+                  ? formData.projectId
+                  : formData.groupId
+              }
               onChange={(e) =>
                 handleInputChange(
                   formData.type === 'project' ? 'projectId' : 'groupId',
-                  e.target.value
+                  e.target.value,
                 )
               }
               placeholder={
@@ -874,7 +945,11 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
           ))}
         </select>
 
-        <button onClick={handleAddNew} className="btn-add" title="Add new configuration">
+        <button
+          onClick={handleAddNew}
+          className="btn-add"
+          title="Add new configuration"
+        >
           + Add
         </button>
       </div>
@@ -886,7 +961,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
               config.id === currentConfigId && (
                 <div key={config.id} className="config-actions">
                   {configsWithMissingCredentials.has(config.id) && (
-                    <span className="missing-credential-warning" title="Credential for this configuration is missing">
+                    <span
+                      className="missing-credential-warning"
+                      title="Credential for this configuration is missing"
+                    >
                       ⚠️
                     </span>
                   )}
@@ -905,7 +983,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                     Delete
                   </button>
                 </div>
-              )
+              ),
           )}
         </div>
       )}
@@ -920,10 +998,18 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
             }
           }}
         >
-          <div className="modal-content project-selector-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-content project-selector-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
-              <h3>{editingConfig ? 'Edit Configuration' : 'Add Configuration'}</h3>
-              <button onClick={() => setShowModal(false)} className="modal-close-btn">
+              <h3>
+                {editingConfig ? 'Edit Configuration' : 'Add Configuration'}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="modal-close-btn"
+              >
                 &times;
               </button>
             </div>
@@ -945,7 +1031,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
               {editingConfig ? (
                 // Legacy footer for editing
                 <>
-                  <button onClick={() => setShowModal(false)} className="btn-cancel">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="btn-cancel"
+                  >
                     Cancel
                   </button>
                   <button onClick={handleSave} className="btn-save">
@@ -960,7 +1049,10 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                       Back
                     </button>
                   )}
-                  <button onClick={() => setShowModal(false)} className="btn-cancel">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="btn-cancel"
+                  >
                     Cancel
                   </button>
                   {wizardStep < 4 ? (
@@ -968,7 +1060,7 @@ export function ProjectSelector({ onProjectChange, currentConfigId, onConfigsCha
                       onClick={handleWizardNext}
                       className="btn-next"
                       disabled={
-                        (wizardStep === 2 && showNewCredentialForm) // Disable next when editing new credential
+                        wizardStep === 2 && showNewCredentialForm // Disable next when editing new credential
                       }
                     >
                       Next

@@ -119,12 +119,15 @@ export function BlueprintManager({
     }
   }, []);
 
-  const handleOverlayClick = useCallback((e) => {
-    if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
-      onClose();
-    }
-    mouseDownOnOverlay.current = false;
-  }, [onClose]);
+  const handleOverlayClick = useCallback(
+    (e) => {
+      if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
+        onClose();
+      }
+      mouseDownOnOverlay.current = false;
+    },
+    [onClose],
+  );
 
   if (!isOpen) {
     return null;
@@ -138,7 +141,9 @@ export function BlueprintManager({
     >
       <div
         className="blueprint-modal blueprint-manager-modal"
-        onMouseDown={(e) => { mouseDownOnOverlay.current = false; }}
+        onMouseDown={(e) => {
+          mouseDownOnOverlay.current = false;
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -161,7 +166,8 @@ export function BlueprintManager({
               <i className="fas fa-layer-group" />
               <p>No blueprints yet</p>
               <span className="hint">
-                Right-click a Milestone and select "Save as Blueprint" to create one.
+                Right-click a Milestone and select "Save as Blueprint" to create
+                one.
               </span>
             </div>
           ) : (
@@ -177,7 +183,9 @@ export function BlueprintManager({
                     <button
                       className="expand-btn"
                       onClick={() => toggleExpand(blueprint.id)}
-                      title={expandedId === blueprint.id ? 'Collapse' : 'Expand'}
+                      title={
+                        expandedId === blueprint.id ? 'Collapse' : 'Expand'
+                      }
                     >
                       <i
                         className={
@@ -205,12 +213,16 @@ export function BlueprintManager({
                         />
                       ) : (
                         <>
-                          <span className="blueprint-name">{blueprint.name}</span>
+                          <span className="blueprint-name">
+                            {blueprint.name}
+                          </span>
                           <span className="blueprint-meta">
                             {blueprint.items.length} items ·{' '}
                             {formatDate(blueprint.created_at)}
                             {blueprint.storage_type === 'snippet' && (
-                              <span className="storage-badge shared">Shared</span>
+                              <span className="storage-badge shared">
+                                Shared
+                              </span>
                             )}
                             {blueprint.storage_type === 'localStorage' && (
                               <span className="storage-badge local">Local</span>
@@ -257,7 +269,9 @@ export function BlueprintManager({
                     <div className="blueprint-details">
                       <div className="detail-section">
                         <span className="detail-label">Milestone:</span>
-                        <span className="detail-value">{blueprint.milestone.title}</span>
+                        <span className="detail-value">
+                          {blueprint.milestone.title}
+                        </span>
                       </div>
                       {blueprint.milestone.description && (
                         <div className="detail-section">
@@ -274,7 +288,9 @@ export function BlueprintManager({
                             <div key={item.iid} className="item-row">
                               <i
                                 className={
-                                  item.issue_type === 'Task' ? 'fas fa-check' : 'fas fa-file'
+                                  item.issue_type === 'Task'
+                                    ? 'fas fa-check'
+                                    : 'fas fa-file'
                                 }
                               />
                               <span className="item-title">{item.title}</span>

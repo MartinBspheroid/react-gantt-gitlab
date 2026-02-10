@@ -1,6 +1,19 @@
-import { useState, useEffect, useMemo, useCallback, useContext, useRef } from 'react';
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useContext,
+  useRef,
+} from 'react';
 import { Editor as WxEditor, registerEditorItem } from '@svar-ui/react-editor';
-import { Locale, RichSelect, Slider, Counter, TwoState } from '@svar-ui/react-core';
+import {
+  Locale,
+  RichSelect,
+  Slider,
+  Counter,
+  TwoState,
+} from '@svar-ui/react-core';
 import { defaultEditorItems, normalizeDates } from '@svar-ui/gantt-store';
 import { dateToString, locale } from '@svar-ui/lib-dom';
 import { en } from '@svar-ui/gantt-locales';
@@ -51,7 +64,7 @@ function Editor({
     return dateToString(f, i18nData.calendar);
   }, [i18nData]);
 
-  const activeTask = useStore(api, "_activeTask");
+  const activeTask = useStore(api, '_activeTask');
 
   const normalizedTopBar = useMemo(() => {
     if (topBar === true && !readonly) {
@@ -115,14 +128,13 @@ function Editor({
 
   // const taskId = useStore(api, "activeTaskId");
   const taskId = useMemo(() => activeTask?.id, [activeTask]);
-  const unit = useStore(api, "durationUnit");
-  const unscheduledTasks = useStore(api, "unscheduledTasks");
-  const taskTypes = useStore(api, "taskTypes");
+  const unit = useStore(api, 'durationUnit');
+  const unscheduledTasks = useStore(api, 'unscheduledTasks');
+  const taskTypes = useStore(api, 'taskTypes');
 
   const [taskType, setTaskType] = useWritableProp(activeTask?.type);
   const taskUnscheduled = useMemo(() => activeTask?.unscheduled, [activeTask]);
   const [linksActionsMap, setLinksActionsMap] = useState({});
-
 
   useEffect(() => {
     setLinksActionsMap({});
@@ -132,13 +144,13 @@ function Editor({
   // vs traditional Gantt milestone (single point in time, type === 'milestone')
   const isGitLabMilestone = useMemo(
     () => activeTask?.$isMilestone || activeTask?._gitlab?.type === 'milestone',
-    [activeTask]
+    [activeTask],
   );
 
   // Traditional Gantt milestone type OR GitLab milestone
   const milestone = useMemo(
     () => taskType === 'milestone' || isGitLabMilestone,
-    [taskType, isGitLabMilestone]
+    [taskType, isGitLabMilestone],
   );
   const summary = useMemo(() => taskType === 'summary', [taskType]);
 
@@ -253,7 +265,8 @@ function Editor({
     // GitLab milestones always have dates (stored directly on task.start/end, not in _gitlab)
     // For regular tasks: check _gitlab fields to determine if GitLab actually has the dates
     // (task.start may be auto-filled with createdAt when GitLab has no startDate)
-    const hasGitLabStartDate = isGitLabMilestone || activeTask._gitlab?.startDate;
+    const hasGitLabStartDate =
+      isGitLabMilestone || activeTask._gitlab?.startDate;
     const hasGitLabDueDate = isGitLabMilestone || activeTask._gitlab?.dueDate;
 
     // If GitLab doesn't have the date, set it to null so Editor shows empty
@@ -265,10 +278,14 @@ function Editor({
     }
 
     // Calculate workdays if helpers are available and both dates exist
-    if (workdaysHelpers?.countWorkdays && hasGitLabStartDate && hasGitLabDueDate) {
+    if (
+      workdaysHelpers?.countWorkdays &&
+      hasGitLabStartDate &&
+      hasGitLabDueDate
+    ) {
       taskWithWorkdays.workdays = workdaysHelpers.countWorkdays(
         activeTask.start,
-        activeTask.end
+        activeTask.end,
       );
     }
     return taskWithWorkdays;
@@ -296,43 +313,49 @@ function Editor({
     api.exec('show-editor', { id: null });
   }, [api]);
 
-  const handleAction = useCallback((ev) => {
-    const { item, changes } = ev;
-    if (item.id === 'delete') {
-      deleteTask();
-    }
-    if (item.id === 'save') {
-      if (!changes.length) saveLinks();
-      else hide();
-    }
-    if (item.id === 'gitlab-link') {
-      openGitLabLink(activeTask);
-      return; // Don't hide editor
-    }
-    if (item.comp) hide();
-  }, [api, taskId, autoSave, saveLinks, deleteTask, hide, activeTask]);
+  const handleAction = useCallback(
+    (ev) => {
+      const { item, changes } = ev;
+      if (item.id === 'delete') {
+        deleteTask();
+      }
+      if (item.id === 'save') {
+        if (!changes.length) saveLinks();
+        else hide();
+      }
+      if (item.id === 'gitlab-link') {
+        openGitLabLink(activeTask);
+        return; // Don't hide editor
+      }
+      if (item.comp) hide();
+    },
+    [api, taskId, autoSave, saveLinks, deleteTask, hide, activeTask],
+  );
 
   // Track which date fields the user has actually changed
   // This is needed because svar's normalizeDates auto-fills the other date field
   const changedDateFieldsRef = useRef(new Set());
 
-  const normalizeTask = useCallback((t, key) => {
-    if (unscheduledTasks && t.type === 'summary') t.unscheduled = false;
+  const normalizeTask = useCallback(
+    (t, key) => {
+      if (unscheduledTasks && t.type === 'summary') t.unscheduled = false;
 
-    // Track date field changes
-    if (key === 'start' || key === 'end') {
-      changedDateFieldsRef.current.add(key);
-    }
+      // Track date field changes
+      if (key === 'start' || key === 'end') {
+        changedDateFieldsRef.current.add(key);
+      }
 
-    // Skip normalizeDates for date fields entirely
-    // normalizeDates auto-fills start/end which we don't want - dates should be independent
-    if (key === 'start' || key === 'end') {
+      // Skip normalizeDates for date fields entirely
+      // normalizeDates auto-fills start/end which we don't want - dates should be independent
+      if (key === 'start' || key === 'end') {
+        return t;
+      }
+
+      normalizeDates(t, unit, true, key);
       return t;
-    }
-
-    normalizeDates(t, unit, true, key);
-    return t;
-  }, [unscheduledTasks, unit]);
+    },
+    [unscheduledTasks, unit],
+  );
 
   /**
    * Set end date time to 23:59:59 to make the date inclusive.
@@ -347,61 +370,74 @@ function Editor({
     return date;
   }, []);
 
-  const handleChange = useCallback((ev) => {
-    let { update, key, value } = ev;
+  const handleChange = useCallback(
+    (ev) => {
+      let { update, key, value } = ev;
 
-    // Handle workdays change - calculate new end date
-    if (key === 'workdays' && workdaysHelpers?.calculateEndDateByWorkdays && update.start) {
-      const newEndDate = workdaysHelpers.calculateEndDateByWorkdays(update.start, value);
-      update.end = setEndOfDay(newEndDate);
-      ev.update = normalizeTask({ ...update }, 'end');
-      return;
-    }
+      // Handle workdays change - calculate new end date
+      if (
+        key === 'workdays' &&
+        workdaysHelpers?.calculateEndDateByWorkdays &&
+        update.start
+      ) {
+        const newEndDate = workdaysHelpers.calculateEndDateByWorkdays(
+          update.start,
+          value,
+        );
+        update.end = setEndOfDay(newEndDate);
+        ev.update = normalizeTask({ ...update }, 'end');
+        return;
+      }
 
-    // Handle end date change - ensure bar draws through the entire day
-    if (key === 'end') {
-      setEndOfDay(update.end);
-    }
+      // Handle end date change - ensure bar draws through the entire day
+      if (key === 'end') {
+        setEndOfDay(update.end);
+      }
 
-    ev.update = normalizeTask({ ...update }, key);
+      ev.update = normalizeTask({ ...update }, key);
 
-    if (!autoSave) {
-      if (key === 'type') setTaskType(value);
-    }
-  }, [autoSave, workdaysHelpers, normalizeTask, setEndOfDay]);
+      if (!autoSave) {
+        if (key === 'type') setTaskType(value);
+      }
+    },
+    [autoSave, workdaysHelpers, normalizeTask, setEndOfDay],
+  );
 
-  const handleSave = useCallback((ev) => {
-    let { values } = ev;
+  const handleSave = useCallback(
+    (ev) => {
+      let { values } = ev;
 
-    // Build originalDateValues based on what the user actually changed
-    // This tells GitLabGantt which fields to sync to GitLab
-    const originalDateValues = {};
-    if (changedDateFieldsRef.current.has('start')) {
-      originalDateValues.start = values.start; // can be null or Date
-    }
-    if (changedDateFieldsRef.current.has('end')) {
-      originalDateValues.end = values.end; // can be null or Date
-    }
+      // Build originalDateValues based on what the user actually changed
+      // This tells GitLabGantt which fields to sync to GitLab
+      const originalDateValues = {};
+      if (changedDateFieldsRef.current.has('start')) {
+        originalDateValues.start = values.start; // can be null or Date
+      }
+      if (changedDateFieldsRef.current.has('end')) {
+        originalDateValues.end = values.end; // can be null or Date
+      }
 
-    // Clear the tracking for next edit session
-    changedDateFieldsRef.current.clear();
+      // Clear the tracking for next edit session
+      changedDateFieldsRef.current.clear();
 
-    values = {
-      ...values,
-      unscheduled:
-        unscheduledTasks && values.unscheduled && values.type !== 'summary',
-    };
-    delete values.links;
-    delete values.data;
+      values = {
+        ...values,
+        unscheduled:
+          unscheduledTasks && values.unscheduled && values.type !== 'summary',
+      };
+      delete values.links;
+      delete values.data;
 
-    api.exec('update-task', {
-      id: taskId,
-      task: values,
-      _originalDateValues: originalDateValues, // Preserve null values that svar would overwrite
-    });
+      api.exec('update-task', {
+        id: taskId,
+        task: values,
+        _originalDateValues: originalDateValues, // Preserve null values that svar would overwrite
+      });
 
-    if (!autoSave) saveLinks();
-  }, [api, taskId, unscheduledTasks, autoSave, saveLinks]);
+      if (!autoSave) saveLinks();
+    },
+    [api, taskId, unscheduledTasks, autoSave, saveLinks],
+  );
 
   return task ? (
     <Locale>

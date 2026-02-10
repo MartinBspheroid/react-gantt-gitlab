@@ -8,7 +8,7 @@ function GanttSummariesProgress({ skinSettings }) {
   const tasks = data.tasks;
 
   const [api, setApi] = useState();
-  
+
   const [items, setItems] = useState(defaultEditorItems);
 
   const dayDiff = (next, prev) => {

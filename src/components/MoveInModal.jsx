@@ -59,7 +59,9 @@ export function MoveInModal({
 
   // Filter tasks that can be moved to a parent Issue (only Tasks can have Issue parents)
   const tasksMovableToParent = useMemo(() => {
-    return selectedTasks.filter((task) => task._gitlab?.workItemType === 'Task');
+    return selectedTasks.filter(
+      (task) => task._gitlab?.workItemType === 'Task',
+    );
   }, [selectedTasks]);
 
   // Filter tasks that can be moved to a Milestone (both Issues and Tasks)
@@ -70,7 +72,9 @@ export function MoveInModal({
 
   // Filter tasks that can be moved to an Epic (only Issues, not Tasks)
   const tasksMovableToEpic = useMemo(() => {
-    return selectedTasks.filter((task) => task._gitlab?.workItemType !== 'Task');
+    return selectedTasks.filter(
+      (task) => task._gitlab?.workItemType !== 'Task',
+    );
   }, [selectedTasks]);
 
   // Get available parent Issues (exclude selected tasks, milestones, and Tasks)
@@ -95,7 +99,7 @@ export function MoveInModal({
     return availableParentIssues.filter(
       (task) =>
         task.text.toLowerCase().includes(searchLower) ||
-        String(task.id).includes(searchLower)
+        String(task.id).includes(searchLower),
     );
   }, [availableParentIssues, parentSearch]);
 
@@ -103,7 +107,9 @@ export function MoveInModal({
   const filteredMilestones = useMemo(() => {
     if (!milestoneSearch.trim()) return milestones;
     const searchLower = milestoneSearch.toLowerCase();
-    return milestones.filter((m) => m.title.toLowerCase().includes(searchLower));
+    return milestones.filter((m) =>
+      m.title.toLowerCase().includes(searchLower),
+    );
   }, [milestones, milestoneSearch]);
 
   // Filter epics by search
@@ -120,7 +126,12 @@ export function MoveInModal({
       tasksMovableToMilestone.length > 0 ||
       (epics.length > 0 && tasksMovableToEpic.length > 0)
     );
-  }, [tasksMovableToParent.length, tasksMovableToMilestone.length, tasksMovableToEpic.length, epics.length]);
+  }, [
+    tasksMovableToParent.length,
+    tasksMovableToMilestone.length,
+    tasksMovableToEpic.length,
+    epics.length,
+  ]);
 
   // Set default tab when modal opens - select based on selection content
   useEffect(() => {
@@ -142,7 +153,14 @@ export function MoveInModal({
         setActiveTab('epic');
       }
     }
-  }, [isOpen, activeTab, tasksMovableToMilestone.length, tasksMovableToParent.length, tasksMovableToEpic.length, epics.length]);
+  }, [
+    isOpen,
+    activeTab,
+    tasksMovableToMilestone.length,
+    tasksMovableToParent.length,
+    tasksMovableToEpic.length,
+    epics.length,
+  ]);
 
   // Reset activeTab when modal closes
   useEffect(() => {
@@ -230,7 +248,9 @@ export function MoveInModal({
     switch (activeTab) {
       case 'parent':
         if (selectedParent === null) return 'None (Remove Parent)';
-        const parentTask = availableParentIssues.find((t) => t.id === selectedParent);
+        const parentTask = availableParentIssues.find(
+          (t) => t.id === selectedParent,
+        );
         return parentTask ? `#${parentTask.id} ${parentTask.text}` : '';
       case 'milestone':
         if (selectedMilestone === null) return 'None (Remove Milestone)';
@@ -276,7 +296,8 @@ export function MoveInModal({
               <i className="fas fa-info-circle" />
               <p>No items can be moved.</p>
               <p className="move-in-empty-hint">
-                Select Tasks to move to an Issue, or Issues to move to a Milestone or Epic.
+                Select Tasks to move to an Issue, or Issues to move to a
+                Milestone or Epic.
               </p>
             </div>
           </div>
@@ -323,7 +344,9 @@ export function MoveInModal({
             >
               To Milestone
               {tasksMovableToMilestone.length > 0 && (
-                <span className="tab-badge">{tasksMovableToMilestone.length}</span>
+                <span className="tab-badge">
+                  {tasksMovableToMilestone.length}
+                </span>
               )}
             </button>
             {hasEpics && (
@@ -346,7 +369,8 @@ export function MoveInModal({
             {activeTab === 'parent' && (
               <div className="move-in-section">
                 <div className="section-description">
-                  Move {tasksMovableToParent.length} Task(s) to an Issue as children
+                  Move {tasksMovableToParent.length} Task(s) to an Issue as
+                  children
                 </div>
 
                 {/* Search */}
@@ -433,7 +457,9 @@ export function MoveInModal({
                       onChange={() => setSelectedMilestone(null)}
                     />
                     <span className="target-option-text">
-                      <span className="target-none">None (Remove Milestone)</span>
+                      <span className="target-none">
+                        None (Remove Milestone)
+                      </span>
                     </span>
                   </label>
 
@@ -563,7 +589,11 @@ export function MoveInModal({
             )}
           </div>
           <div className="modal-actions">
-            <button className="btn btn-secondary" onClick={handleClose} disabled={isProcessing}>
+            <button
+              className="btn btn-secondary"
+              onClick={handleClose}
+              disabled={isProcessing}
+            >
               Cancel
             </button>
             <button
@@ -571,7 +601,9 @@ export function MoveInModal({
               onClick={handleMove}
               disabled={isProcessing || getCurrentMovableCount() === 0}
             >
-              {isProcessing ? 'Moving...' : `Move ${getCurrentMovableCount()} item(s)`}
+              {isProcessing
+                ? 'Moving...'
+                : `Move ${getCurrentMovableCount()} item(s)`}
             </button>
           </div>
         </div>

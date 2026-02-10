@@ -5,7 +5,10 @@
  */
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { getNewMilestoneTitle, getNewItemTitle } from '../providers/BlueprintService';
+import {
+  getNewMilestoneTitle,
+  getNewItemTitle,
+} from '../providers/BlueprintService';
 import './ApplyBlueprintModal.css';
 import './shared/modal-close-button.css';
 
@@ -16,12 +19,7 @@ import './shared/modal-close-button.css';
  * @param {Array} props.blueprints - 可用的 Blueprint 列表
  * @param {Function} props.onApply - 套用回調 (blueprint, options) => Promise<ApplyBlueprintResult>
  */
-export function ApplyBlueprintModal({
-  isOpen,
-  onClose,
-  blueprints,
-  onApply,
-}) {
+export function ApplyBlueprintModal({ isOpen, onClose, blueprints, onApply }) {
   // 選擇的 Blueprint
   const [selectedBlueprintId, setSelectedBlueprintId] = useState('');
 
@@ -87,7 +85,11 @@ export function ApplyBlueprintModal({
         prefix: milestonePrefix,
         custom_title: customMilestoneTitle,
       },
-      item_naming: { add_issue_prefix: addIssuePrefix, add_task_prefix: addTaskPrefix, prefix: itemPrefix },
+      item_naming: {
+        add_issue_prefix: addIssuePrefix,
+        add_task_prefix: addTaskPrefix,
+        prefix: itemPrefix,
+      },
       apply_labels: applyLabels,
       apply_assignees: applyAssignees,
     };
@@ -108,7 +110,9 @@ export function ApplyBlueprintModal({
   // 預覽 Item 標題 (第一個 Issue 和第一個 Task)
   const previewIssueTitle = useMemo(() => {
     if (!selectedBlueprint) return '';
-    const firstIssue = selectedBlueprint.items.find(item => item.issue_type === 'Issue');
+    const firstIssue = selectedBlueprint.items.find(
+      (item) => item.issue_type === 'Issue',
+    );
     if (!firstIssue) return '';
     const options = {
       start_date: new Date(startDate),
@@ -117,7 +121,11 @@ export function ApplyBlueprintModal({
         prefix: milestonePrefix,
         custom_title: customMilestoneTitle,
       },
-      item_naming: { add_issue_prefix: addIssuePrefix, add_task_prefix: addTaskPrefix, prefix: itemPrefix },
+      item_naming: {
+        add_issue_prefix: addIssuePrefix,
+        add_task_prefix: addTaskPrefix,
+        prefix: itemPrefix,
+      },
       apply_labels: applyLabels,
       apply_assignees: applyAssignees,
     };
@@ -137,7 +145,9 @@ export function ApplyBlueprintModal({
 
   const previewTaskTitle = useMemo(() => {
     if (!selectedBlueprint) return '';
-    const firstTask = selectedBlueprint.items.find(item => item.issue_type === 'Task');
+    const firstTask = selectedBlueprint.items.find(
+      (item) => item.issue_type === 'Task',
+    );
     if (!firstTask) return '';
     const options = {
       start_date: new Date(startDate),
@@ -146,7 +156,11 @@ export function ApplyBlueprintModal({
         prefix: milestonePrefix,
         custom_title: customMilestoneTitle,
       },
-      item_naming: { add_issue_prefix: addIssuePrefix, add_task_prefix: addTaskPrefix, prefix: itemPrefix },
+      item_naming: {
+        add_issue_prefix: addIssuePrefix,
+        add_task_prefix: addTaskPrefix,
+        prefix: itemPrefix,
+      },
       apply_labels: applyLabels,
       apply_assignees: applyAssignees,
     };
@@ -224,12 +238,15 @@ export function ApplyBlueprintModal({
     }
   }, []);
 
-  const handleOverlayClick = useCallback((e) => {
-    if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
-      handleClose();
-    }
-    mouseDownOnOverlay.current = false;
-  }, [handleClose]);
+  const handleOverlayClick = useCallback(
+    (e) => {
+      if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
+        handleClose();
+      }
+      mouseDownOnOverlay.current = false;
+    },
+    [handleClose],
+  );
 
   if (!isOpen) {
     return null;
@@ -243,7 +260,9 @@ export function ApplyBlueprintModal({
     >
       <div
         className="blueprint-modal apply-blueprint-modal"
-        onMouseDown={(e) => { mouseDownOnOverlay.current = false; }}
+        onMouseDown={(e) => {
+          mouseDownOnOverlay.current = false;
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -271,7 +290,8 @@ export function ApplyBlueprintModal({
                 <label htmlFor="blueprint-select">Select Blueprint</label>
                 {blueprints.length === 0 ? (
                   <div className="empty-message">
-                    No blueprints available. Create one by right-clicking a Milestone.
+                    No blueprints available. Create one by right-clicking a
+                    Milestone.
                   </div>
                 ) : (
                   <select
@@ -282,7 +302,9 @@ export function ApplyBlueprintModal({
                     {blueprints.map((bp) => (
                       <option key={bp.id} value={bp.id}>
                         {bp.name} ({bp.items.length} items)
-                        {bp.storage_type === 'snippet' ? ' [Shared]' : ' [Local]'}
+                        {bp.storage_type === 'snippet'
+                          ? ' [Shared]'
+                          : ' [Local]'}
                       </option>
                     ))}
                   </select>
@@ -343,13 +365,17 @@ export function ApplyBlueprintModal({
                         type="text"
                         placeholder="Enter custom milestone name"
                         value={customMilestoneTitle}
-                        onChange={(e) => setCustomMilestoneTitle(e.target.value)}
+                        onChange={(e) =>
+                          setCustomMilestoneTitle(e.target.value)
+                        }
                       />
                     )}
                     {previewMilestoneTitle && (
                       <div className="name-preview">
                         <span className="preview-label">Preview:</span>
-                        <span className="preview-value">{previewMilestoneTitle}</span>
+                        <span className="preview-value">
+                          {previewMilestoneTitle}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -385,14 +411,20 @@ export function ApplyBlueprintModal({
                         />
                         {addIssuePrefix && previewIssueTitle && (
                           <div className="name-preview">
-                            <span className="preview-label">Issue Preview:</span>
-                            <span className="preview-value">{previewIssueTitle}</span>
+                            <span className="preview-label">
+                              Issue Preview:
+                            </span>
+                            <span className="preview-value">
+                              {previewIssueTitle}
+                            </span>
                           </div>
                         )}
                         {addTaskPrefix && previewTaskTitle && (
                           <div className="name-preview">
                             <span className="preview-label">Task Preview:</span>
-                            <span className="preview-value">{previewTaskTitle}</span>
+                            <span className="preview-value">
+                              {previewTaskTitle}
+                            </span>
                           </div>
                         )}
                       </>
@@ -451,7 +483,8 @@ export function ApplyBlueprintModal({
                 disabled={
                   applying ||
                   !selectedBlueprint ||
-                  (milestoneNamingMode === 'custom' && !customMilestoneTitle.trim())
+                  (milestoneNamingMode === 'custom' &&
+                    !customMilestoneTitle.trim())
                 }
               >
                 {applying ? 'Creating...' : 'Create'}
@@ -468,13 +501,18 @@ export function ApplyBlueprintModal({
  * 套用結果顯示元件
  */
 function ApplyResultView({ result }) {
-  const { success, milestone, created, failed, links_created, links_failed } = result;
+  const { success, milestone, created, failed, links_created, links_failed } =
+    result;
 
   return (
     <div className="apply-result">
       {/* 整體狀態 */}
       <div className={`result-status ${success ? 'success' : 'partial'}`}>
-        <i className={success ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'} />
+        <i
+          className={
+            success ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'
+          }
+        />
         <span>
           {success
             ? 'Blueprint applied successfully!'
@@ -510,13 +548,19 @@ function ApplyResultView({ result }) {
           <div className="result-list">
             {created.slice(0, 10).map((item) => (
               <div key={item.new_iid} className="result-item success">
-                <i className={item.issue_type === 'Task' ? 'fas fa-check' : 'fas fa-file'} />
+                <i
+                  className={
+                    item.issue_type === 'Task' ? 'fas fa-check' : 'fas fa-file'
+                  }
+                />
                 <span>{item.title}</span>
                 <span className="item-type">{item.issue_type}</span>
               </div>
             ))}
             {created.length > 10 && (
-              <div className="result-more">+{created.length - 10} more items</div>
+              <div className="result-more">
+                +{created.length - 10} more items
+              </div>
             )}
           </div>
         </div>

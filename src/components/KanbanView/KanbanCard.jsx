@@ -163,7 +163,6 @@ export function KanbanCard({
         <span className="kanban-card-title">{task.text}</span>
       </div>
 
-
       {/* Assignees */}
       {assignees.length > 0 && (
         <div className="kanban-card-assignees">
@@ -208,7 +207,9 @@ export function KanbanCard({
               key={childTask.id}
               className={`kanban-card-task-item ${childTask._gitlab?.state === 'closed' ? 'kanban-card-task-done' : ''}`}
             >
-              <i className={`fas ${childTask._gitlab?.state === 'closed' ? 'fa-check-square' : 'fa-square'} kanban-card-icon`} />
+              <i
+                className={`fas ${childTask._gitlab?.state === 'closed' ? 'fa-check-square' : 'fa-square'} kanban-card-icon`}
+              />
               <span className="kanban-card-task-title">{childTask.text}</span>
             </div>
           ))}

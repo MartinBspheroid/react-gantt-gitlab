@@ -66,12 +66,19 @@ export function BaseDialog({
     }
   }, []);
 
-  const handleOverlayClick = useCallback((e) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget && mouseDownOnOverlay.current) {
-      onClose();
-    }
-    mouseDownOnOverlay.current = false;
-  }, [closeOnOverlayClick, onClose]);
+  const handleOverlayClick = useCallback(
+    (e) => {
+      if (
+        closeOnOverlayClick &&
+        e.target === e.currentTarget &&
+        mouseDownOnOverlay.current
+      ) {
+        onClose();
+      }
+      mouseDownOnOverlay.current = false;
+    },
+    [closeOnOverlayClick, onClose],
+  );
 
   // 阻止 modal 內部點擊事件冒泡到 overlay
   const handleModalMouseDown = useCallback(() => {
@@ -120,16 +127,10 @@ export function BaseDialog({
         </div>
 
         {/* Body */}
-        <div className="base-dialog-body">
-          {children}
-        </div>
+        <div className="base-dialog-body">{children}</div>
 
         {/* Footer */}
-        {footer && (
-          <div className="base-dialog-footer">
-            {footer}
-          </div>
-        )}
+        {footer && <div className="base-dialog-footer">{footer}</div>}
       </div>
     </div>
   );

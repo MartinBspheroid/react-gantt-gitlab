@@ -56,8 +56,12 @@ export function FilterMultiSelect({
     // Sort selected items to top if enabled
     if (selectedFirst && selected.length > 0) {
       const selectedSet = new Set(selected);
-      const selectedItems = filtered.filter((opt) => selectedSet.has(opt.value));
-      const unselectedItems = filtered.filter((opt) => !selectedSet.has(opt.value));
+      const selectedItems = filtered.filter((opt) =>
+        selectedSet.has(opt.value),
+      );
+      const unselectedItems = filtered.filter(
+        (opt) => !selectedSet.has(opt.value),
+      );
       return [...selectedItems, ...unselectedItems];
     }
 
@@ -73,7 +77,7 @@ export function FilterMultiSelect({
     } else {
       // Multi select: add/remove from selection
       const newSelected = selected.includes(value)
-        ? selected.filter(v => v !== value)
+        ? selected.filter((v) => v !== value)
         : [...selected, value];
       onChange(newSelected);
     }
@@ -82,7 +86,7 @@ export function FilterMultiSelect({
   // Select all visible options (only for multi-select)
   const handleSelectAll = () => {
     if (singleSelect) return;
-    const visibleValues = filteredOptions.map(opt => opt.value);
+    const visibleValues = filteredOptions.map((opt) => opt.value);
     const newSelected = [...new Set([...selected, ...visibleValues])];
     onChange(newSelected);
   };
@@ -93,8 +97,8 @@ export function FilterMultiSelect({
       onChange([]);
     } else if (search.trim()) {
       // Only clear visible options
-      const visibleValues = new Set(filteredOptions.map(opt => opt.value));
-      const newSelected = selected.filter(v => !visibleValues.has(v));
+      const visibleValues = new Set(filteredOptions.map((opt) => opt.value));
+      const newSelected = selected.filter((v) => !visibleValues.has(v));
       onChange(newSelected);
     } else {
       onChange([]);
@@ -106,10 +110,10 @@ export function FilterMultiSelect({
     if (singleSelect) return;
     if (search.trim()) {
       // Only invert visible options, keep non-visible selections unchanged
-      const visibleValues = new Set(filteredOptions.map(opt => opt.value));
-      const newSelected = selected.filter(v => !visibleValues.has(v));
+      const visibleValues = new Set(filteredOptions.map((opt) => opt.value));
+      const newSelected = selected.filter((v) => !visibleValues.has(v));
       // Add visible items that were NOT selected
-      filteredOptions.forEach(opt => {
+      filteredOptions.forEach((opt) => {
         if (!selected.includes(opt.value)) {
           newSelected.push(opt.value);
         }
@@ -117,14 +121,16 @@ export function FilterMultiSelect({
       onChange(newSelected);
     } else {
       // Invert all options
-      const allValues = options.map(opt => opt.value);
-      const newSelected = allValues.filter(v => !selected.includes(v));
+      const allValues = options.map((opt) => opt.value);
+      const newSelected = allValues.filter((v) => !selected.includes(v));
       onChange(newSelected);
     }
   };
 
   const selectedCount = selected.length;
-  const visibleSelectedCount = filteredOptions.filter(opt => selected.includes(opt.value)).length;
+  const visibleSelectedCount = filteredOptions.filter((opt) =>
+    selected.includes(opt.value),
+  ).length;
 
   return (
     <div className="filter-multi-select">
@@ -179,7 +185,10 @@ export function FilterMultiSelect({
                   {opt.label}
                 </span>
               ) : (
-                <span className="fms-option-text" title={opt.subtitle || opt.label}>
+                <span
+                  className="fms-option-text"
+                  title={opt.subtitle || opt.label}
+                >
                   {opt.label}
                 </span>
               )}

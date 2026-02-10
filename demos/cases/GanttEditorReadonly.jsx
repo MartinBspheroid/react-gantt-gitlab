@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { getData } from '../data';
 import { Gantt, Editor } from '../../src';
 
-function GanttEditorReadonly({...skinSettings}) {
+function GanttEditorReadonly({ ...skinSettings }) {
   const data = useMemo(() => getData(), []);
   const [api, setApi] = useState();
 

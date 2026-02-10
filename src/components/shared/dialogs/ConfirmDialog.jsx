@@ -112,9 +112,7 @@ export function ConfirmDialog({
       closeOnEscape={!processing}
       closeOnOverlayClick={!processing}
     >
-      <div className="dialog-message">
-        {message}
-      </div>
+      <div className="dialog-message">{message}</div>
     </BaseDialog>
   );
 }

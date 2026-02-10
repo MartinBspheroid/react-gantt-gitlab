@@ -43,13 +43,19 @@ export function SharedToolbar({
   // Calculate stats from tasks
   const stats = {
     total: tasks?.length || 0,
-    completed: tasks?.filter(t => t.progress === 100 || t._gitlab?.state === 'closed').length || 0,
-    inProgress: tasks?.filter(t => t.progress > 0 && t.progress < 100).length || 0,
-    notStarted: tasks?.filter(t => t.progress === 0 && t._gitlab?.state !== 'closed').length || 0,
-    overdue: tasks?.filter(t => {
-      if (!t.end || t._gitlab?.state === 'closed') return false;
-      return new Date(t.end) < new Date();
-    }).length || 0,
+    completed:
+      tasks?.filter((t) => t.progress === 100 || t._gitlab?.state === 'closed')
+        .length || 0,
+    inProgress:
+      tasks?.filter((t) => t.progress > 0 && t.progress < 100).length || 0,
+    notStarted:
+      tasks?.filter((t) => t.progress === 0 && t._gitlab?.state !== 'closed')
+        .length || 0,
+    overdue:
+      tasks?.filter((t) => {
+        if (!t.end || t._gitlab?.state === 'closed') return false;
+        return new Date(t.end) < new Date();
+      }).length || 0,
   };
 
   return (
@@ -113,7 +119,9 @@ export function SharedToolbar({
             title="View Options"
           >
             <i className="fas fa-sliders-h" />
-            <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`} />
+            <i
+              className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}
+            />
           </button>
         </>
       )}

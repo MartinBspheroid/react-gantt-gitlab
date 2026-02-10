@@ -13,9 +13,13 @@ import { en } from '@svar-ui/gantt-locales';
 
 // stores
 import { EventBusRouter } from '@svar-ui/lib-state';
-import { DataStore, defaultColumns, defaultTaskTypes } from '@svar-ui/gantt-store';
+import {
+  DataStore,
+  defaultColumns,
+  defaultTaskTypes,
+} from '@svar-ui/gantt-store';
 
-// context 
+// context
 import StoreContext from '../context';
 
 // store factory
@@ -23,7 +27,6 @@ import { writable } from '@svar-ui/lib-react';
 
 // ui
 import Layout from './Layout.jsx';
-
 
 const camelize = (s) =>
   s
@@ -72,7 +75,6 @@ const Gantt = forwardRef(function Gantt(
   const restPropsRef = useRef();
   restPropsRef.current = restProps;
 
-
   // init stores
   const dataStore = useMemo(() => new DataStore(writable), []);
   const firstInRoute = useMemo(() => dataStore.in, [dataStore]);
@@ -87,7 +89,6 @@ const Gantt = forwardRef(function Gantt(
     });
     firstInRoute.setNext(lastInRouteRef.current);
   }
-
 
   // writable prop for two-way binding tableAPI
   const [tableAPI, setTableAPI] = useState(null);
@@ -117,7 +118,6 @@ const Gantt = forwardRef(function Gantt(
     }),
     [dataStore, firstInRoute],
   );
-
 
   // expose API via ref
   useImperativeHandle(
@@ -219,17 +219,20 @@ const Gantt = forwardRef(function Gantt(
   }
 
   // Custom locale with YY/MM/DD date format
-  const customLocale = useMemo(() => ({
-    ...en,
-    gantt: {
-      ...en.gantt,
-      dateFormat: 'yy/MM/dd',
-    },
-    formats: {
-      ...en.formats,
-      dateFormat: 'yy/MM/dd',
-    },
-  }), []);
+  const customLocale = useMemo(
+    () => ({
+      ...en,
+      gantt: {
+        ...en.gantt,
+        dateFormat: 'yy/MM/dd',
+      },
+      formats: {
+        ...en.formats,
+        dateFormat: 'yy/MM/dd',
+      },
+    }),
+    [],
+  );
 
   return (
     <Locale words={customLocale} optional={true}>

@@ -4,7 +4,13 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@testing-library/react';
 import { ToastContainer, useToast } from '../Toast';
 
 afterEach(() => {
@@ -16,7 +22,9 @@ afterEach(() => {
 describe('Toast', () => {
   describe('ToastContainer', () => {
     it('should render nothing when no toasts', () => {
-      const { container } = render(<ToastContainer toasts={[]} onRemove={vi.fn()} />);
+      const { container } = render(
+        <ToastContainer toasts={[]} onRemove={vi.fn()} />,
+      );
       expect(container.firstChild).toBeNull();
     });
 
@@ -122,7 +130,12 @@ describe('Toast', () => {
 
     it('should render different positions', () => {
       const mockRemove = vi.fn();
-      const positions = ['top-right', 'top-center', 'bottom-right', 'bottom-center'];
+      const positions = [
+        'top-right',
+        'top-center',
+        'bottom-right',
+        'bottom-center',
+      ];
 
       positions.forEach((position) => {
         cleanup();
@@ -189,7 +202,9 @@ describe('Toast', () => {
 
       const message = screen.getByText('Portal test');
       expect(message.closest('.toast-container')).toBeInTheDocument();
-      expect(document.body.contains(message.closest('.toast-container'))).toBe(true);
+      expect(document.body.contains(message.closest('.toast-container'))).toBe(
+        true,
+      );
     });
   });
 
@@ -291,7 +306,9 @@ describe('Toast', () => {
           <div>
             <button onClick={() => showToast('Info', 'info')}>Info</button>
             <button onClick={() => showToast('Error', 'error')}>Error</button>
-            <button onClick={() => showToast('Success', 'success')}>Success</button>
+            <button onClick={() => showToast('Success', 'success')}>
+              Success
+            </button>
             {toasts.map((t) => (
               <div key={t.id} data-testid={`toast-${t.id}`} data-type={t.type}>
                 {t.message}
@@ -307,9 +324,18 @@ describe('Toast', () => {
       fireEvent.click(screen.getByText('Error'));
       fireEvent.click(screen.getByText('Success'));
 
-      expect(screen.getByTestId('toast-1')).toHaveAttribute('data-type', 'info');
-      expect(screen.getByTestId('toast-2')).toHaveAttribute('data-type', 'error');
-      expect(screen.getByTestId('toast-3')).toHaveAttribute('data-type', 'success');
+      expect(screen.getByTestId('toast-1')).toHaveAttribute(
+        'data-type',
+        'info',
+      );
+      expect(screen.getByTestId('toast-2')).toHaveAttribute(
+        'data-type',
+        'error',
+      );
+      expect(screen.getByTestId('toast-3')).toHaveAttribute(
+        'data-type',
+        'success',
+      );
     });
   });
 });

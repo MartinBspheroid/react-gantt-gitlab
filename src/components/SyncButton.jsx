@@ -68,7 +68,10 @@ export function SyncButton({ onSync, syncState, filterOptions }) {
           </div>
         )}
         {!syncState.error && syncState.lastSyncTime && (
-          <div className="sync-time" title={syncState.lastSyncTime?.toLocaleString()}>
+          <div
+            className="sync-time"
+            title={syncState.lastSyncTime?.toLocaleString()}
+          >
             Last sync: {formatLastSyncTime(syncState.lastSyncTime)}
           </div>
         )}

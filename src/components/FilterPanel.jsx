@@ -8,7 +8,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataFilters } from '../utils/DataFilters';
 import { FilterPresetSelector } from './FilterPresetSelector';
 import { FilterMultiSelect } from './FilterMultiSelect';
-import { presetHasServerFilters, presetHasClientFilters } from '../types/projectSettings';
+import {
+  presetHasServerFilters,
+  presetHasClientFilters,
+} from '../types/projectSettings';
 
 // Default empty server filters
 const DEFAULT_SERVER_FILTERS = {
@@ -38,7 +41,10 @@ const parseServerFiltersFromPreset = (presetServerFilters) => ({
   labelNames: presetServerFilters?.labelNames || [],
   milestoneTitles: presetServerFilters?.milestoneTitles || [],
   assigneeUsernames: presetServerFilters?.assigneeUsernames || [],
-  dateRange: presetServerFilters?.dateRange || { createdAfter: '', createdBefore: '' },
+  dateRange: presetServerFilters?.dateRange || {
+    createdAfter: '',
+    createdBefore: '',
+  },
 });
 
 /**
@@ -84,38 +90,40 @@ export function FilterPanel({
 
   // Client-side filters
   const [filters, setFilters] = useState(() =>
-    parseClientFiltersFromPreset(initialFilters)
+    parseClientFiltersFromPreset(initialFilters),
   );
 
   // Server-side filters (local state for editing)
   const [serverFilters, setServerFilters] = useState(
-    initialServerFilters || DEFAULT_SERVER_FILTERS
+    initialServerFilters || DEFAULT_SERVER_FILTERS,
   );
 
   // Track if server filters have unsync'd changes
-  const [hasUnsyncedServerChanges, setHasUnsyncedServerChanges] = useState(false);
+  const [hasUnsyncedServerChanges, setHasUnsyncedServerChanges] =
+    useState(false);
 
   // Track currently selected preset ID
-  const [selectedPresetId, setSelectedPresetId] = useState(initialPresetId || null);
+  const [selectedPresetId, setSelectedPresetId] = useState(
+    initialPresetId || null,
+  );
 
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Track if initial preset has been applied
   const initialPresetAppliedRef = useRef(false);
 
-
   // Build label options - merge from tasks (client) and filterOptions (server)
   const labelOptions = useMemo(() => {
     // First, get labels from filterOptions (server source - has colors)
     const serverLabels = filterOptions?.labels || [];
-    const serverLabelMap = new Map(serverLabels.map(l => [l.title, l]));
+    const serverLabelMap = new Map(serverLabels.map((l) => [l.title, l]));
 
     // Then get labels from tasks (client source)
     const taskLabels = tasks ? DataFilters.getUniqueLabels(tasks) : [];
 
     // Merge: prefer server data for color info
     const merged = new Map();
-    taskLabels.forEach(label => {
+    taskLabels.forEach((label) => {
       const serverLabel = serverLabelMap.get(label);
       merged.set(label, {
         value: label,
@@ -124,7 +132,7 @@ export function FilterPanel({
       });
     });
     // Add server-only labels
-    serverLabels.forEach(sl => {
+    serverLabels.forEach((sl) => {
       if (!merged.has(sl.title)) {
         merged.set(sl.title, {
           value: sl.title,
@@ -134,14 +142,16 @@ export function FilterPanel({
       }
     });
 
-    return Array.from(merged.values()).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(merged.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
   }, [tasks, filterOptions?.labels]);
 
   // Build assignee options - merge from tasks (client) and filterOptions (server)
   const assigneeOptions = useMemo(() => {
     // First, get members from filterOptions (server source - has username and name)
     const serverMembers = filterOptions?.members || [];
-    const serverMemberMap = new Map(serverMembers.map(m => [m.username, m]));
+    const serverMemberMap = new Map(serverMembers.map((m) => [m.username, m]));
 
     // Then get assignees from tasks (client source) - these are display names
     const taskAssignees = tasks ? DataFilters.getUniqueAssignees(tasks) : [];
@@ -151,9 +161,11 @@ export function FilterPanel({
     const merged = new Map();
 
     // Add task assignees (by display name)
-    taskAssignees.forEach(assignee => {
+    taskAssignees.forEach((assignee) => {
       // Try to find matching server member
-      const serverMember = serverMembers.find(m => m.name === assignee || m.username === assignee);
+      const serverMember = serverMembers.find(
+        (m) => m.name === assignee || m.username === assignee,
+      );
       merged.set(assignee, {
         value: assignee,
         label: assignee,
@@ -163,7 +175,7 @@ export function FilterPanel({
     });
 
     // Add server members not in tasks
-    serverMembers.forEach(member => {
+    serverMembers.forEach((member) => {
       if (!merged.has(member.name) && !merged.has(member.username)) {
         merged.set(member.name, {
           value: member.name,
@@ -174,7 +186,9 @@ export function FilterPanel({
       }
     });
 
-    return Array.from(merged.values()).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(merged.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
   }, [tasks, filterOptions?.members]);
 
   // Build milestone options - merge from milestones prop and filterOptions
@@ -188,7 +202,7 @@ export function FilterPanel({
     // Create map by title for deduplication
     const merged = new Map();
 
-    propMilestones.forEach(m => {
+    propMilestones.forEach((m) => {
       merged.set(m.title, {
         value: m.iid, // Use iid for filtering (matches _gitlab.milestoneIid)
         title: m.title,
@@ -196,7 +210,7 @@ export function FilterPanel({
       });
     });
 
-    serverMilestones.forEach(m => {
+    serverMilestones.forEach((m) => {
       if (!merged.has(m.title)) {
         merged.set(m.title, {
           value: m.iid,
@@ -206,15 +220,19 @@ export function FilterPanel({
       }
     });
 
-    return Array.from(merged.values()).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(merged.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
   }, [milestones, filterOptions?.milestones]);
 
   // Build epic options from epics prop
   const epicOptions = useMemo(() => {
-    return (epics || []).map(e => ({
-      value: e.id,
-      label: e.title,
-    })).sort((a, b) => a.label.localeCompare(b.label));
+    return (epics || [])
+      .map((e) => ({
+        value: e.id,
+        label: e.title,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [epics]);
 
   // Apply initial preset when presets are loaded
@@ -228,7 +246,7 @@ export function FilterPanel({
       !presetsLoading &&
       !initialPresetAppliedRef.current
     ) {
-      const preset = presets.find(p => p.id === initialPresetId);
+      const preset = presets.find((p) => p.id === initialPresetId);
       if (preset) {
         const presetFilters = preset.filters;
         // Check for server filters using helper function
@@ -239,7 +257,9 @@ export function FilterPanel({
 
         // Apply both client and server filters if they exist
         if (hasServerFilters) {
-          const parsedServerFilters = parseServerFiltersFromPreset(presetFilters.serverFilters);
+          const parsedServerFilters = parseServerFiltersFromPreset(
+            presetFilters.serverFilters,
+          );
           setServerFilters(parsedServerFilters);
         }
 
@@ -269,16 +289,25 @@ export function FilterPanel({
   useEffect(() => {
     // Skip if initialFilters hasn't actually changed (shallow compare)
     const prev = prevInitialFiltersRef.current;
-    const hasChanged = prev !== initialFilters && (
-      prev?.search !== initialFilters?.search ||
-      JSON.stringify(prev?.milestoneIds) !== JSON.stringify(initialFilters?.milestoneIds) ||
-      JSON.stringify(prev?.epicIds) !== JSON.stringify(initialFilters?.epicIds) ||
-      JSON.stringify(prev?.labels) !== JSON.stringify(initialFilters?.labels) ||
-      JSON.stringify(prev?.assignees) !== JSON.stringify(initialFilters?.assignees) ||
-      JSON.stringify(prev?.states) !== JSON.stringify(initialFilters?.states)
-    );
+    const hasChanged =
+      prev !== initialFilters &&
+      (prev?.search !== initialFilters?.search ||
+        JSON.stringify(prev?.milestoneIds) !==
+          JSON.stringify(initialFilters?.milestoneIds) ||
+        JSON.stringify(prev?.epicIds) !==
+          JSON.stringify(initialFilters?.epicIds) ||
+        JSON.stringify(prev?.labels) !==
+          JSON.stringify(initialFilters?.labels) ||
+        JSON.stringify(prev?.assignees) !==
+          JSON.stringify(initialFilters?.assignees) ||
+        JSON.stringify(prev?.states) !==
+          JSON.stringify(initialFilters?.states));
 
-    if (hasChanged && initialFilters && Object.keys(initialFilters).length > 0) {
+    if (
+      hasChanged &&
+      initialFilters &&
+      Object.keys(initialFilters).length > 0
+    ) {
       // Programmatic change from parent - just update local state, don't notify back
       setFilters(parseClientFiltersFromPreset(initialFilters));
     }
@@ -288,11 +317,14 @@ export function FilterPanel({
 
   // Handle filter changes from user interactions
   // This is the idiomatic React way - update state and notify parent in the same handler
-  const handleFilterFieldChange = useCallback((field, value) => {
-    const newFilters = { ...filters, [field]: value };
-    setFilters(newFilters);
-    onFilterChange?.(newFilters, true);
-  }, [filters, onFilterChange]);
+  const handleFilterFieldChange = useCallback(
+    (field, value) => {
+      const newFilters = { ...filters, [field]: value };
+      setFilters(newFilters);
+      onFilterChange?.(newFilters, true);
+    },
+    [filters, onFilterChange],
+  );
 
   const handleSearchChange = (search) => {
     handleFilterFieldChange('search', search);
@@ -301,66 +333,74 @@ export function FilterPanel({
   // Apply preset filters
   // This is a programmatic change, so we notify parent with isUserAction=false
   // Supports presets with both client and server filters
-  const handleApplyPreset = useCallback((preset) => {
-    const presetFilters = preset.filters;
+  const handleApplyPreset = useCallback(
+    (preset) => {
+      const presetFilters = preset.filters;
 
-    // Notify parent about preset selection FIRST, so isApplyingPresetRef is set
-    setSelectedPresetId(preset.id);
-    onPresetSelect?.(preset.id);
+      // Notify parent about preset selection FIRST, so isApplyingPresetRef is set
+      setSelectedPresetId(preset.id);
+      onPresetSelect?.(preset.id);
 
-    // Check if preset has server filters using helper function
-    const hasServerFilters = presetHasServerFilters(presetFilters);
+      // Check if preset has server filters using helper function
+      const hasServerFilters = presetHasServerFilters(presetFilters);
 
-    // Check if preset has client filters using helper function
-    const hasClientFilters = presetHasClientFilters(presetFilters);
+      // Check if preset has client filters using helper function
+      const hasClientFilters = presetHasClientFilters(presetFilters);
 
-    // Apply server filters (or clear them)
-    if (hasServerFilters) {
-      const parsedServerFilters = parseServerFiltersFromPreset(presetFilters.serverFilters);
-      setServerFilters(parsedServerFilters);
-      setHasUnsyncedServerChanges(false);
-      onServerFilterApply?.(parsedServerFilters, false);
-    } else {
-      setServerFilters(DEFAULT_SERVER_FILTERS);
-      setHasUnsyncedServerChanges(false);
-      onServerFilterApply?.(DEFAULT_SERVER_FILTERS, false);
-    }
+      // Apply server filters (or clear them)
+      if (hasServerFilters) {
+        const parsedServerFilters = parseServerFiltersFromPreset(
+          presetFilters.serverFilters,
+        );
+        setServerFilters(parsedServerFilters);
+        setHasUnsyncedServerChanges(false);
+        onServerFilterApply?.(parsedServerFilters, false);
+      } else {
+        setServerFilters(DEFAULT_SERVER_FILTERS);
+        setHasUnsyncedServerChanges(false);
+        onServerFilterApply?.(DEFAULT_SERVER_FILTERS, false);
+      }
 
-    // Apply client filters (or clear them)
-    if (hasClientFilters) {
-      const parsedFilters = parseClientFiltersFromPreset(presetFilters);
-      setFilters(parsedFilters);
-      onFilterChange?.(parsedFilters, false);
-    } else {
-      setFilters(DEFAULT_CLIENT_FILTERS);
-      onFilterChange?.(DEFAULT_CLIENT_FILTERS, false);
-    }
+      // Apply client filters (or clear them)
+      if (hasClientFilters) {
+        const parsedFilters = parseClientFiltersFromPreset(presetFilters);
+        setFilters(parsedFilters);
+        onFilterChange?.(parsedFilters, false);
+      } else {
+        setFilters(DEFAULT_CLIENT_FILTERS);
+        onFilterChange?.(DEFAULT_CLIENT_FILTERS, false);
+      }
 
-    // Set active tab based on which filters exist
-    // If only server filters exist, show server tab; otherwise show client tab
-    if (hasServerFilters && !hasClientFilters) {
-      setActiveTab('server');
-    } else {
-      setActiveTab('client');
-    }
-  }, [onPresetSelect, onServerFilterApply, onFilterChange]);
+      // Set active tab based on which filters exist
+      // If only server filters exist, show server tab; otherwise show client tab
+      if (hasServerFilters && !hasClientFilters) {
+        setActiveTab('server');
+      } else {
+        setActiveTab('client');
+      }
+    },
+    [onPresetSelect, onServerFilterApply, onFilterChange],
+  );
 
   // Create preset with current filters (saves both client and server filters)
-  const handleCreatePreset = useCallback(async (name) => {
-    if (onCreatePreset) {
-      // Save both client and server filters
-      const newPresetId = await onCreatePreset(name, {
-        ...filters,
-        serverFilters: serverFilters,
-      });
+  const handleCreatePreset = useCallback(
+    async (name) => {
+      if (onCreatePreset) {
+        // Save both client and server filters
+        const newPresetId = await onCreatePreset(name, {
+          ...filters,
+          serverFilters: serverFilters,
+        });
 
-      // Select the newly created preset
-      if (newPresetId) {
-        setSelectedPresetId(newPresetId);
-        onPresetSelect?.(newPresetId);
+        // Select the newly created preset
+        if (newPresetId) {
+          setSelectedPresetId(newPresetId);
+          onPresetSelect?.(newPresetId);
+        }
       }
-    }
-  }, [onCreatePreset, filters, serverFilters, onPresetSelect]);
+    },
+    [onCreatePreset, filters, serverFilters, onPresetSelect],
+  );
 
   // Client filter count
   const clientFilterCount =
@@ -379,13 +419,14 @@ export function FilterPanel({
     (serverFilters.dateRange?.createdBefore ? 1 : 0);
 
   // Total active filter count based on current tab
-  const activeFilterCount = activeTab === 'server' ? serverFilterCount : clientFilterCount;
+  const activeFilterCount =
+    activeTab === 'server' ? serverFilterCount : clientFilterCount;
 
   // Check if local server filters differ from preset's server filters
   // This allows showing "modified" immediately when server filter is changed (before Apply)
   const isLocalServerFilterDirty = useMemo(() => {
     if (!selectedPresetId || !presets) return false;
-    const preset = presets.find(p => p.id === selectedPresetId);
+    const preset = presets.find((p) => p.id === selectedPresetId);
     if (!preset?.filters) return false;
 
     const presetServerFilters = preset.filters.serverFilters;
@@ -398,11 +439,16 @@ export function FilterPanel({
     // Compare each field
     const presetParsed = parseServerFiltersFromPreset(presetServerFilters);
     return (
-      JSON.stringify(serverFilters.labelNames || []) !== JSON.stringify(presetParsed.labelNames || []) ||
-      JSON.stringify(serverFilters.milestoneTitles || []) !== JSON.stringify(presetParsed.milestoneTitles || []) ||
-      JSON.stringify(serverFilters.assigneeUsernames || []) !== JSON.stringify(presetParsed.assigneeUsernames || []) ||
-      (serverFilters.dateRange?.createdAfter || '') !== (presetParsed.dateRange?.createdAfter || '') ||
-      (serverFilters.dateRange?.createdBefore || '') !== (presetParsed.dateRange?.createdBefore || '')
+      JSON.stringify(serverFilters.labelNames || []) !==
+        JSON.stringify(presetParsed.labelNames || []) ||
+      JSON.stringify(serverFilters.milestoneTitles || []) !==
+        JSON.stringify(presetParsed.milestoneTitles || []) ||
+      JSON.stringify(serverFilters.assigneeUsernames || []) !==
+        JSON.stringify(presetParsed.assigneeUsernames || []) ||
+      (serverFilters.dateRange?.createdAfter || '') !==
+        (presetParsed.dateRange?.createdAfter || '') ||
+      (serverFilters.dateRange?.createdBefore || '') !==
+        (presetParsed.dateRange?.createdBefore || '')
     );
   }, [selectedPresetId, presets, serverFilters, serverFilterCount]);
 
@@ -411,12 +457,12 @@ export function FilterPanel({
 
   // Server filter handlers
   const handleServerFilterChange = (field, value) => {
-    setServerFilters(prev => ({ ...prev, [field]: value }));
+    setServerFilters((prev) => ({ ...prev, [field]: value }));
     setHasUnsyncedServerChanges(true);
   };
 
   const handleServerDateRangeChange = (field, value) => {
-    setServerFilters(prev => ({
+    setServerFilters((prev) => ({
       ...prev,
       dateRange: { ...prev.dateRange, [field]: value },
     }));
@@ -535,10 +581,14 @@ export function FilterPanel({
                       serverFilters: serverFilters,
                     };
 
-                    await onUpdatePreset?.(selectedPresetId, { filters: newFilters });
+                    await onUpdatePreset?.(selectedPresetId, {
+                      filters: newFilters,
+                    });
 
                     // Re-apply preset to clear dirty state
-                    const preset = presets.find((p) => p.id === selectedPresetId);
+                    const preset = presets.find(
+                      (p) => p.id === selectedPresetId,
+                    );
                     if (preset) {
                       // Update the preset object with new filters before re-applying
                       const updatedPreset = { ...preset, filters: newFilters };
@@ -579,7 +629,9 @@ export function FilterPanel({
                 {serverFilterCount > 0 && (
                   <span className="tab-badge">{serverFilterCount}</span>
                 )}
-                {hasUnsyncedServerChanges && <span className="unsync-indicator">unapplied</span>}
+                {hasUnsyncedServerChanges && (
+                  <span className="unsync-indicator">unapplied</span>
+                )}
               </button>
             </div>
 
@@ -607,165 +659,197 @@ export function FilterPanel({
                   />
                 </div>
 
-              {/* Main Filter Grid */}
-              <div className="filter-grid">
-                {/* Milestones - Client uses OR logic */}
-                <FilterMultiSelect
-                  title="Milestones (OR)"
-                  options={[
-                    // Add "None" option for tasks without milestone
-                    { value: 0, label: 'None (No Milestone)' },
-                    ...milestoneOptions,
-                  ]}
-                  selected={filters.milestoneIds}
-                  onChange={(values) => handleFilterFieldChange('milestoneIds', values)}
-                  placeholder="Search milestones..."
-                  emptyMessage="No milestones"
-                />
-
-                {/* Epics - Client uses OR logic */}
-                <FilterMultiSelect
-                  title="Epics (OR)"
-                  options={[
-                    // Add "None" option for tasks without epic
-                    { value: 0, label: 'None (No Epic)' },
-                    ...epicOptions,
-                  ]}
-                  selected={filters.epicIds}
-                  onChange={(values) => handleFilterFieldChange('epicIds', values)}
-                  placeholder="Search epics..."
-                  emptyMessage="No epics"
-                />
-
-                {/* Labels - Client uses OR logic */}
-                <FilterMultiSelect
-                  title="Labels (OR)"
-                  options={[
-                    // Add "None" option for tasks without labels
-                    { value: 'NONE', label: 'None (No Labels)' },
-                    ...labelOptions,
-                  ]}
-                  selected={filters.labels}
-                  onChange={(values) => handleFilterFieldChange('labels', values)}
-                  placeholder="Search labels..."
-                  emptyMessage="No labels"
-                />
-
-                {/* Assignees - Client uses OR logic */}
-                <FilterMultiSelect
-                  title="Assignees (OR)"
-                  options={[
-                    // Add "None" option for unassigned tasks
-                    { value: 'NONE', label: 'None (Unassigned)' },
-                    ...assigneeOptions,
-                  ]}
-                  selected={filters.assignees}
-                  onChange={(values) => handleFilterFieldChange('assignees', values)}
-                  placeholder="Search assignees..."
-                  emptyMessage="No assignees"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Server Tab Content */}
-          {activeTab === 'server' && (
-            <>
-              {filterOptionsLoading ? (
-                <div className="filter-loading">Loading filter options...</div>
-              ) : (
+                {/* Main Filter Grid */}
                 <div className="filter-grid">
-                  {/* Labels - GitLab API uses AND logic for multiple labels */}
-                  {/* Note: GitLab GraphQL API does not support filtering for "no labels" */}
-                  <FilterMultiSelect
-                    title="Labels (AND)"
-                    options={(filterOptions?.labels || []).map(l => ({
-                      value: l.title,
-                      label: l.title,
-                      color: l.color || null,
-                    }))}
-                    selected={serverFilters.labelNames || []}
-                    onChange={(values) => handleServerFilterChange('labelNames', values)}
-                    placeholder="Search labels..."
-                    emptyMessage="No labels available"
-                  />
-
-                  {/* Milestones - GitLab API uses OR logic for multiple milestones */}
+                  {/* Milestones - Client uses OR logic */}
                   <FilterMultiSelect
                     title="Milestones (OR)"
                     options={[
-                      // Add "None" option for items without milestone
-                      { value: 'NONE', label: 'None (No Milestone)' },
-                      // Then all milestones
-                      ...(filterOptions?.milestones || []).map(m => ({
-                        value: m.title,
-                        label: m.title,
-                      })),
+                      // Add "None" option for tasks without milestone
+                      { value: 0, label: 'None (No Milestone)' },
+                      ...milestoneOptions,
                     ]}
-                    selected={serverFilters.milestoneTitles || []}
-                    onChange={(values) => handleServerFilterChange('milestoneTitles', values)}
+                    selected={filters.milestoneIds}
+                    onChange={(values) =>
+                      handleFilterFieldChange('milestoneIds', values)
+                    }
                     placeholder="Search milestones..."
-                    emptyMessage="No milestones available"
+                    emptyMessage="No milestones"
                   />
 
-                  {/* Assignees - GitLab API uses AND logic for multiple assignees */}
+                  {/* Epics - Client uses OR logic */}
                   <FilterMultiSelect
-                    title="Assignees (AND)"
+                    title="Epics (OR)"
                     options={[
-                      // Add "None" option for unassigned issues
-                      { value: 'NONE', label: 'None (Unassigned)', subtitle: 'No assignee' },
-                      // Then all members
-                      ...(filterOptions?.members || []).map(m => ({
-                        value: m.username,
-                        label: m.name,
-                        subtitle: `@${m.username}`,
-                      })),
+                      // Add "None" option for tasks without epic
+                      { value: 0, label: 'None (No Epic)' },
+                      ...epicOptions,
                     ]}
-                    selected={serverFilters.assigneeUsernames || []}
-                    onChange={(values) => handleServerFilterChange('assigneeUsernames', values)}
-                    placeholder="Search assignees..."
-                    emptyMessage="No members available"
+                    selected={filters.epicIds}
+                    onChange={(values) =>
+                      handleFilterFieldChange('epicIds', values)
+                    }
+                    placeholder="Search epics..."
+                    emptyMessage="No epics"
                   />
 
-                  {/* Date Range */}
-                  <div className="date-range-section">
-                    <div className="date-range-header">Created Date Range</div>
-                    <div className="date-range-inputs">
-                      <div className="date-input-group">
-                        <label>From:</label>
-                        <input
-                          type="date"
-                          value={serverFilters.dateRange?.createdAfter || ''}
-                          onChange={(e) => handleServerDateRangeChange('createdAfter', e.target.value)}
-                          className="filter-date-input"
-                        />
+                  {/* Labels - Client uses OR logic */}
+                  <FilterMultiSelect
+                    title="Labels (OR)"
+                    options={[
+                      // Add "None" option for tasks without labels
+                      { value: 'NONE', label: 'None (No Labels)' },
+                      ...labelOptions,
+                    ]}
+                    selected={filters.labels}
+                    onChange={(values) =>
+                      handleFilterFieldChange('labels', values)
+                    }
+                    placeholder="Search labels..."
+                    emptyMessage="No labels"
+                  />
+
+                  {/* Assignees - Client uses OR logic */}
+                  <FilterMultiSelect
+                    title="Assignees (OR)"
+                    options={[
+                      // Add "None" option for unassigned tasks
+                      { value: 'NONE', label: 'None (Unassigned)' },
+                      ...assigneeOptions,
+                    ]}
+                    selected={filters.assignees}
+                    onChange={(values) =>
+                      handleFilterFieldChange('assignees', values)
+                    }
+                    placeholder="Search assignees..."
+                    emptyMessage="No assignees"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Server Tab Content */}
+            {activeTab === 'server' && (
+              <>
+                {filterOptionsLoading ? (
+                  <div className="filter-loading">
+                    Loading filter options...
+                  </div>
+                ) : (
+                  <div className="filter-grid">
+                    {/* Labels - GitLab API uses AND logic for multiple labels */}
+                    {/* Note: GitLab GraphQL API does not support filtering for "no labels" */}
+                    <FilterMultiSelect
+                      title="Labels (AND)"
+                      options={(filterOptions?.labels || []).map((l) => ({
+                        value: l.title,
+                        label: l.title,
+                        color: l.color || null,
+                      }))}
+                      selected={serverFilters.labelNames || []}
+                      onChange={(values) =>
+                        handleServerFilterChange('labelNames', values)
+                      }
+                      placeholder="Search labels..."
+                      emptyMessage="No labels available"
+                    />
+
+                    {/* Milestones - GitLab API uses OR logic for multiple milestones */}
+                    <FilterMultiSelect
+                      title="Milestones (OR)"
+                      options={[
+                        // Add "None" option for items without milestone
+                        { value: 'NONE', label: 'None (No Milestone)' },
+                        // Then all milestones
+                        ...(filterOptions?.milestones || []).map((m) => ({
+                          value: m.title,
+                          label: m.title,
+                        })),
+                      ]}
+                      selected={serverFilters.milestoneTitles || []}
+                      onChange={(values) =>
+                        handleServerFilterChange('milestoneTitles', values)
+                      }
+                      placeholder="Search milestones..."
+                      emptyMessage="No milestones available"
+                    />
+
+                    {/* Assignees - GitLab API uses AND logic for multiple assignees */}
+                    <FilterMultiSelect
+                      title="Assignees (AND)"
+                      options={[
+                        // Add "None" option for unassigned issues
+                        {
+                          value: 'NONE',
+                          label: 'None (Unassigned)',
+                          subtitle: 'No assignee',
+                        },
+                        // Then all members
+                        ...(filterOptions?.members || []).map((m) => ({
+                          value: m.username,
+                          label: m.name,
+                          subtitle: `@${m.username}`,
+                        })),
+                      ]}
+                      selected={serverFilters.assigneeUsernames || []}
+                      onChange={(values) =>
+                        handleServerFilterChange('assigneeUsernames', values)
+                      }
+                      placeholder="Search assignees..."
+                      emptyMessage="No members available"
+                    />
+
+                    {/* Date Range */}
+                    <div className="date-range-section">
+                      <div className="date-range-header">
+                        Created Date Range
                       </div>
-                      <div className="date-input-group">
-                        <label>To:</label>
-                        <input
-                          type="date"
-                          value={serverFilters.dateRange?.createdBefore || ''}
-                          onChange={(e) => handleServerDateRangeChange('createdBefore', e.target.value)}
-                          className="filter-date-input"
-                        />
+                      <div className="date-range-inputs">
+                        <div className="date-input-group">
+                          <label>From:</label>
+                          <input
+                            type="date"
+                            value={serverFilters.dateRange?.createdAfter || ''}
+                            onChange={(e) =>
+                              handleServerDateRangeChange(
+                                'createdAfter',
+                                e.target.value,
+                              )
+                            }
+                            className="filter-date-input"
+                          />
+                        </div>
+                        <div className="date-input-group">
+                          <label>To:</label>
+                          <input
+                            type="date"
+                            value={serverFilters.dateRange?.createdBefore || ''}
+                            onChange={(e) =>
+                              handleServerDateRangeChange(
+                                'createdBefore',
+                                e.target.value,
+                              )
+                            }
+                            className="filter-date-input"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Apply Button */}
-              <div className="server-filter-actions">
-                <button
-                  className="btn-apply-server"
-                  onClick={handleApplyServerFilter}
-                  disabled={!hasUnsyncedServerChanges}
-                >
-                  {hasUnsyncedServerChanges ? 'Apply Changes' : 'No Changes'}
-                </button>
-              </div>
-            </>
-          )}
+                {/* Apply Button */}
+                <div className="server-filter-actions">
+                  <button
+                    className="btn-apply-server"
+                    onClick={handleApplyServerFilter}
+                    disabled={!hasUnsyncedServerChanges}
+                  >
+                    {hasUnsyncedServerChanges ? 'Apply Changes' : 'No Changes'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

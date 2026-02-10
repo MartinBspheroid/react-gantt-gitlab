@@ -120,7 +120,7 @@ export function WorkloadView({ initialConfigId }) {
     projectPath,
     proxyConfig,
     currentConfig?.type || 'project',
-    canEdit
+    canEdit,
   );
 
   // Use shared GitLab data initialization hook
@@ -156,7 +156,7 @@ export function WorkloadView({ initialConfigId }) {
     projectPath,
     proxyConfig,
     canEditHolidays,
-    currentConfig?.type || 'project'
+    currentConfig?.type || 'project',
   );
 
   // Update ref when allTasks changes
@@ -183,8 +183,14 @@ export function WorkloadView({ initialConfigId }) {
   }, [provider]);
 
   // Extract assignees and labels from filtered tasks (for sidebar)
-  const taskAssignees = useMemo(() => getUniqueAssignees(filteredTasks), [filteredTasks]);
-  const taskLabels = useMemo(() => getUniqueLabels(filteredTasks), [filteredTasks]);
+  const taskAssignees = useMemo(
+    () => getUniqueAssignees(filteredTasks),
+    [filteredTasks],
+  );
+  const taskLabels = useMemo(
+    () => getUniqueLabels(filteredTasks),
+    [filteredTasks],
+  );
 
   // Combine project members with task assignees, and project labels with task labels
   const availableAssignees = useMemo(() => {
@@ -200,7 +206,8 @@ export function WorkloadView({ initialConfigId }) {
   // Generate storage key for current project (for sidebar selection persistence)
   const filterStorageKey = useMemo(() => {
     if (!currentConfig) return null;
-    const projectKey = currentConfig.projectId || currentConfig.groupId || 'default';
+    const projectKey =
+      currentConfig.projectId || currentConfig.groupId || 'default';
     return `workload-filter-${projectKey}`;
   }, [currentConfig]);
 
@@ -234,7 +241,7 @@ export function WorkloadView({ initialConfigId }) {
       JSON.stringify({
         assignees: selectedAssignees,
         labels: selectedLabels,
-      })
+      }),
     );
   }, [filterStorageKey, selectedAssignees, selectedLabels]);
 
@@ -248,7 +255,10 @@ export function WorkloadView({ initialConfigId }) {
       // Find original task
       const originalTask = findOriginalTask(task.id, allTasksRef.current);
       if (!originalTask) {
-        console.warn('[WorkloadView] Could not find original task for:', task.id);
+        console.warn(
+          '[WorkloadView] Could not find original task for:',
+          task.id,
+        );
         return;
       }
 
@@ -278,17 +288,14 @@ export function WorkloadView({ initialConfigId }) {
           try {
             await syncTask(originalTask.id, pendingChanges);
           } catch (error) {
-            console.error(
-              '[WorkloadView] Failed to sync task:',
-              error.message
-            );
+            console.error('[WorkloadView] Failed to sync task:', error.message);
           }
         }
       }, 500);
 
       dateChangeTimersRef.current.set(taskKey, timer);
     },
-    [syncTask]
+    [syncTask],
   );
 
   // Handle group change (cross-group drag)
@@ -302,7 +309,10 @@ export function WorkloadView({ initialConfigId }) {
       // Find original task
       const originalTask = findOriginalTask(task.id, allTasksRef.current);
       if (!originalTask) {
-        console.warn('[WorkloadView] Could not find original task for:', task.id);
+        console.warn(
+          '[WorkloadView] Could not find original task for:',
+          task.id,
+        );
         return;
       }
 
@@ -320,40 +330,60 @@ export function WorkloadView({ initialConfigId }) {
             const currentAssignees = originalTask.assigned
               ? originalTask.assigned.split(',').map((a) => a.trim())
               : [];
-            await provider.removeIssueAssignee(taskId, fromGroup.name, currentAssignees);
+            await provider.removeIssueAssignee(
+              taskId,
+              fromGroup.name,
+              currentAssignees,
+            );
           } else if (fromGroup.type === 'label') {
             const currentLabels = originalTask.labels
-              ? (Array.isArray(originalTask.labels)
-                  ? originalTask.labels
-                  : originalTask.labels.split(',').map((l) => l.trim()))
+              ? Array.isArray(originalTask.labels)
+                ? originalTask.labels
+                : originalTask.labels.split(',').map((l) => l.trim())
               : [];
-            await provider.removeIssueLabel(taskId, fromGroup.name, currentLabels);
+            await provider.removeIssueLabel(
+              taskId,
+              fromGroup.name,
+              currentLabels,
+            );
           }
         } else if (toGroup.type === 'assignee') {
           // Moving to assignee group - add this assignee to the task
           const currentAssignees = originalTask.assigned
             ? originalTask.assigned.split(',').map((a) => a.trim())
             : [];
-          await provider.addIssueAssignee(taskId, toGroup.name, currentAssignees);
+          await provider.addIssueAssignee(
+            taskId,
+            toGroup.name,
+            currentAssignees,
+          );
 
           // If moving from another assignee group, optionally remove old assignee
           if (fromGroup.type === 'assignee') {
             const updatedAssignees = [...currentAssignees, toGroup.name];
-            await provider.removeIssueAssignee(taskId, fromGroup.name, updatedAssignees);
+            await provider.removeIssueAssignee(
+              taskId,
+              fromGroup.name,
+              updatedAssignees,
+            );
           }
         } else if (toGroup.type === 'label') {
           // Moving to label group - add this label to the task
           const currentLabels = originalTask.labels
-            ? (Array.isArray(originalTask.labels)
-                ? originalTask.labels
-                : originalTask.labels.split(',').map((l) => l.trim()))
+            ? Array.isArray(originalTask.labels)
+              ? originalTask.labels
+              : originalTask.labels.split(',').map((l) => l.trim())
             : [];
           await provider.addIssueLabel(taskId, toGroup.name, currentLabels);
 
           // If moving from another label group, optionally remove old label
           if (fromGroup.type === 'label') {
             const updatedLabels = [...currentLabels, toGroup.name];
-            await provider.removeIssueLabel(taskId, fromGroup.name, updatedLabels);
+            await provider.removeIssueLabel(
+              taskId,
+              fromGroup.name,
+              updatedLabels,
+            );
           }
         }
 
@@ -363,20 +393,26 @@ export function WorkloadView({ initialConfigId }) {
         console.error('[WorkloadView] Failed to update group:', error.message);
       }
     },
-    [provider, sync]
+    [provider, sync],
   );
 
   // Handler for applying server filters and triggering sync (same as GitLabGantt)
-  const handleServerFilterApply = useCallback(async (serverFilters) => {
-    const gitlabFilters = toGitLabServerFilters(serverFilters);
-    setActiveServerFilters(gitlabFilters);
-    await sync({ serverFilters: gitlabFilters });
-  }, [sync, setActiveServerFilters]);
+  const handleServerFilterApply = useCallback(
+    async (serverFilters) => {
+      const gitlabFilters = toGitLabServerFilters(serverFilters);
+      setActiveServerFilters(gitlabFilters);
+      await sync({ serverFilters: gitlabFilters });
+    },
+    [sync, setActiveServerFilters],
+  );
 
   // Handle preset selection from FilterPanel
-  const handlePresetSelect = useCallback((presetId) => {
-    setLastUsedPresetId(presetId);
-  }, [setLastUsedPresetId]);
+  const handlePresetSelect = useCallback(
+    (presetId) => {
+      setLastUsedPresetId(presetId);
+    },
+    [setLastUsedPresetId],
+  );
 
   // Use shared highlight time hook for weekend/holiday logic
   const { highlightTime } = useHighlightTime({ holidays, workdays });
@@ -440,7 +476,9 @@ export function WorkloadView({ initialConfigId }) {
           title="View Options"
         >
           <i className="fas fa-sliders-h"></i>
-          <i className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}></i>
+          <i
+            className={`fas fa-chevron-${showViewOptions ? 'up' : 'down'} chevron-icon`}
+          ></i>
         </button>
 
         <SyncButton onSync={sync} syncState={syncState} filterOptions={{}} />
@@ -581,7 +619,11 @@ export function WorkloadView({ initialConfigId }) {
         <div className="workload-gantt-wrapper">
           {syncState.isLoading || filteredTasks.length === 0 ? (
             <div className="loading-message">
-              <p>{syncState.isLoading ? 'Loading GitLab data...' : 'No tasks match the current filters.'}</p>
+              <p>
+                {syncState.isLoading
+                  ? 'Loading GitLab data...'
+                  : 'No tasks match the current filters.'}
+              </p>
             </div>
           ) : !hasSelection ? (
             <div className="no-selection-message">
@@ -621,10 +663,16 @@ export function WorkloadView({ initialConfigId }) {
             }
           }}
         >
-          <div className="settings-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="settings-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="settings-modal-header">
               <h3>Workload Settings</h3>
-              <button onClick={() => setShowSettings(false)} className="modal-close-btn">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="modal-close-btn"
+              >
                 &times;
               </button>
             </div>

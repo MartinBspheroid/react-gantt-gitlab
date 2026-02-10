@@ -171,9 +171,12 @@ export function DataProvider({
   }, []);
 
   // === Filter Preset Operations ===
-  const createNewPreset = useCallback(async (name: string, filters: unknown) => {
-    // TODO: Implement using preset manager
-  }, []);
+  const createNewPreset = useCallback(
+    async (name: string, filters: unknown) => {
+      // TODO: Implement using preset manager
+    },
+    [],
+  );
 
   const updatePreset = useCallback(async (id: string, filters: unknown) => {
     // TODO: Implement using preset manager

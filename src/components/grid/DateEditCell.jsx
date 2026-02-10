@@ -61,7 +61,7 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
       }
       setShowPicker(false);
     },
-    [row.id, column.id, onDateChange]
+    [row.id, column.id, onDateChange],
   );
 
   // Handle clear button click
@@ -116,15 +116,13 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
   const isNone = displayValue === 'None';
 
   // Style for "None" text - using --wx-color-font-alt because --wx-color-secondary is transparent in willow theme
-  const noneStyle = isNone ? { color: 'var(--wx-color-font-alt, #9fa1ae)' } : {};
+  const noneStyle = isNone
+    ? { color: 'var(--wx-color-font-alt, #9fa1ae)' }
+    : {};
 
   // Readonly mode - just display
   if (readonly) {
-    return (
-      <span style={noneStyle}>
-        {displayValue}
-      </span>
-    );
+    return <span style={noneStyle}>{displayValue}</span>;
   }
 
   return (
@@ -139,51 +137,53 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
         {displayValue}
       </span>
 
-      {showPicker && createPortal(
-        <DatePickerPopup
-          value={date}
-          onDateSelect={handleDateSelect}
-          onClear={handleClear}
-          popupRef={(el) => {
-            pickerRef.current = el;
-            // Position popup using fixed positioning
-            // Fixed positioning is relative to viewport, matching getBoundingClientRect
-            if (el && cellRef.current) {
-              // Use requestAnimationFrame to wait for DOM to fully render
-              // This ensures we measure the actual popup height correctly
-              requestAnimationFrame(() => {
-                if (!el || !cellRef.current) return;
+      {showPicker &&
+        createPortal(
+          <DatePickerPopup
+            value={date}
+            onDateSelect={handleDateSelect}
+            onClear={handleClear}
+            popupRef={(el) => {
+              pickerRef.current = el;
+              // Position popup using fixed positioning
+              // Fixed positioning is relative to viewport, matching getBoundingClientRect
+              if (el && cellRef.current) {
+                // Use requestAnimationFrame to wait for DOM to fully render
+                // This ensures we measure the actual popup height correctly
+                requestAnimationFrame(() => {
+                  if (!el || !cellRef.current) return;
 
-                const rect = cellRef.current.getBoundingClientRect();
-                // Measure actual popup height after DOM is ready
-                const popupHeight = el.offsetHeight || el.getBoundingClientRect().height || 0;
+                  const rect = cellRef.current.getBoundingClientRect();
+                  // Measure actual popup height after DOM is ready
+                  const popupHeight =
+                    el.offsetHeight || el.getBoundingClientRect().height || 0;
 
-                // For popup positioning, we use viewport boundaries
-                // The popup is rendered via Portal to document.body with position:fixed,
-                // so it's not clipped by any container's overflow
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const spaceAbove = rect.top;
+                  // For popup positioning, we use viewport boundaries
+                  // The popup is rendered via Portal to document.body with position:fixed,
+                  // so it's not clipped by any container's overflow
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  const spaceAbove = rect.top;
 
-                let top;
-                // Flip to above only if below space is insufficient AND above has enough space
-                if (spaceBelow < popupHeight && spaceAbove >= popupHeight) {
-                  // Show above - popup bottom aligns at cell top
-                  top = rect.top - popupHeight;
-                } else {
-                  // Show below (default) - popup top aligns at cell top (overlapping cell)
-                  top = rect.top;
-                }
+                  let top;
+                  // Flip to above only if below space is insufficient AND above has enough space
+                  if (spaceBelow < popupHeight && spaceAbove >= popupHeight) {
+                    // Show above - popup bottom aligns at cell top
+                    top = rect.top - popupHeight;
+                  } else {
+                    // Show below (default) - popup top aligns at cell top (overlapping cell)
+                    top = rect.top;
+                  }
 
-                el.style.position = 'fixed';
-                el.style.top = `${top}px`;
-                el.style.left = `${rect.left}px`;
-                el.style.zIndex = '10000';
-              });
-            }
-          }}
-        />,
-        document.body
-      )}
+                  el.style.position = 'fixed';
+                  el.style.top = `${top}px`;
+                  el.style.left = `${rect.left}px`;
+                  el.style.zIndex = '10000';
+                });
+              }
+            }}
+          />,
+          document.body,
+        )}
     </>
   );
 }

@@ -12,7 +12,15 @@ import './DateTimePicker.css';
  * @param {Function} props.onChange - Change handler
  */
 export default function DateTimePicker(props) {
-  const { value, time, format, onchange, onChange, clearable = false, ...restProps } = props;
+  const {
+    value,
+    time,
+    format,
+    onchange,
+    onChange,
+    clearable = false,
+    ...restProps
+  } = props;
   const onChangeHandler = onChange ?? onchange;
 
   function handleDateChange(ev) {

@@ -10,7 +10,10 @@
 
 import { useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { KanbanCard } from './KanbanCard';
 import { SortControl } from './SortControl';
 import './KanbanList.css';
@@ -46,7 +49,9 @@ function sortTasks(tasks, sortBy, sortOrder) {
         const dateA = a.end ? new Date(a.end).getTime() : Infinity;
         const dateB = b.end ? new Date(b.end).getTime() : Infinity;
         // Guard against NaN from invalid date strings
-        comparison = (Number.isNaN(dateA) ? Infinity : dateA) - (Number.isNaN(dateB) ? Infinity : dateB);
+        comparison =
+          (Number.isNaN(dateA) ? Infinity : dateA) -
+          (Number.isNaN(dateB) ? Infinity : dateB);
         break;
       }
 
@@ -80,16 +85,20 @@ function sortTasks(tasks, sortBy, sortOrder) {
       case 'assignee': {
         // Sort by first assignee name alphabetically
         // Unassigned issues go to the end
-        const assigneeA = (a.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
-        const assigneeB = (b.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
+        const assigneeA =
+          (a.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
+        const assigneeB =
+          (b.assigned || '').split(', ')[0].toLowerCase() || '\uffff';
         comparison = assigneeA.localeCompare(assigneeB);
         break;
       }
 
       default: {
         // Fallback to position (same logic as 'position' case)
-        const defaultPosA = a._localOrder ?? a._gitlab?.relativePosition ?? a.id;
-        const defaultPosB = b._localOrder ?? b._gitlab?.relativePosition ?? b.id;
+        const defaultPosA =
+          a._localOrder ?? a._gitlab?.relativePosition ?? a.id;
+        const defaultPosB =
+          b._localOrder ?? b._gitlab?.relativePosition ?? b.id;
         comparison = defaultPosA - defaultPosB;
         break;
       }
@@ -145,7 +154,9 @@ export function KanbanList({
     : 'kanban-list-header';
 
   // Determine list class with drop target highlight
-  const listClass = isDropTarget ? 'kanban-list kanban-list-over' : 'kanban-list';
+  const listClass = isDropTarget
+    ? 'kanban-list kanban-list-over'
+    : 'kanban-list';
 
   return (
     <div className={listClass} data-list-id={id} ref={setNodeRef}>

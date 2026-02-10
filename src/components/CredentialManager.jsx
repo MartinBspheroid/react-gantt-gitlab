@@ -91,11 +91,11 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
 
     if (usageCount > 0) {
       setDeleteWarningMessage(
-        `This credential "${credential?.name}" is currently used by ${usageCount} configuration(s). Deleting it will cause those configurations to stop working. Are you sure you want to delete it?`
+        `This credential "${credential?.name}" is currently used by ${usageCount} configuration(s). Deleting it will cause those configurations to stop working. Are you sure you want to delete it?`,
       );
     } else {
       setDeleteWarningMessage(
-        `Are you sure you want to delete credential "${credential?.name}"?`
+        `Are you sure you want to delete credential "${credential?.name}"?`,
       );
     }
 
@@ -134,7 +134,7 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
       // Auto-fill name from domain if successful and name is empty
       if (result.success && !formData.name.trim()) {
         const domainName = GitLabCredentialManager.extractDomainName(
-          formData.gitlabUrl
+          formData.gitlabUrl,
         );
         setFormData((prev) => ({
           ...prev,
@@ -225,9 +225,18 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
         }
       }}
     >
-      <div className="modal-content credential-manager-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-content credential-manager-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h3>{showForm ? (editingCredential ? 'Edit Credential' : 'Add Credential') : 'Manage Credentials'}</h3>
+          <h3>
+            {showForm
+              ? editingCredential
+                ? 'Edit Credential'
+                : 'Add Credential'
+              : 'Manage Credentials'}
+          </h3>
           <button onClick={handleClose} className="modal-close-btn">
             &times;
           </button>
@@ -240,7 +249,9 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
               {credentials.length === 0 ? (
                 <div className="empty-state">
                   <p>No credentials yet</p>
-                  <p>Click the button below to add your first GitLab credential</p>
+                  <p>
+                    Click the button below to add your first GitLab credential
+                  </p>
                 </div>
               ) : (
                 credentials.map((credential) => {
@@ -249,7 +260,9 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
                     <div key={credential.id} className="credential-item">
                       <div className="credential-info">
                         <div className="credential-name">{credential.name}</div>
-                        <div className="credential-url">{credential.gitlabUrl}</div>
+                        <div className="credential-url">
+                          {credential.gitlabUrl}
+                        </div>
                         <div className="credential-usage">
                           {usageCount > 0
                             ? `Used by ${usageCount} configuration(s)`
@@ -295,7 +308,9 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
                 <input
                   type="text"
                   value={formData.gitlabUrl}
-                  onChange={(e) => handleInputChange('gitlabUrl', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('gitlabUrl', e.target.value)
+                  }
                   placeholder="https://gitlab.com"
                 />
               </div>
@@ -314,7 +329,9 @@ export function CredentialManager({ isOpen, onClose, onCredentialsChange }) {
               <div className="form-group">
                 <button
                   onClick={handleTestConnection}
-                  disabled={testingConnection || !formData.gitlabUrl || !formData.token}
+                  disabled={
+                    testingConnection || !formData.gitlabUrl || !formData.token
+                  }
                   className="btn-test"
                 >
                   {testingConnection ? 'Testing...' : 'Test Connection'}

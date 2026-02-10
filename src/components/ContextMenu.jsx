@@ -29,11 +29,14 @@ const ContextMenu = forwardRef(function ContextMenu(
     at = 'point',
     children,
     onClick,
-    css
+    css,
   },
   ref,
 ) {
-  const ownMenu = useMemo(() => optionsInit ?? [...defaultMenuOptions], [optionsInit]);
+  const ownMenu = useMemo(
+    () => optionsInit ?? [...defaultMenuOptions],
+    [optionsInit],
+  );
   const [optionsProp] = useWritableProp(ownMenu);
 
   const menuRef = useRef(null);
@@ -44,10 +47,10 @@ const ContextMenu = forwardRef(function ContextMenu(
   const l = useMemo(() => i18nCtx || locale({ ...en, ...coreEn }), [i18nCtx]);
   const _ = useMemo(() => l.getGroup('gantt'), [l]);
 
-  const rTaskTypesVal = useStoreLater(api, "taskTypes");
-  const rTasksVal = useStoreLater(api, "_tasks");
-  const rSelectedVal = useStoreLater(api, "selected");
-  const rSelectedTasksVal = useStoreLater(api, "_selected");
+  const rTaskTypesVal = useStoreLater(api, 'taskTypes');
+  const rTasksVal = useStoreLater(api, '_tasks');
+  const rSelectedVal = useStoreLater(api, 'selected');
+  const rSelectedTasksVal = useStoreLater(api, '_selected');
 
   useEffect(() => {
     if (!api) return;

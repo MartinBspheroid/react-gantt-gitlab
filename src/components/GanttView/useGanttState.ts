@@ -18,7 +18,8 @@ export function useGanttState() {
   const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
   const [showApplyBlueprintModal, setShowApplyBlueprintModal] = useState(false);
   const [showBlueprintManager, setShowBlueprintManager] = useState(false);
-  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] = useState(null);
+  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] =
+    useState(null);
 
   // === Create/Delete Dialog State ===
   const [createItemDialogOpen, setCreateItemDialogOpen] = useState(false);
@@ -26,7 +27,8 @@ export function useGanttState() {
   const [createItemDialogContext, setCreateItemDialogContext] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteDialogItems, setDeleteDialogItems] = useState([]);
-  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] = useState(false);
+  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] =
+    useState(false);
 
   // === Edit State ===
   const [dateEditable, setDateEditable] = useState(true);
