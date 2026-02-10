@@ -37,6 +37,10 @@ export interface FilterOptions {
   states?: string[];
   search?: string;
 
+  // Critical path filter
+  criticalPathOnly?: boolean;
+  criticalTaskIds?: (string | number)[];
+
   // Filter type indicator for Preset
   filterType?: 'client' | 'server';
 
@@ -262,6 +266,21 @@ export class DataFilters {
   }
 
   /**
+   * Filter tasks to show only critical path
+   */
+  static filterByCriticalPath(
+    tasks: ITask[],
+    criticalTaskIds: (string | number)[],
+  ): ITask[] {
+    if (!criticalTaskIds || criticalTaskIds.length === 0) {
+      return tasks;
+    }
+
+    const criticalSet = new Set(criticalTaskIds);
+    return tasks.filter((task) => criticalSet.has(task.id!));
+  }
+
+  /**
    * Apply all filters
    */
   static applyFilters(tasks: ITask[], options: FilterOptions): ITask[] {
@@ -289,6 +308,10 @@ export class DataFilters {
 
     if (options.search) {
       filtered = this.searchTasks(filtered, options.search);
+    }
+
+    if (options.criticalPathOnly && options.criticalTaskIds) {
+      filtered = this.filterByCriticalPath(filtered, options.criticalTaskIds);
     }
 
     // Ensure parent-child integrity: include all necessary parent tasks

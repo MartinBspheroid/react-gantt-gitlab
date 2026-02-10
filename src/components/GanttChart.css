@@ -641,3 +641,50 @@
 .wx-bar.wx-parent-task {
   z-index: 2 !important;
 }
+
+/* Critical path task highlighting */
+.wx-task.wx-critical,
+.wx-bar.wx-critical {
+  background-color: #dc3545 !important;
+  border-color: #bd2130 !important;
+}
+
+.wx-task.wx-critical .wx-content,
+.wx-bar.wx-critical .wx-content {
+  background-color: #dc3545 !important;
+}
+
+.wx-summary.wx-critical {
+  background-color: #c82333 !important;
+  border-color: #a71d2a !important;
+}
+
+.wx-summary.wx-critical .wx-content {
+  background-color: #c82333 !important;
+}
+
+/* Critical path links */
+.wx-link.wx-critical-link {
+  stroke: #dc3545 !important;
+  stroke-width: 2px !important;
+}
+
+/* Non-critical task slack indicator (subtle highlight) */
+.wx-task.wx-non-critical {
+  border-style: dashed;
+}
+
+/* Slack badge for non-critical tasks */
+.wx-task .slack-badge {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffc107;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+}

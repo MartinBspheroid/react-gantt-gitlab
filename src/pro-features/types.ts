@@ -73,9 +73,13 @@ export interface ITaskConstraint {
   date: Date;
 }
 
+export interface ICriticalPathConfig {
+  type: 'strict' | 'flexible';
+}
+
 export interface IProFeaturesConfig {
   calendar?: ICalendar;
-  criticalPath?: boolean;
+  criticalPath?: boolean | ICriticalPathConfig;
   undoRedo?: boolean;
   splitTasks?: boolean;
   autoSchedule?: boolean;
