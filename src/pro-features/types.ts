@@ -38,7 +38,7 @@ export interface IExportOptions {
 }
 
 export interface IImportOptions {
-  format: 'json' | 'csv';
+  format: 'json' | 'csv' | 'ms-xml';
   merge?: boolean;
   updateExisting?: boolean;
 }

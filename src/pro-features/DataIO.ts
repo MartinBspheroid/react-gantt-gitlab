@@ -195,6 +195,187 @@ export function importFromCSV(
   return { tasks, links: [] };
 }
 
+export function importFromMSProjectXML(
+  xmlString: string,
+  _options: IImportOptions = { format: 'ms-xml' },
+): { tasks: ITask[]; links: ILink[] } {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlString, 'text/xml');
+
+  const parseError = doc.querySelector('parsererror');
+  if (parseError) {
+    throw new Error(`Invalid XML: ${parseError.textContent}`);
+  }
+
+  const tasks: ITask[] = [];
+  const links: ILink[] = [];
+  const taskMap = new Map<string, string>();
+
+  const taskElements = doc.querySelectorAll('Project > Tasks > Task');
+
+  taskElements.forEach((taskEl) => {
+    const uid = getTextContent(taskEl, 'UID');
+    const name = getTextContent(taskEl, 'Name');
+    const startStr = getTextContent(taskEl, 'Start');
+    const finishStr = getTextContent(taskEl, 'Finish');
+    const durationStr = getTextContent(taskEl, 'Duration');
+    const outlineLevel = parseInt(
+      getTextContent(taskEl, 'OutlineLevel') || '0',
+      10,
+    );
+    const percentComplete = parseFloat(
+      getTextContent(taskEl, 'PercentComplete') || '0',
+    );
+
+    if (!uid || !name) return;
+
+    const taskId = `ms-${uid}`;
+    taskMap.set(uid, taskId);
+
+    const task: ITask = {
+      id: taskId,
+      text: name,
+      start: startStr ? parseMSProjectDate(startStr) : undefined,
+      end: finishStr ? parseMSProjectDate(finishStr) : undefined,
+      duration: durationStr ? parseMSProjectDuration(durationStr) : undefined,
+      progress: percentComplete / 100,
+      type: outlineLevel > 0 ? 'task' : 'task',
+      parent: 0,
+    };
+
+    tasks.push(task);
+
+    const predecessorLinks = taskEl.querySelectorAll('PredecessorLink');
+    predecessorLinks.forEach((linkEl, index) => {
+      const predUid = getTextContent(linkEl, 'PredecessorUID');
+      const linkType = getTextContent(linkEl, 'Type');
+
+      if (predUid && taskMap.has(predUid)) {
+        const sourceId = taskMap.get(predUid)!;
+        links.push({
+          id: `link-${sourceId}-${taskId}-${index}`,
+          source: sourceId,
+          target: taskId,
+          type: mapMSProjectLinkType(linkType),
+        });
+      }
+    });
+  });
+
+  buildTaskHierarchy(tasks, taskMap, doc);
+
+  return { tasks, links };
+}
+
+function getTextContent(parent: Element | Document, tagName: string): string {
+  const el = parent.querySelector(tagName);
+  return el?.textContent?.trim() || '';
+}
+
+function parseMSProjectDate(dateStr: string): Date {
+  const match = dateStr.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/,
+  );
+  if (match) {
+    const [, year, month, day, hour, minute, second] = match.map(Number);
+    return new Date(year, month - 1, day, hour, minute, second);
+  }
+  return new Date(dateStr);
+}
+
+function parseMSProjectDuration(durationStr: string): number {
+  const match = durationStr.match(/P(?:([^T]*)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?/);
+  if (match) {
+    const days = parseInt(match[1] || '0', 10);
+    return days > 0 ? days : 1;
+  }
+  const hoursMatch = durationStr.match(/(\d+)\s*hrs?/i);
+  if (hoursMatch) {
+    return Math.ceil(parseInt(hoursMatch[1], 10) / 8);
+  }
+  const daysMatch = durationStr.match(/(\d+)\s*days?/i);
+  if (daysMatch) {
+    return parseInt(daysMatch[1], 10);
+  }
+  return 1;
+}
+
+function mapMSProjectLinkType(
+  type: string,
+):
+  | 'finish_to_start'
+  | 'start_to_start'
+  | 'finish_to_finish'
+  | 'start_to_finish' {
+  switch (type) {
+    case '0':
+      return 'finish_to_start';
+    case '1':
+      return 'start_to_start';
+    case '2':
+      return 'finish_to_finish';
+    case '3':
+      return 'start_to_finish';
+    default:
+      return 'finish_to_start';
+  }
+}
+
+function buildTaskHierarchy(
+  tasks: ITask[],
+  taskMap: Map<string, string>,
+  doc: Document,
+): void {
+  const taskElementsByUid = new Map<string, Element>();
+  doc.querySelectorAll('Project > Tasks > Task').forEach((el) => {
+    const uid = getTextContent(el, 'UID');
+    if (uid) taskElementsByUid.set(uid, el);
+  });
+
+  const uidToOutlineLevel = new Map<string, number>();
+  taskElementsByUid.forEach((el, uid) => {
+    const level = parseInt(getTextContent(el, 'OutlineLevel') || '0', 10);
+    uidToOutlineLevel.set(uid, level);
+  });
+
+  const sortedUids = Array.from(taskElementsByUid.keys()).sort((a, b) => {
+    const levelA = uidToOutlineLevel.get(a) || 0;
+    const levelB = uidToOutlineLevel.get(b) || 0;
+    const elA = taskElementsByUid.get(a)!;
+    const elB = taskElementsByUid.get(b)!;
+    const idxA = Array.from(taskElementsByUid.values()).indexOf(elA);
+    const idxB = Array.from(taskElementsByUid.values()).indexOf(elB);
+    if (levelA !== levelB) return levelA - levelB;
+    return idxA - idxB;
+  });
+
+  const taskStack: Array<{ uid: string; level: number }> = [];
+
+  sortedUids.forEach((uid) => {
+    const level = uidToOutlineLevel.get(uid) || 0;
+    const taskId = taskMap.get(uid);
+    if (!taskId) return;
+
+    while (
+      taskStack.length > 0 &&
+      taskStack[taskStack.length - 1].level >= level
+    ) {
+      taskStack.pop();
+    }
+
+    if (taskStack.length > 0) {
+      const parentUid = taskStack[taskStack.length - 1].uid;
+      const parentId = taskMap.get(parentUid);
+      const task = tasks.find((t) => t.id === taskId);
+      if (task && parentId) {
+        task.parent = parentId;
+      }
+    }
+
+    taskStack.push({ uid, level });
+  });
+}
+
 export function importData(
   dataString: string,
   options: IImportOptions,
@@ -202,6 +383,8 @@ export function importData(
   switch (options.format) {
     case 'csv':
       return importFromCSV(dataString, options);
+    case 'ms-xml':
+      return importFromMSProjectXML(dataString, options);
     case 'json':
     default:
       return importFromJSON(dataString, options);
@@ -222,7 +405,14 @@ export async function importFromFile(
   options?: IImportOptions,
 ): Promise<{ tasks: ITask[]; links: ILink[] }> {
   const content = await readFileAsText(file);
-  const format = file.name.endsWith('.csv') ? 'csv' : 'json';
+
+  let format: 'json' | 'csv' | 'ms-xml' = 'json';
+  if (file.name.endsWith('.csv')) {
+    format = 'csv';
+  } else if (file.name.endsWith('.xml')) {
+    format = 'ms-xml';
+  }
+
   return importData(content, { ...options, format });
 }
 

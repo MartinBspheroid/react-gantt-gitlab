@@ -33,6 +33,7 @@ import {
   downloadExport,
   importData,
   importFromFile,
+  importFromMSProjectXML,
 } from '../pro-features/DataIO';
 import {
   scheduleTasks,
@@ -301,6 +302,10 @@ export interface IUseDataExportResult {
     csvString: string,
     options?: Partial<IImportOptions>,
   ) => { tasks: ITask[]; links: ILink[] };
+  importFromMSProjectXML: (
+    xmlString: string,
+    options?: Partial<IImportOptions>,
+  ) => { tasks: ITask[]; links: ILink[] };
   importFromFile: (
     file: File,
     options?: Partial<IImportOptions>,
@@ -338,6 +343,12 @@ export function useDataExport(): IUseDataExportResult {
     [],
   );
 
+  const handleImportMSProjectXML = useCallback(
+    (xmlString: string, options?: Partial<IImportOptions>) =>
+      importFromMSProjectXML(xmlString, { ...options, format: 'ms-xml' }),
+    [],
+  );
+
   const handleImportFile = useCallback(
     (file: File, options?: Partial<IImportOptions>) =>
       importFromFile(file, options),
@@ -350,6 +361,7 @@ export function useDataExport(): IUseDataExportResult {
     downloadExport: handleDownload,
     importFromJSON: handleImportJSON,
     importFromCSV: handleImportCSV,
+    importFromMSProjectXML: handleImportMSProjectXML,
     importFromFile: handleImportFile,
   };
 }

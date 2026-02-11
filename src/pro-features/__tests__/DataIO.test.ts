@@ -4,6 +4,7 @@ import {
   exportToCSV,
   importFromJSON,
   importFromCSV,
+  importFromMSProjectXML,
 } from '../DataIO';
 import type { ITask, ILink } from '@svar-ui/gantt-store';
 
@@ -168,6 +169,122 @@ describe('DataIO', () => {
 
       const result = importFromCSV(csv);
       expect(result.tasks[0].text).toBe('Task, with comma');
+    });
+  });
+
+  describe('importFromMSProjectXML', () => {
+    const validMSProjectXML = `<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Task 1</Name>
+      <Start>2024-01-01T08:00:00</Start>
+      <Finish>2024-01-05T17:00:00</Finish>
+      <Duration>P4D</Duration>
+      <PercentComplete>50</PercentComplete>
+      <OutlineLevel>1</OutlineLevel>
+    </Task>
+    <Task>
+      <UID>2</UID>
+      <Name>Task 2</Name>
+      <Start>2024-01-06T08:00:00</Start>
+      <Finish>2024-01-10T17:00:00</Finish>
+      <Duration>P4D</Duration>
+      <PercentComplete>0</PercentComplete>
+      <OutlineLevel>1</OutlineLevel>
+      <PredecessorLink>
+        <PredecessorUID>1</PredecessorUID>
+        <Type>0</Type>
+      </PredecessorLink>
+    </Task>
+  </Tasks>
+</Project>`;
+
+    it('should import tasks from MS Project XML', () => {
+      const result = importFromMSProjectXML(validMSProjectXML);
+
+      expect(result.tasks).toHaveLength(2);
+      expect(result.tasks[0].text).toBe('Task 1');
+      expect(result.tasks[0].id).toBe('ms-1');
+    });
+
+    it('should parse dates correctly', () => {
+      const result = importFromMSProjectXML(validMSProjectXML);
+
+      expect(result.tasks[0].start).toBeInstanceOf(Date);
+      expect(result.tasks[0].end).toBeInstanceOf(Date);
+      expect(result.tasks[0].start?.getFullYear()).toBe(2024);
+    });
+
+    it('should parse duration correctly', () => {
+      const result = importFromMSProjectXML(validMSProjectXML);
+
+      expect(result.tasks[0].duration).toBe(4);
+    });
+
+    it('should parse progress as decimal', () => {
+      const result = importFromMSProjectXML(validMSProjectXML);
+
+      expect(result.tasks[0].progress).toBe(0.5);
+      expect(result.tasks[1].progress).toBe(0);
+    });
+
+    it('should import dependencies as links', () => {
+      const result = importFromMSProjectXML(validMSProjectXML);
+
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0].source).toBe('ms-1');
+      expect(result.links[0].target).toBe('ms-2');
+      expect(result.links[0].type).toBe('finish_to_start');
+    });
+
+    it('should map link types correctly', () => {
+      const startToStartXML = `<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Tasks>
+    <Task><UID>1</UID><Name>A</Name><OutlineLevel>1</OutlineLevel></Task>
+    <Task><UID>2</UID><Name>B</Name><OutlineLevel>1</OutlineLevel>
+      <PredecessorLink>
+        <PredecessorUID>1</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+  </Tasks>
+</Project>`;
+
+      const result = importFromMSProjectXML(startToStartXML);
+      expect(result.links[0].type).toBe('start_to_start');
+    });
+
+    it('should handle empty tasks', () => {
+      const emptyXML = `<?xml version="1.0" encoding="UTF-8"?>
+<Project><Tasks></Tasks></Project>`;
+
+      const result = importFromMSProjectXML(emptyXML);
+      expect(result.tasks).toHaveLength(0);
+      expect(result.links).toHaveLength(0);
+    });
+
+    it('should throw error for invalid XML', () => {
+      expect(() => importFromMSProjectXML('not valid xml')).toThrow();
+    });
+
+    it('should handle tasks without optional fields', () => {
+      const minimalXML = `<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Minimal Task</Name>
+      <OutlineLevel>1</OutlineLevel>
+    </Task>
+  </Tasks>
+</Project>`;
+
+      const result = importFromMSProjectXML(minimalXML);
+      expect(result.tasks).toHaveLength(1);
+      expect(result.tasks[0].text).toBe('Minimal Task');
     });
   });
 
