@@ -12,6 +12,7 @@ import { getID } from '../../helpers/locate';
 import storeContext from '../../context';
 import { useStore, useStoreWithCounter } from '@svar-ui/lib-react';
 import { getMatchingRules, parseLabelsString } from '../../types/colorRule';
+import { isSplitTask, visualizeSplitTask } from '../../pro-features/SplitTasks';
 import './Bars.css';
 
 // Parent task baseline 括號樣式常數（9-slice 設計：斜邊固定，中間伸縮）
@@ -79,6 +80,196 @@ const ParentBaselineBracket = ({ task, isMilestone, cellWidth }) => {
         strokeLinejoin="round"
       />
     </svg>
+  );
+};
+
+/**
+ * Calculate position for a split task segment
+ * Uses task's internal positioning ($x, $w) relative to timeline start
+ */
+const getSegmentPosition = (task, segmentStart, segmentEnd, scalesValue) => {
+  if (!task.start || !scalesValue?.start) return null;
+
+  const timelineStart = scalesValue.start.getTime();
+  const cellWidth = scalesValue.lengthUnitWidth || 40;
+  const lengthUnit = scalesValue.lengthUnit || 'day';
+
+  let unitMs = 24 * 60 * 60 * 1000; // day
+  if (lengthUnit === 'hour') unitMs = 60 * 60 * 1000;
+  else if (lengthUnit === 'week') unitMs = 7 * 24 * 60 * 60 * 1000;
+  else if (lengthUnit === 'month') unitMs = 30 * 24 * 60 * 60 * 1000;
+  else if (lengthUnit === 'quarter') unitMs = 90 * 24 * 60 * 60 * 1000;
+
+  const startX =
+    ((segmentStart.getTime() - timelineStart) / unitMs) * cellWidth;
+  const endX = ((segmentEnd.getTime() - timelineStart) / unitMs) * cellWidth;
+  const width = Math.max(cellWidth, endX - startX);
+
+  return { left: startX, width };
+};
+
+/**
+ * SplitTaskSegments - renders a split task as multiple segments with gap connectors
+ */
+const SplitTaskSegments = ({
+  task,
+  api,
+  readonly,
+  taskTemplate: TaskTemplate,
+  colorRules,
+  labelOffset,
+  getMoveMode,
+  linkFrom,
+  alreadyLinked,
+  scalesValue,
+  onSegmentDown,
+}) => {
+  if (!isSplitTask(task)) return null;
+
+  const visualSegments = visualizeSplitTask({
+    id: task.id,
+    parts: task.splitParts,
+  });
+
+  if (visualSegments.length === 0) return null;
+
+  // Filter out gaps, keep only actual segments
+  const segments = visualSegments.filter((s) => !s.isGap);
+  const gaps = visualSegments.filter((s) => s.isGap);
+
+  // Calculate positions for all segments
+  const segmentPositions = segments.map((segment) => ({
+    ...segment,
+    position: getSegmentPosition(task, segment.start, segment.end, scalesValue),
+  }));
+
+  // Get color rules matching
+  const matchedRules = getMatchingRules(
+    task.text,
+    parseLabelsString(task.labels),
+    colorRules,
+  );
+  const hasColorRules = matchedRules.length > 0;
+
+  const toRgba = (hex, opacity = 1) => {
+    if (!hex) return 'transparent';
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return hex;
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const baseColor = '#00ba94';
+  const stripeStyle = hasColorRules
+    ? {
+        '--wx-base-color': baseColor,
+        '--wx-color-rule-1': toRgba(
+          matchedRules[0]?.color,
+          matchedRules[0]?.opacity ?? 1,
+        ),
+        '--wx-color-rule-2': toRgba(
+          matchedRules[1]?.color || matchedRules[0]?.color,
+          matchedRules[1]?.opacity ?? matchedRules[0]?.opacity ?? 1,
+        ),
+        '--wx-color-rule-3': toRgba(
+          matchedRules[2]?.color || matchedRules[0]?.color,
+          matchedRules[2]?.opacity ?? matchedRules[0]?.opacity ?? 1,
+        ),
+      }
+    : {};
+
+  const stripeClass = hasColorRules
+    ? matchedRules.length === 1
+      ? ' wx-color-rule-single'
+      : matchedRules.length === 2
+        ? ' wx-color-rule-double'
+        : ' wx-color-rule-triple'
+    : '';
+
+  return (
+    <div
+      className="wx-GKbcLEGA wx-split-task-container"
+      style={{
+        left: `${task.$x}px`,
+        top: `${task.$y}px`,
+        height: `${task.$h}px`,
+      }}
+    >
+      {segmentPositions.map((segment, index) => {
+        if (!segment.position) return null;
+
+        const segmentStyle = {
+          left: `${segment.position.left - task.$x}px`,
+          width: `${segment.position.width}px`,
+          height: `${task.$h}px`,
+          ...stripeStyle,
+          '--wx-label-offset': `${labelOffset}px`,
+        };
+
+        const segmentClass =
+          `wx-GKbcLEGA wx-split-segment wx-task` +
+          (linkFrom && linkFrom.id === task.id ? ' wx-selected' : '') +
+          stripeClass;
+
+        // Calculate gap connector to next segment
+        const gapConnector =
+          index < segmentPositions.length - 1
+            ? (() => {
+                const currentEnd =
+                  segment.position.left + segment.position.width;
+                const nextStart = segmentPositions[index + 1].position.left;
+                return {
+                  left: currentEnd,
+                  width: nextStart - currentEnd,
+                };
+              })()
+            : null;
+
+        return (
+          <Fragment key={segment.id}>
+            <div
+              className={segmentClass}
+              style={segmentStyle}
+              data-tooltip-id={task.id}
+              data-id={task.id}
+              data-segment-id={segment.id}
+              onMouseDown={(e) =>
+                onSegmentDown && onSegmentDown(e, task, segment.id)
+              }
+            >
+              {TaskTemplate ? (
+                <TaskTemplate data={task} api={api} onAction={() => {}} />
+              ) : hasColorRules ? (
+                <>
+                  <div className="wx-GKbcLEGA wx-content"></div>
+                  {index === 0 && (
+                    <div className="wx-GKbcLEGA wx-text-out">
+                      {task.text || ''}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="wx-GKbcLEGA wx-content">
+                  {index === 0 ? task.text || '' : ''}
+                </div>
+              )}
+            </div>
+            {gapConnector && gapConnector.width > 0 && (
+              <div
+                className="wx-GKbcLEGA wx-split-gap-connector"
+                style={{
+                  left: `${gapConnector.left - task.$x}px`,
+                  width: `${gapConnector.width}px`,
+                  top: `${task.$h / 2}px`,
+                }}
+              />
+            )}
+          </Fragment>
+        );
+      })}
+    </div>
   );
 };
 
@@ -550,6 +741,47 @@ function Bars(props) {
     >
       {tasks.map((task) => {
         if (task.$skip || task.unscheduled) return null;
+
+        // Check if this is a split task - render using SplitTaskSegments
+        if (
+          isSplitTask(task) &&
+          task.type !== 'milestone' &&
+          task.type !== 'summary'
+        ) {
+          const matchedRules = getMatchingRules(
+            task.text,
+            parseLabelsString(task.labels),
+            colorRules,
+          );
+
+          return (
+            <Fragment key={task.id}>
+              <SplitTaskSegments
+                task={task}
+                api={api}
+                readonly={readonly}
+                taskTemplate={TaskTemplate}
+                colorRules={colorRules}
+                labelOffset={labelOffset}
+                getMoveMode={getMoveMode}
+                linkFrom={linkFrom}
+                alreadyLinked={alreadyLinked}
+                scalesValue={scalesValue}
+                onSegmentDown={(e, task, segmentId) => {
+                  // Handle segment-specific drag operations
+                  const node = locate(e);
+                  if (node) down(node, e);
+                }}
+              />
+              {baselinesValue && !task.$skip_baseline ? (
+                <div
+                  className="wx-GKbcLEGA wx-baseline"
+                  style={baselineStyle(task)}
+                ></div>
+              ) : null}
+            </Fragment>
+          );
+        }
 
         // Color rules matching
         const matchedRules = getMatchingRules(
