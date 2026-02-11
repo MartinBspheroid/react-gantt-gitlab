@@ -156,11 +156,150 @@ export function convertADODependencyToILink(
     source: dependency.sourceId,
     target: dependency.targetId,
     type: dependency.type,
+    lag: dependency.lag,
     _ado: {
       relationType: dependency.relationType,
       lag: dependency.lag,
     },
-  } as ILink & { _ado: { relationType: ADOLinkType; lag?: number } };
+  } as ILink & {
+    lag?: number;
+    _ado: { relationType: ADOLinkType; lag?: number };
+  };
+}
+
+export function detectCircularDependencies(
+  links: ADODependencyLink[],
+): Set<string> {
+  const cycles = new Set<string>();
+  const graph = new Map<number, number[]>();
+
+  links.forEach((link) => {
+    if (!graph.has(link.sourceId)) {
+      graph.set(link.sourceId, []);
+    }
+    graph.get(link.sourceId)!.push(link.targetId);
+  });
+
+  function dfs(
+    start: number,
+    current: number,
+    visited: Set<number>,
+    path: number[],
+  ): boolean {
+    if (visited.has(current)) {
+      if (current === start && path.length > 1) {
+        const cycleKey = path.map(String).join('-');
+        cycles.add(cycleKey);
+        return true;
+      }
+      return false;
+    }
+
+    visited.add(current);
+    path.push(current);
+
+    const successors = graph.get(current) || [];
+    for (const succ of successors) {
+      if (succ === start || !visited.has(succ)) {
+        dfs(start, succ, visited, path);
+      }
+    }
+
+    path.pop();
+    visited.delete(current);
+    return false;
+  }
+
+  const allIds = new Set<number>();
+  links.forEach((link) => {
+    allIds.add(link.sourceId);
+    allIds.add(link.targetId);
+  });
+
+  allIds.forEach((id) => {
+    dfs(id, id, new Set(), []);
+  });
+
+  return cycles;
+}
+
+export function filterCircularDependencies(links: ADODependencyLink[]): {
+  validLinks: ADODependencyLink[];
+  circularLinks: ADODependencyLink[];
+} {
+  const validLinks: ADODependencyLink[] = [];
+  const circularLinks: ADODependencyLink[] = [];
+
+  const graph = new Map<number, Set<number>>();
+  links.forEach((link) => {
+    if (!graph.has(link.sourceId)) {
+      graph.set(link.sourceId, new Set());
+    }
+    graph.get(link.sourceId)!.add(link.targetId);
+  });
+
+  function hasCycle(
+    source: number,
+    target: number,
+    visited: Set<number>,
+    recStack: Set<number>,
+  ): boolean {
+    visited.add(target);
+    recStack.add(target);
+
+    const neighbors = graph.get(target) || new Set();
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor)) {
+        if (hasCycle(source, neighbor, visited, recStack)) {
+          return true;
+        }
+      } else if (neighbor === source) {
+        return true;
+      } else if (recStack.has(neighbor)) {
+        return true;
+      }
+    }
+
+    recStack.delete(target);
+    return false;
+  }
+
+  const cycleLinkKeys = new Set<string>();
+  const allNodes = new Set<number>();
+  links.forEach((link) => {
+    allNodes.add(link.sourceId);
+    allNodes.add(link.targetId);
+  });
+
+  links.forEach((link) => {
+    const visited = new Set<number>();
+    const recStack = new Set<number>();
+
+    if (hasCycle(link.sourceId, link.targetId, visited, recStack)) {
+      cycleLinkKeys.add(`${link.sourceId}-${link.targetId}`);
+    }
+  });
+
+  const cycles = detectCircularDependencies(links);
+  if (cycles.size > 0) {
+    console.warn(
+      `[ADO] Detected ${cycles.size} potential circular dependency paths`,
+    );
+  }
+
+  links.forEach((link) => {
+    const linkKey = `${link.sourceId}-${link.targetId}`;
+    if (cycleLinkKeys.has(linkKey)) {
+      circularLinks.push(link);
+      console.warn(
+        `[ADO] Skipping circular link: ${link.sourceId} -> ${link.targetId}`,
+      );
+    } else {
+      validLinks.push(link);
+    }
+  });
+
+  return { validLinks, circularLinks };
 }
 
 export interface ADOIteration {
