@@ -562,7 +562,7 @@ export function WorkloadChart({
   ]);
 
   // Render a single task bar
-  const renderTaskBar = (task, group, rowIndex) => {
+  const renderTaskBar = (task, group) => {
     // Check if this task is being dragged
     const isDragging = dragState && dragState.task.id === task.id;
     const displayStart =

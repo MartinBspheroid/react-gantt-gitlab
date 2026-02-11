@@ -3,11 +3,10 @@ import { HashRouter, NavLink, useNavigate } from 'react-router-dom';
 
 import Router from './Router';
 import { links } from '../routes';
-import { GitHubLogoIcon, LogoIcon } from '../assets/icons';
+import { LogoIcon } from '../assets/icons';
 import './Index.css';
 
 function DemoExplorerContent({
-  productTag,
   publicName,
   skins,
   Globals,

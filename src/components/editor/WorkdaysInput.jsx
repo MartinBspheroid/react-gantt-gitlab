@@ -37,7 +37,6 @@ export default function WorkdaysInput({
       setLocalValue(newValue);
     }
     // Intentionally only depend on value - we want to sync from prop to local
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   /**

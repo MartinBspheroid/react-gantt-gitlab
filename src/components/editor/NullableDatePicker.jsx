@@ -25,7 +25,7 @@ import './NullableDatePicker.css';
  * @param {boolean} props.disabled - If true, disable editing
  */
 export default function NullableDatePicker(props) {
-  const { value, onChange, onchange, label, disabled = false } = props;
+  const { value, onChange, onchange, disabled = false } = props;
   const onChangeHandler = onChange ?? onchange;
 
   const [showPicker, setShowPicker] = useState(false);

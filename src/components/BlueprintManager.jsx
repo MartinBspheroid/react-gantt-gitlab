@@ -141,7 +141,7 @@ export function BlueprintManager({
     >
       <div
         className="blueprint-modal blueprint-manager-modal"
-        onMouseDown={(e) => {
+        onMouseDown={() => {
           mouseDownOnOverlay.current = false;
         }}
         onClick={(e) => e.stopPropagation()}
