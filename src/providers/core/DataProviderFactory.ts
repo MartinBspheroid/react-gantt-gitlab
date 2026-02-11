@@ -10,6 +10,7 @@ import type {
   DataProviderConfig,
 } from './DataProviderInterface';
 import { GitLabAdapter } from '../adapters/GitLabAdapter';
+import { ADOAdapter } from '../adapters/ADOAdapter';
 
 export class DataProviderFactory {
   /**
@@ -25,9 +26,7 @@ export class DataProviderFactory {
         return new GitLabAdapter(config);
 
       case 'azure-devops':
-        throw new Error(
-          'Azure DevOps provider not yet implemented. Planned for Phase 2.',
-        );
+        return new ADOAdapter(config);
 
       case 'custom':
         throw new Error(

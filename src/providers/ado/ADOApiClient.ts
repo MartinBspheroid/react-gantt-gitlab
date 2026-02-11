@@ -1,0 +1,198 @@
+import type {
+  ADOConfig,
+  ADOQueryResult,
+  ADOBatchResponse,
+  ADOWorkItem,
+  ADODependencyLink,
+  ADOFetchDependenciesOptions,
+  ADOFetchDependenciesResult,
+  ADOLinkType,
+} from '../types/azure-devops';
+import {
+  extractWorkItemIdFromUrl,
+  mapADOLinkTypeToGantt,
+  validateADOLink,
+  convertADODependencyToILink,
+} from '../types/azure-devops';
+import type { ILink } from '@svar-ui/gantt-store';
+
+const DEPENDENCY_LINK_TYPES: ADOLinkType[] = [
+  'System.LinkTypes.Dependency-Forward',
+  'System.LinkTypes.Dependency-Reverse',
+];
+
+export class ADOApiClient {
+  private config: ADOConfig;
+  private baseUrl: string;
+
+  constructor(config: ADOConfig) {
+    this.config = config;
+    this.baseUrl = `${config.organizationUrl}/${config.project}/_apis`;
+  }
+
+  private getAuthHeaders(): HeadersInit {
+    const token = btoa(`:${this.config.pat}`);
+    return {
+      Authorization: `Basic ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json;api-version=7.0',
+    };
+  }
+
+  private async fetchApi<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...this.getAuthHeaders(),
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `ADO API error: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  async getWorkItemsWithRelations(ids: number[]): Promise<ADOWorkItem[]> {
+    if (ids.length === 0) return [];
+
+    const batchSize = 200;
+    const allWorkItems: ADOWorkItem[] = [];
+
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      const batchResult = await this.fetchApi<ADOBatchResponse>(
+        `/wit/workitems?ids=${batch.join(',')}&$expand=relations`,
+      );
+      allWorkItems.push(...batchResult.value);
+    }
+
+    return allWorkItems;
+  }
+
+  async fetchDependenciesByQuery(
+    workItemIds: number[],
+  ): Promise<ADOFetchDependenciesResult> {
+    const errors: string[] = [];
+    const links: ILink[] = [];
+    const processedLinks = new Set<string>();
+
+    if (workItemIds.length === 0) {
+      return { links, errors };
+    }
+
+    const validIds = new Set(workItemIds);
+
+    const workItems = await this.getWorkItemsWithRelations(workItemIds);
+
+    for (const workItem of workItems) {
+      if (!workItem.relations) continue;
+
+      for (const relation of workItem.relations) {
+        if (!DEPENDENCY_LINK_TYPES.includes(relation.rel as ADOLinkType)) {
+          continue;
+        }
+
+        const targetId = extractWorkItemIdFromUrl(relation.url);
+        if (!targetId) {
+          errors.push(
+            `Could not extract target ID from relation URL: ${relation.url}`,
+          );
+          continue;
+        }
+
+        const isForward =
+          relation.rel === 'System.LinkTypes.Dependency-Forward';
+        const sourceId = isForward ? workItem.id : targetId;
+        const actualTargetId = isForward ? targetId : workItem.id;
+
+        const linkType = mapADOLinkTypeToGantt(
+          relation.rel as ADOLinkType,
+          isForward,
+        );
+
+        const lag = relation.attributes?.lag;
+
+        const dependency: ADODependencyLink = {
+          sourceId,
+          targetId: actualTargetId,
+          type: linkType,
+          lag,
+          relationType: relation.rel as ADOLinkType,
+        };
+
+        const validation = validateADOLink(dependency, validIds);
+        if (!validation.valid) {
+          errors.push(
+            `Invalid link from ${sourceId} to ${actualTargetId}: ${validation.error}`,
+          );
+          continue;
+        }
+
+        const linkKey = `${sourceId}-${actualTargetId}`;
+        const reverseKey = `${actualTargetId}-${sourceId}`;
+        if (processedLinks.has(linkKey) || processedLinks.has(reverseKey)) {
+          continue;
+        }
+        processedLinks.add(linkKey);
+
+        const iLink = convertADODependencyToILink(dependency);
+        links.push(iLink);
+      }
+    }
+
+    console.log(
+      `[ADO] Fetched ${links.length} dependency links from ${workItems.length} work items`,
+    );
+
+    return { links, errors };
+  }
+
+  async queryWorkItemRelations(wiql: string): Promise<ADOQueryResult> {
+    return this.fetchApi<ADOQueryResult>('/wit/wiql', {
+      method: 'POST',
+      body: JSON.stringify({ query: wiql }),
+    });
+  }
+
+  async fetchAllDependencies(
+    options: ADOFetchDependenciesOptions,
+  ): Promise<ADOFetchDependenciesResult> {
+    return this.fetchDependenciesByQuery(options.workItemIds);
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.fetchApi<{ count: number }>(
+        '/wit/workitems?ids=1&errorPolicy=omit',
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export async function fetchADODependencies(
+  config: ADOConfig,
+  workItemIds: number[],
+): Promise<ILink[]> {
+  const client = new ADOApiClient(config);
+  const result = await client.fetchAllDependencies({ workItemIds });
+
+  if (result.errors.length > 0) {
+    console.warn('[ADO] Errors fetching dependencies:', result.errors);
+  }
+
+  return result.links;
+}
