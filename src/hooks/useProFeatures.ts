@@ -53,10 +53,24 @@ import {
   shouldConvertToTask,
   getSummaryChain,
 } from '../pro-features/SummaryBehavior';
+import {
+  createSplitTask,
+  mergeSplitTask,
+  splitTaskAt,
+  addSplitPart,
+  removeSplitPart,
+  updateSplitPart,
+  isSplitTask,
+  getSplitParts,
+  calculateGapsInSplitTask,
+  visualizeSplitTask,
+} from '../pro-features/SplitTasks';
 import type {
   IScheduleConfig,
   IScheduleOptions,
   ISummaryConfig,
+  ISplitTask,
+  ISplitTaskPart,
 } from '../pro-features/types';
 
 export interface IUseCriticalPathResult {
@@ -671,5 +685,76 @@ export function useGanttProFeatures(api: IApi | null) {
     },
     dataExport,
     autoSchedule,
+  };
+}
+
+export interface IUseSplitTasksResult {
+  isSplitTask: (task: ITask) => boolean;
+  getSplitParts: (task: ITask) => ISplitTaskPart[];
+  splitTask: (task: ITask, splitDate: Date) => ISplitTask;
+  mergeTask: (splitTask: ISplitTask) => ITask;
+  addPart: (splitTask: ISplitTask, start: Date, end: Date) => ISplitTask;
+  removePart: (splitTask: ISplitTask, partId: TID) => ISplitTask;
+  updatePart: (
+    splitTask: ISplitTask,
+    partId: TID,
+    updates: Partial<ISplitTaskPart>,
+  ) => ISplitTask;
+  calculateGaps: (
+    splitTask: ISplitTask,
+  ) => Array<{ start: Date; end: Date; duration: number }>;
+  visualize: (splitTask: ISplitTask) => Array<{
+    id: TID;
+    start: Date;
+    end: Date;
+    duration: number;
+    isGap: boolean;
+  }>;
+}
+
+export function useSplitTasks(): IUseSplitTasksResult {
+  const checkIsSplitTask = useCallback((task: ITask) => isSplitTask(task), []);
+  const getParts = useCallback((task: ITask) => getSplitParts(task), []);
+  const handleSplitTask = useCallback(
+    (task: ITask, splitDate: Date) => splitTaskAt(task, splitDate),
+    [],
+  );
+  const handleMergeTask = useCallback(
+    (splitTask: ISplitTask) => mergeSplitTask(splitTask),
+    [],
+  );
+  const handleAddPart = useCallback(
+    (splitTask: ISplitTask, start: Date, end: Date) =>
+      addSplitPart(splitTask, start, end),
+    [],
+  );
+  const handleRemovePart = useCallback(
+    (splitTask: ISplitTask, partId: TID) => removeSplitPart(splitTask, partId),
+    [],
+  );
+  const handleUpdatePart = useCallback(
+    (splitTask: ISplitTask, partId: TID, updates: Partial<ISplitTaskPart>) =>
+      updateSplitPart(splitTask, partId, updates),
+    [],
+  );
+  const handleCalculateGaps = useCallback(
+    (splitTask: ISplitTask) => calculateGapsInSplitTask(splitTask),
+    [],
+  );
+  const handleVisualize = useCallback(
+    (splitTask: ISplitTask) => visualizeSplitTask(splitTask),
+    [],
+  );
+
+  return {
+    isSplitTask: checkIsSplitTask,
+    getSplitParts: getParts,
+    splitTask: handleSplitTask,
+    mergeTask: handleMergeTask,
+    addPart: handleAddPart,
+    removePart: handleRemovePart,
+    updatePart: handleUpdatePart,
+    calculateGaps: handleCalculateGaps,
+    visualize: handleVisualize,
   };
 }

@@ -325,3 +325,68 @@
 .wx-gantt-dark .wx-bar.wx-priority-4.wx-GKbcLEGA {
   border-left: 4px solid #6b7280 !important;
 }
+
+/* Split task styles - segmented bars with gap connectors */
+.wx-split-task-container.wx-GKbcLEGA {
+  position: absolute;
+  pointer-events: none;
+}
+
+.wx-split-segment.wx-GKbcLEGA {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: var(--wx-gantt-bar-border-radius);
+  font: var(--wx-gantt-bar-font);
+  white-space: nowrap;
+  line-height: inherit;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.wx-split-segment.wx-task.wx-GKbcLEGA {
+  color: var(--wx-gantt-task-font-color);
+  background-color: var(--wx-gantt-task-color);
+  border: var(--wx-gantt-task-border);
+}
+
+.wx-split-segment.wx-task.wx-selected.wx-GKbcLEGA {
+  border: 1px solid var(--wx-gantt-task-border-color);
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-split-segment.wx-task:hover.wx-GKbcLEGA {
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-split-segment .wx-content.wx-GKbcLEGA {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 2;
+}
+
+.wx-split-segment .wx-text-out.wx-GKbcLEGA {
+  position: absolute;
+  line-height: normal;
+  display: block;
+  color: var(--wx-color-font);
+  pointer-events: none;
+  left: calc(100% + var(--wx-label-offset, 8px));
+}
+
+/* Gap connector - dotted line between split segments */
+.wx-split-gap-connector.wx-GKbcLEGA {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  border-top: 2px dashed rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wx-split-gap-connector.wx-selected.wx-GKbcLEGA {
+  border-top-color: var(--wx-color-primary);
+}
