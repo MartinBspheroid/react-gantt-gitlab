@@ -41,6 +41,7 @@ import { MoveInModal } from '../MoveInModal.jsx';
 import { SaveBlueprintModal } from '../SaveBlueprintModal.jsx';
 import { ApplyBlueprintModal } from '../ApplyBlueprintModal.jsx';
 import { BlueprintManager } from '../BlueprintManager.jsx';
+import { GroupingDropdown } from '../GroupingDropdown.jsx';
 
 // Blueprint hook stub - provides empty data when no backend is available
 function useBlueprint() {
@@ -283,6 +284,10 @@ export function GanttView({
     showColumnSettings,
     setShowColumnSettings,
     effectiveCellWidth,
+    groupBy,
+    setGroupBy,
+    collapsedGroups,
+    setCollapsedGroups,
   } = useGanttState();
 
   // Settings modal can be controlled externally (from Workspace) or internally
@@ -409,6 +414,27 @@ export function GanttView({
     linksRef.current = links;
   }, [links]);
 
+  // Handle group header collapse/expand from Gantt events
+  useEffect(() => {
+    const handleGroupToggle = (event) => {
+      const { groupId, collapsed } = event.detail;
+      if (collapsed) {
+        setCollapsedGroups((prev) => new Set([...prev, groupId]));
+      } else {
+        setCollapsedGroups((prev) => {
+          const next = new Set(prev);
+          next.delete(groupId);
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('gantt-group-toggle', handleGroupToggle);
+    return () => {
+      window.removeEventListener('gantt-group-toggle', handleGroupToggle);
+    };
+  }, [setCollapsedGroups]);
+
   // Restore fold state after tasks update - separate effect to avoid timing issues
   useEffect(() => {
     if (!api || allTasks.length === 0 || openStateRef.current.size === 0) {
@@ -526,6 +552,11 @@ export function GanttView({
   const filteredTasks = useMemo(() => {
     return DataFilters.applyFilters(tasksWithWorkdays, filterOptions);
   }, [tasksWithWorkdays, filterOptions]);
+
+  // Apply grouping to filtered tasks
+  const { tasks: groupedTasks, groupCount } = useMemo(() => {
+    return DataFilters.groupTasks(filteredTasks, groupBy, collapsedGroups);
+  }, [filteredTasks, groupBy, collapsedGroups]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -983,6 +1014,22 @@ export function GanttView({
       // This is the ONLY place where fold state is saved (user manually opens/closes)
       // We don't save during sync because Gantt store may have stale data
       ganttApi.on('open-task', (ev) => {
+        // Check if this is a group header
+        const task = ganttApi.getTask(ev.id);
+        if (task?.$groupHeader) {
+          // Group header collapse/expand - update collapsedGroups state
+          // ev.mode is true when expanded, false when collapsed
+          const groupId = String(ev.id);
+          // We need to update the state, but can't do it directly from here
+          // Instead, use a custom event to notify the component
+          window.dispatchEvent(
+            new CustomEvent('gantt-group-toggle', {
+              detail: { groupId, collapsed: !ev.mode },
+            }),
+          );
+          return;
+        }
+
         // Update openStateRef with the new state
         if (ev.id && ev.mode !== undefined) {
           // Always use string keys to match localStorage (which serializes keys as strings)
@@ -2257,6 +2304,45 @@ export function GanttView({
     let icon;
     let iconColor;
 
+    // Check if this is a group header
+    if (data.$groupHeader) {
+      // Group header - special styling
+      const groupIcon = data.$groupType === 'assignee'
+        ? 'fa-user'
+        : data.$groupType === 'epic'
+          ? 'fa-layer-group'
+          : data.$groupType === 'sprint'
+            ? 'fa-repeat'
+            : 'fa-folder';
+
+      return (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontWeight: 600,
+            color: 'var(--wx-gantt-group-header-text, #5a4fcf)',
+          }}
+        >
+          <i className={`fas ${groupIcon}`} style={{ marginRight: '8px', color: '#6c5ce7' }}></i>
+          <span>{data.$groupName}</span>
+          <span
+            style={{
+              marginLeft: '8px',
+              padding: '1px 6px',
+              background: '#6c5ce7',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
+            {data.$taskCount} tasks
+          </span>
+        </div>
+      );
+    }
+
     // Determine icon and color based on source type
     if (data.$isMilestone || data._source?.type === 'milestone') {
       // Milestone - purple
@@ -2272,8 +2358,13 @@ export function GanttView({
       iconColor = '#3983eb';
     }
 
+    // Add group index for alternating background styling
+    const groupIndexStyle = data.$groupIndex !== undefined
+      ? { '--group-index': data.$groupIndex }
+      : {};
+
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', ...groupIndexStyle }}>
         <span style={{ marginRight: '8px', color: iconColor }}>{icon}</span>
         <span>{data.text}</span>
       </div>
@@ -2750,6 +2841,12 @@ export function GanttView({
             onToggleColumn={toggleColumn}
             onReorderColumns={reorderColumns}
           />
+          <GroupingDropdown
+            value={groupBy}
+            onChange={setGroupBy}
+            groupCount={groupCount}
+            taskCount={stats.total}
+          />
           <Toolbar
             api={api}
             onAddMilestone={handleAddMilestone}
@@ -2871,7 +2968,7 @@ export function GanttView({
                           throw error;
                         }
                       }}
-                      tasks={filteredTasks}
+                      tasks={groupedTasks}
                       links={links}
                       markers={markers}
                       scales={scales}

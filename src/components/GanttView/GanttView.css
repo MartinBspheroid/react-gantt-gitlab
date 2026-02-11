@@ -647,3 +647,71 @@
 .wx-bar.wx-parent-task {
   z-index: 2 !important;
 }
+
+/* Group header row styling */
+.wx-row[data-group-header='true'] {
+  background-color: var(--wx-gantt-group-header-background, #f0f4f8) !important;
+  font-weight: 600;
+}
+
+.wx-row[data-group-header='true']:hover {
+  background-color: var(--wx-gantt-group-header-hover, #e4eaf1) !important;
+}
+
+.wx-row[data-group-header='true'] .wx-cell {
+  border-bottom: 2px solid var(--wx-gantt-group-header-border, #c8d6e5);
+}
+
+/* Group header task bar styling */
+.wx-bar.wx-group-header {
+  background: linear-gradient(
+    135deg,
+    var(--wx-gantt-group-bar-start, #6c5ce7) 0%,
+    var(--wx-gantt-group-bar-end, #a29bfe) 100%
+  ) !important;
+  border-radius: 4px !important;
+}
+
+.wx-bar.wx-group-header .wx-content {
+  color: white !important;
+  font-weight: 600;
+}
+
+/* Alternating group backgrounds - use data attribute for group index */
+.wx-row[data-group-index='0'],
+.wx-row[data-group-index='2'],
+.wx-row[data-group-index='4'],
+.wx-row[data-group-index='6'],
+.wx-row[data-group-index='8'] {
+  background-color: var(
+    --wx-gantt-group-even-background,
+    rgba(108, 92, 231, 0.03)
+  );
+}
+
+.wx-row[data-group-index='1'],
+.wx-row[data-group-index='3'],
+.wx-row[data-group-index='5'],
+.wx-row[data-group-index='7'],
+.wx-row[data-group-index='9'] {
+  background-color: var(
+    --wx-gantt-group-odd-background,
+    rgba(162, 155, 254, 0.03)
+  );
+}
+
+/* Group task count badge in grid */
+.group-task-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 16px;
+  padding: 0 4px;
+  margin-left: 6px;
+  background: var(--wx-gantt-accent-color, #6c5ce7);
+  color: white;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}

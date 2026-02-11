@@ -571,4 +571,199 @@ export class DataFilters {
 
     return stats;
   }
+
+  /**
+   * Group type options for row grouping
+   */
+  static readonly GROUP_BY_OPTIONS = [
+    { value: 'none', label: 'No Grouping' },
+    { value: 'assignee', label: 'By Assignee' },
+    { value: 'epic', label: 'By Epic' },
+    { value: 'sprint', label: 'By Sprint' },
+  ] as const;
+
+  /**
+   * Group tasks by a specified field and create virtual group header tasks
+   * Returns tasks with group headers interspersed, suitable for Gantt display
+   *
+   * @param tasks - Array of tasks to group
+   * @param groupBy - Grouping type: 'none', 'assignee', 'epic', 'sprint'
+   * @param collapsedGroups - Set of group IDs that are collapsed
+   * @returns Object with grouped tasks array and group metadata
+   */
+  static groupTasks(
+    tasks: ITask[],
+    groupBy: string,
+    collapsedGroups: Set<string> = new Set(),
+  ): {
+    tasks: ITask[];
+    groupCount: number;
+    groupMeta: Map<
+      string,
+      {
+        name: string;
+        taskCount: number;
+        dateRange: { start: Date | null; end: Date | null } | null;
+      }
+    >;
+  } {
+    if (groupBy === 'none' || !groupBy) {
+      return { tasks, groupCount: 0, groupMeta: new Map() };
+    }
+
+    const groupMap = new Map<string, ITask[]>();
+    const groupMeta = new Map<
+      string,
+      {
+        name: string;
+        taskCount: number;
+        dateRange: { start: Date | null; end: Date | null } | null;
+      }
+    >();
+
+    const getGroupKey = (task: ITask): string => {
+      switch (groupBy) {
+        case 'assignee':
+          return (task.assigned as string) || 'Unassigned';
+        case 'epic':
+          return ((task as any).epic as string) || 'No Epic';
+        case 'sprint':
+          return ((task as any).iteration as string) || 'No Sprint';
+        default:
+          return 'Other';
+      }
+    };
+
+    const getSortValue = (task: ITask): string => {
+      const key = getGroupKey(task);
+      if (key === 'Unassigned' || key === 'No Epic' || key === 'No Sprint') {
+        return '\xFF';
+      }
+      return key.toLowerCase();
+    };
+
+    tasks.forEach((task) => {
+      const key = getGroupKey(task);
+      if (!groupMap.has(key)) {
+        groupMap.set(key, []);
+      }
+      groupMap.get(key)!.push(task);
+    });
+
+    const sortedGroups = Array.from(groupMap.entries()).sort(([a], [b]) => {
+      const aSort =
+        a === 'Unassigned' || a === 'No Epic' || a === 'No Sprint'
+          ? '\xFF'
+          : a.toLowerCase();
+      const bSort =
+        b === 'Unassigned' || b === 'No Epic' || a === 'No Sprint'
+          ? '\xFF'
+          : b.toLowerCase();
+      return aSort.localeCompare(bSort);
+    });
+
+    const result: ITask[] = [];
+    let groupIndex = 0;
+
+    sortedGroups.forEach(([groupName, groupTasks]) => {
+      const groupId = `group-${groupBy}-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const isCollapsed = collapsedGroups.has(groupId);
+
+      const tasksWithDates = groupTasks.filter((t) => t.start && t.end);
+      const dateRange =
+        tasksWithDates.length > 0
+          ? {
+              start: new Date(
+                Math.min(...tasksWithDates.map((t) => t.start!.getTime())),
+              ),
+              end: new Date(
+                Math.max(...tasksWithDates.map((t) => t.end!.getTime())),
+              ),
+            }
+          : null;
+
+      groupMeta.set(groupId, {
+        name: groupName,
+        taskCount: groupTasks.length,
+        dateRange,
+      });
+
+      const groupHeader: ITask = {
+        id: groupId,
+        text: groupName,
+        start: dateRange?.start || new Date(),
+        end: dateRange?.end || new Date(),
+        parent: 0,
+        open: !isCollapsed,
+        $groupHeader: true,
+        $groupName: groupName,
+        $groupIndex: groupIndex,
+        $groupType: groupBy,
+        $taskCount: groupTasks.length,
+        progress: 0,
+        type: 'project',
+      } as any;
+
+      result.push(groupHeader);
+
+      if (!isCollapsed) {
+        const childTasks = groupTasks.map((task) => ({
+          ...task,
+          $groupIndex: groupIndex,
+        }));
+        result.push(...childTasks);
+      }
+
+      groupIndex++;
+    });
+
+    return {
+      tasks: result,
+      groupCount: sortedGroups.length,
+      groupMeta,
+    };
+  }
+
+  /**
+   * Get unique values for a grouping field from tasks
+   */
+  static getUniqueGroupValues(tasks: ITask[], groupBy: string): string[] {
+    const values = new Set<string>();
+
+    tasks.forEach((task) => {
+      switch (groupBy) {
+        case 'assignee':
+          if (task.assigned) {
+            const assignees =
+              typeof task.assigned === 'string'
+                ? task.assigned.split(',').map((a) => a.trim())
+                : [task.assigned];
+            assignees.forEach((a) => a && values.add(a));
+          } else {
+            values.add('Unassigned');
+          }
+          break;
+        case 'epic':
+          if ((task as any).epic) {
+            values.add((task as any).epic);
+          } else {
+            values.add('No Epic');
+          }
+          break;
+        case 'sprint':
+          if ((task as any).iteration) {
+            values.add((task as any).iteration);
+          } else {
+            values.add('No Sprint');
+          }
+          break;
+      }
+    });
+
+    return Array.from(values).sort((a, b) => {
+      if (a === 'Unassigned' || a === 'No Epic' || a === 'No Sprint') return 1;
+      if (b === 'Unassigned' || b === 'No Epic' || b === 'No Sprint') return -1;
+      return a.localeCompare(b);
+    });
+  }
 }

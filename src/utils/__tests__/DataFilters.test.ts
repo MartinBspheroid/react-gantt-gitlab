@@ -1465,3 +1465,302 @@ describe('toServerFilters', () => {
     expect(result?.createdBefore).toBeUndefined();
   });
 });
+
+// ===========================================================================
+// groupTasks
+// ===========================================================================
+describe('DataFilters.groupTasks', () => {
+  it('should return tasks unchanged when groupBy is none', () => {
+    const tasks = [
+      makeTask({ id: 1, text: 'Task 1' }),
+      makeTask({ id: 2, text: 'Task 2' }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'none');
+    expect(result.tasks).toEqual(tasks);
+    expect(result.groupCount).toBe(0);
+  });
+
+  it('should return tasks unchanged when groupBy is empty', () => {
+    const tasks = [makeTask({ id: 1 })];
+    const result = DataFilters.groupTasks(tasks, '');
+    expect(result.tasks).toEqual(tasks);
+  });
+
+  it('should group tasks by assignee', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: 'bob' }),
+      makeTask({ id: 3, assigned: 'alice' }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    expect(result.groupCount).toBe(2);
+    expect(result.tasks[0].$groupHeader).toBe(true);
+    expect(result.tasks[0].$groupName).toBe('alice');
+  });
+
+  it('should group tasks by epic', () => {
+    const tasks = [
+      makeTask({ id: 1, epic: 'Epic A' } as any),
+      makeTask({ id: 2, epic: 'Epic B' } as any),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'epic');
+    expect(result.groupCount).toBe(2);
+    expect(result.tasks[0].$groupName).toBe('Epic A');
+  });
+
+  it('should group tasks by sprint (iteration)', () => {
+    const tasks = [
+      makeTask({ id: 1, iteration: 'Sprint 1' } as any),
+      makeTask({ id: 2, iteration: 'Sprint 2' } as any),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'sprint');
+    expect(result.groupCount).toBe(2);
+    expect(result.tasks[0].$groupName).toBe('Sprint 1');
+  });
+
+  it('should handle unassigned tasks in assignee grouping', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: undefined }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    expect(result.groupCount).toBe(2);
+    const unassignedGroup = result.tasks.find(
+      (t) => t.$groupName === 'Unassigned',
+    );
+    expect(unassignedGroup).toBeDefined();
+    expect(unassignedGroup?.$groupHeader).toBe(true);
+  });
+
+  it('should handle tasks without epic in epic grouping', () => {
+    const tasks = [
+      makeTask({ id: 1, epic: 'Epic A' } as any),
+      makeTask({ id: 2 } as any),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'epic');
+    expect(result.groupCount).toBe(2);
+    const noEpicGroup = result.tasks.find((t) => t.$groupName === 'No Epic');
+    expect(noEpicGroup).toBeDefined();
+  });
+
+  it('should create group headers with correct metadata', () => {
+    const tasks = [
+      makeTask({
+        id: 1,
+        assigned: 'alice',
+        start: new Date('2024-01-01'),
+        end: new Date('2024-01-10'),
+      }),
+      makeTask({
+        id: 2,
+        assigned: 'alice',
+        start: new Date('2024-01-05'),
+        end: new Date('2024-01-15'),
+      }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    const groupHeader = result.tasks[0];
+    expect(groupHeader.$groupHeader).toBe(true);
+    expect(groupHeader.$groupName).toBe('alice');
+    expect(groupHeader.$groupType).toBe('assignee');
+    expect(groupHeader.$taskCount).toBe(2);
+  });
+
+  it('should calculate date range for group header', () => {
+    const tasks = [
+      makeTask({
+        id: 1,
+        assigned: 'alice',
+        start: new Date('2024-01-01'),
+        end: new Date('2024-01-10'),
+      }),
+      makeTask({
+        id: 2,
+        assigned: 'alice',
+        start: new Date('2024-01-05'),
+        end: new Date('2024-01-15'),
+      }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    const groupHeader = result.tasks[0];
+    expect(groupHeader.start).toEqual(new Date('2024-01-01'));
+    expect(groupHeader.end).toEqual(new Date('2024-01-15'));
+  });
+
+  it('should collapse groups in collapsedGroups set', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: 'bob' }),
+    ];
+    const collapsedGroups = new Set(['group-assignee-alice']);
+    const result = DataFilters.groupTasks(tasks, 'assignee', collapsedGroups);
+    expect(result.tasks.length).toBe(3);
+    expect(result.tasks[0].open).toBe(false);
+    expect(result.tasks[0].$groupName).toBe('alice');
+    expect(result.tasks[1].$groupName).toBe('bob');
+  });
+
+  it('should expand groups not in collapsedGroups set', () => {
+    const tasks = [makeTask({ id: 1, assigned: 'alice' })];
+    const result = DataFilters.groupTasks(tasks, 'assignee', new Set());
+    const groupHeader = result.tasks[0];
+    expect(groupHeader.open).toBe(true);
+  });
+
+  it('should sort groups alphabetically', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'zara' }),
+      makeTask({ id: 2, assigned: 'alice' }),
+      makeTask({ id: 3, assigned: 'bob' }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    const groupHeaders = result.tasks.filter((t) => t.$groupHeader);
+    expect(groupHeaders[0].$groupName).toBe('alice');
+    expect(groupHeaders[1].$groupName).toBe('bob');
+    expect(groupHeaders[2].$groupName).toBe('zara');
+  });
+
+  it('should put special groups (Unassigned, No Epic, No Sprint) at the end', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: undefined }),
+      makeTask({ id: 3, assigned: 'bob' }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    const groupNames = result.tasks
+      .filter((t) => t.$groupHeader)
+      .map((t) => t.$groupName);
+    expect(groupNames[groupNames.length - 1]).toBe('Unassigned');
+  });
+
+  it('should handle empty tasks array', () => {
+    const result = DataFilters.groupTasks([], 'assignee');
+    expect(result.tasks).toEqual([]);
+    expect(result.groupCount).toBe(0);
+  });
+
+  it('should return groupMeta with correct information', () => {
+    const tasks = [
+      makeTask({
+        id: 1,
+        assigned: 'alice',
+        start: new Date('2024-01-01'),
+        end: new Date('2024-01-10'),
+      }),
+      makeTask({
+        id: 2,
+        assigned: 'alice',
+        start: new Date('2024-01-05'),
+        end: new Date('2024-01-15'),
+      }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    expect(result.groupMeta.size).toBe(1);
+    const meta = result.groupMeta.get('group-assignee-alice');
+    expect(meta?.name).toBe('alice');
+    expect(meta?.taskCount).toBe(2);
+    expect(meta?.dateRange?.start).toEqual(new Date('2024-01-01'));
+    expect(meta?.dateRange?.end).toEqual(new Date('2024-01-15'));
+  });
+
+  it('should add $groupIndex to group header and child tasks', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: 'bob' }),
+    ];
+    const result = DataFilters.groupTasks(tasks, 'assignee');
+    expect(result.tasks[0].$groupIndex).toBe(0);
+    expect(result.tasks[1].$groupIndex).toBe(0);
+    expect(result.tasks[2].$groupIndex).toBe(1);
+    expect(result.tasks[3].$groupIndex).toBe(1);
+  });
+});
+
+// ===========================================================================
+// getUniqueGroupValues
+// ===========================================================================
+describe('DataFilters.getUniqueGroupValues', () => {
+  it('should get unique assignees for grouping', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: 'bob' }),
+      makeTask({ id: 3, assigned: 'alice' }),
+    ];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'assignee');
+    expect(values).toContain('alice');
+    expect(values).toContain('bob');
+    expect(values).toHaveLength(2);
+  });
+
+  it('should include Unassigned for tasks without assignee', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'alice' }),
+      makeTask({ id: 2, assigned: undefined }),
+    ];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'assignee');
+    expect(values).toContain('Unassigned');
+  });
+
+  it('should get unique epics for grouping', () => {
+    const tasks = [
+      makeTask({ id: 1, epic: 'Epic A' } as any),
+      makeTask({ id: 2, epic: 'Epic B' } as any),
+    ];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'epic');
+    expect(values).toContain('Epic A');
+    expect(values).toContain('Epic B');
+  });
+
+  it('should include No Epic for tasks without epic', () => {
+    const tasks = [makeTask({ id: 1 } as any)];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'epic');
+    expect(values).toContain('No Epic');
+  });
+
+  it('should get unique sprints for grouping', () => {
+    const tasks = [
+      makeTask({ id: 1, iteration: 'Sprint 1' } as any),
+      makeTask({ id: 2, iteration: 'Sprint 2' } as any),
+    ];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'sprint');
+    expect(values).toContain('Sprint 1');
+    expect(values).toContain('Sprint 2');
+  });
+
+  it('should include No Sprint for tasks without iteration', () => {
+    const tasks = [makeTask({ id: 1 } as any)];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'sprint');
+    expect(values).toContain('No Sprint');
+  });
+
+  it('should sort values alphabetically with special values at end', () => {
+    const tasks = [
+      makeTask({ id: 1, assigned: 'zara' }),
+      makeTask({ id: 2, assigned: 'alice' }),
+      makeTask({ id: 3, assigned: undefined }),
+    ];
+    const values = DataFilters.getUniqueGroupValues(tasks, 'assignee');
+    expect(values[0]).toBe('alice');
+    expect(values[1]).toBe('zara');
+    expect(values[2]).toBe('Unassigned');
+  });
+
+  it('should handle empty tasks array', () => {
+    const values = DataFilters.getUniqueGroupValues([], 'assignee');
+    expect(values).toEqual([]);
+  });
+});
+
+// ===========================================================================
+// GROUP_BY_OPTIONS
+// ===========================================================================
+describe('DataFilters.GROUP_BY_OPTIONS', () => {
+  it('should have correct options', () => {
+    expect(DataFilters.GROUP_BY_OPTIONS).toEqual([
+      { value: 'none', label: 'No Grouping' },
+      { value: 'assignee', label: 'By Assignee' },
+      { value: 'epic', label: 'By Epic' },
+      { value: 'sprint', label: 'By Sprint' },
+    ]);
+  });
+});

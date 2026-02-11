@@ -84,6 +84,17 @@ export function useGanttState() {
   // Show/hide column settings panel
   const [showColumnSettings, setShowColumnSettings] = useState(false);
 
+  // === Grouping State ===
+  const [groupBy, setGroupBy] = useState(() => {
+    const saved = localStorage.getItem('gantt-group-by');
+    return saved || 'none';
+  });
+
+  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    const saved = localStorage.getItem('gantt-collapsed-groups');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
   // === Effective Cell Width (based on unit) ===
   // Calculate effective cellWidth based on lengthUnit
   const effectiveCellWidth = useMemo(() => {
@@ -121,6 +132,32 @@ export function useGanttState() {
   useEffect(() => {
     localStorage.setItem('gantt-length-unit', lengthUnit);
   }, [lengthUnit]);
+
+  // Save grouping state to localStorage
+  useEffect(() => {
+    localStorage.setItem('gantt-group-by', groupBy);
+  }, [groupBy]);
+
+  // Save collapsed groups to localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      'gantt-collapsed-groups',
+      JSON.stringify(Array.from(collapsedGroups)),
+    );
+  }, [collapsedGroups]);
+
+  // Toggle group collapse
+  const toggleGroupCollapse = useCallback((groupId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  }, []);
 
   return {
     // UI State
@@ -181,5 +218,12 @@ export function useGanttState() {
     showColumnSettings,
     setShowColumnSettings,
     effectiveCellWidth,
+
+    // Grouping
+    groupBy,
+    setGroupBy,
+    collapsedGroups,
+    setCollapsedGroups,
+    toggleGroupCollapse,
   };
 }
