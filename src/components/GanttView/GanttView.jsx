@@ -18,6 +18,8 @@ import Editor from '../Editor.jsx';
 import Toolbar from '../Toolbar.jsx';
 import ContextMenu from '../ContextMenu.jsx';
 import SmartTaskContent from '../SmartTaskContent.jsx';
+import Tooltip from '../../widgets/Tooltip.jsx';
+import TaskTooltipContent from '../TaskTooltipContent.jsx';
 import { useGitLabData } from '../../contexts/GitLabDataContext';
 import { useDateRangePreset } from '../../hooks/useDateRangePreset.ts';
 import { DataFilters } from '../../utils/DataFilters';
@@ -2990,48 +2992,53 @@ export function GanttView({
 
                 try {
                   return (
-                    <Gantt
-                      key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
-                      init={(api) => {
-                        try {
-                          const result = init(api);
-                          return result;
-                        } catch (error) {
-                          console.error(
-                            '[Gantt init] ERROR in init callback:',
-                            error,
-                          );
-                          console.error('[Gantt init] ERROR name:', error.name);
-                          console.error(
-                            '[Gantt init] ERROR message:',
-                            error.message,
-                          );
-                          console.error(
-                            '[Gantt init] ERROR stack:',
-                            error.stack,
-                          );
-                          throw error;
-                        }
-                      }}
-                      tasks={filteredTasks}
-                      links={links}
-                      markers={markers}
-                      scales={scales}
-                      lengthUnit={lengthUnit}
-                      start={dateRange.start}
-                      end={dateRange.end}
-                      columns={columns}
-                      cellWidth={effectiveCellWidth}
-                      cellHeight={cellHeight}
-                      highlightTime={highlightTime}
-                      countWorkdays={countWorkdays}
-                      readonly={false}
-                      baselines={true}
-                      taskTemplate={SmartTaskContent}
-                      autoScale={false}
-                      colorRules={colorRules}
-                      sprints={sprints}
-                    />
+                    <Tooltip api={api} content={TaskTooltipContent}>
+                      <Gantt
+                        key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
+                        init={(api) => {
+                          try {
+                            const result = init(api);
+                            return result;
+                          } catch (error) {
+                            console.error(
+                              '[Gantt init] ERROR in init callback:',
+                              error,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR name:',
+                              error.name,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR message:',
+                              error.message,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR stack:',
+                              error.stack,
+                            );
+                            throw error;
+                          }
+                        }}
+                        tasks={filteredTasks}
+                        links={links}
+                        markers={markers}
+                        scales={scales}
+                        lengthUnit={lengthUnit}
+                        start={dateRange.start}
+                        end={dateRange.end}
+                        columns={columns}
+                        cellWidth={effectiveCellWidth}
+                        cellHeight={cellHeight}
+                        highlightTime={highlightTime}
+                        countWorkdays={countWorkdays}
+                        readonly={false}
+                        baselines={true}
+                        taskTemplate={SmartTaskContent}
+                        autoScale={false}
+                        colorRules={colorRules}
+                        sprints={sprints}
+                      />
+                    </Tooltip>
                   );
                 } catch (error) {
                   console.error(

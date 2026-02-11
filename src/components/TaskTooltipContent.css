@@ -1,0 +1,132 @@
+.task-tooltip-content {
+  min-width: 200px;
+  max-width: 350px;
+  font-family: var(
+    --wx-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif
+  );
+  font-size: 13px;
+  color: var(--wx-color-primary-font, #1f1f1f);
+  background-color: var(--wx-tooltip-background, #fff);
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.task-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--wx-color-border, #e5e5e5);
+}
+
+.task-tooltip-type {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.task-tooltip-iid {
+  color: var(--wx-color-secondary, #6e6e73);
+  font-size: 12px;
+}
+
+.task-tooltip-state {
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.task-tooltip-state.open {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.task-tooltip-state.closed {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.task-tooltip-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.task-tooltip-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.task-tooltip-label {
+  color: var(--wx-color-secondary, #6e6e73);
+  min-width: 85px;
+  flex-shrink: 0;
+}
+
+.task-tooltip-value {
+  color: var(--wx-color-primary-font, #1f1f1f);
+  word-break: break-word;
+}
+
+.task-tooltip-description {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wx-color-border, #e5e5e5);
+}
+
+.task-tooltip-description-text {
+  margin: 4px 0 0 0;
+  color: var(--wx-color-primary-font, #1f1f1f);
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-tooltip-content {
+    background-color: var(--wx-tooltip-background, #2d2d2d);
+    color: var(--wx-color-primary-font, #e0e0e0);
+  }
+
+  .task-tooltip-header {
+    border-bottom-color: var(--wx-color-border, #444);
+  }
+
+  .task-tooltip-label {
+    color: var(--wx-color-secondary, #9e9e9e);
+  }
+
+  .task-tooltip-value {
+    color: var(--wx-color-primary-font, #e0e0e0);
+  }
+
+  .task-tooltip-description {
+    border-top-color: var(--wx-color-border, #444);
+  }
+
+  .task-tooltip-description-text {
+    color: var(--wx-color-primary-font, #e0e0e0);
+  }
+
+  .task-tooltip-state.open {
+    background-color: #1e4d2b;
+    color: #81c995;
+  }
+
+  .task-tooltip-state.closed {
+    background-color: #4c1c1c;
+    color: #f28b82;
+  }
+}
