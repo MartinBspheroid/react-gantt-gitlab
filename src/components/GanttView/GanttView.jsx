@@ -2348,6 +2348,13 @@ export function GanttView({
   const DateCell = useCallback(({ row, column }) => {
     const isMilestone = row.$isMilestone || row._gitlab?.type === 'milestone';
 
+    // Unscheduled tasks show '-' in date columns
+    if (row.unscheduled === true) {
+      return (
+        <span style={{ color: 'var(--wx-color-font-alt, #9fa1ae)' }}>-</span>
+      );
+    }
+
     // Milestones always have dates, so skip the _gitlab check for them
     if (!isMilestone) {
       // For regular tasks, check if GitLab actually has the date
@@ -2382,6 +2389,7 @@ export function GanttView({
   // This ensures the display updates immediately when user drags to resize the bar
   const WorkdaysCell = useCallback(
     ({ row }) => {
+      if (row.unscheduled === true) return '-';
       if (!row.start || !row.end) return '';
       const days = countWorkdays(row.start, row.end);
       return days ? `${days}d` : '';
