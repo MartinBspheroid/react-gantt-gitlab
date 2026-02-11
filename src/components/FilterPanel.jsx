@@ -32,6 +32,7 @@ const DEFAULT_CLIENT_FILTERS = {
   assignees: [],
   states: [],
   search: '',
+  priorities: [],
 };
 
 /**
@@ -57,6 +58,7 @@ const parseClientFiltersFromPreset = (presetFilters) => ({
   assignees: presetFilters?.assignees || [],
   states: presetFilters?.states || [],
   search: presetFilters?.search || '',
+  priorities: presetFilters?.priorities || [],
 });
 
 export function FilterPanel({
@@ -301,7 +303,9 @@ export function FilterPanel({
         JSON.stringify(prev?.assignees) !==
           JSON.stringify(initialFilters?.assignees) ||
         JSON.stringify(prev?.states) !==
-          JSON.stringify(initialFilters?.states));
+          JSON.stringify(initialFilters?.states) ||
+        JSON.stringify(prev?.priorities) !==
+          JSON.stringify(initialFilters?.priorities));
 
     if (
       hasChanged &&
@@ -408,6 +412,7 @@ export function FilterPanel({
     filters.epicIds.length +
     filters.labels.length +
     filters.assignees.length +
+    filters.priorities.length +
     (filters.search ? 1 : 0);
 
   // Server filter count
@@ -723,6 +728,24 @@ export function FilterPanel({
                     }
                     placeholder="Search assignees..."
                     emptyMessage="No assignees"
+                  />
+
+                  {/* Priority - Client uses OR logic */}
+                  <FilterMultiSelect
+                    title="Priority (OR)"
+                    options={[
+                      { value: 0, label: 'P0 - Critical' },
+                      { value: 1, label: 'P1 - High' },
+                      { value: 2, label: 'P2 - Medium' },
+                      { value: 3, label: 'P3 - Low' },
+                      { value: 4, label: 'P4 - None' },
+                    ]}
+                    selected={filters.priorities}
+                    onChange={(values) =>
+                      handleFilterFieldChange('priorities', values)
+                    }
+                    placeholder="Select priorities..."
+                    emptyMessage="No priorities"
                   />
                 </div>
               </>

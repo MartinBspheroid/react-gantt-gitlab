@@ -24,6 +24,7 @@ const ALL_COLUMNS = [
   { key: 'issueId', label: 'Issue ID', defaultVisible: false },
   { key: 'iteration', label: 'Iteration', defaultVisible: false },
   { key: 'epic', label: 'Epic', defaultVisible: false },
+  { key: 'priority', label: 'Priority', defaultVisible: true },
   { key: 'weight', label: 'Weight', defaultVisible: false },
   { key: 'labels', label: 'Labels', defaultVisible: false },
   { key: 'start', label: 'Start', defaultVisible: true },
@@ -329,6 +330,41 @@ export const EpicCell = ({ row }) => {
   return <span title={row.epic}>{row.epic}</span>;
 };
 
+const PRIORITY_COLORS = {
+  0: { bg: '#fee2e2', text: '#991b1b', border: '#dc2626' }, // P0 - red (critical)
+  1: { bg: '#ffedd5', text: '#9a3412', border: '#ea580c' }, // P1 - orange (high)
+  2: { bg: '#fef9c3', text: '#854d0e', border: '#ca8a04' }, // P2 - yellow (medium)
+  3: { bg: '#dbeafe', text: '#1e40af', border: '#2563eb' }, // P3 - blue (low)
+  4: { bg: '#f3f4f6', text: '#4b5563', border: '#9ca3af' }, // P4 - grey (none)
+};
+
+export const PriorityCell = ({ row }) => {
+  const priority = row.priority;
+  if (priority === undefined || priority === null) return null;
+
+  const colors = PRIORITY_COLORS[priority] || PRIORITY_COLORS[4];
+  const label = `P${priority}`;
+
+  return (
+    <span
+      className="priority-badge"
+      style={{
+        backgroundColor: colors.bg,
+        color: colors.text,
+        borderLeft: `3px solid ${colors.border}`,
+        padding: '2px 6px',
+        borderRadius: '3px',
+        fontSize: '11px',
+        fontWeight: 600,
+        display: 'inline-block',
+      }}
+      title={`Priority ${label}`}
+    >
+      {label}
+    </span>
+  );
+};
+
 // LabelCell style constants (must match LabelCell.css)
 const LABEL_STYLE = {
   GAP: 3,
@@ -585,6 +621,12 @@ export const COLUMN_CONFIGS = {
     header: 'Epic',
     width: 120,
     cell: EpicCell,
+  },
+  priority: {
+    id: 'priority',
+    header: 'Priority',
+    width: 60,
+    cell: PriorityCell,
   },
   weight: {
     id: 'weight',

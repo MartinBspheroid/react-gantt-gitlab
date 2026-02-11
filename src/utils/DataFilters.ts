@@ -36,6 +36,7 @@ export interface FilterOptions {
   assignees?: string[];
   states?: string[];
   search?: string;
+  priorities?: number[];
 
   // Critical path filter
   criticalPathOnly?: boolean;
@@ -246,6 +247,23 @@ export class DataFilters {
   }
 
   /**
+   * Filter tasks by priority (0-4)
+   * Supports filtering for tasks without priority (undefined/null)
+   */
+  static filterByPriority(tasks: ITask[], priorities: number[]): ITask[] {
+    if (priorities.length === 0) {
+      return tasks;
+    }
+
+    return tasks.filter((task) => {
+      const taskPriority = task.priority;
+      // If task has no priority, it's treated as P4 (lowest)
+      const effectivePriority = taskPriority ?? 4;
+      return priorities.includes(effectivePriority);
+    });
+  }
+
+  /**
    * Search tasks by text
    */
   static searchTasks(tasks: ITask[], searchText: string): ITask[] {
@@ -304,6 +322,10 @@ export class DataFilters {
 
     if (options.states && options.states.length > 0) {
       filtered = this.filterByState(filtered, options.states);
+    }
+
+    if (options.priorities && options.priorities.length > 0) {
+      filtered = this.filterByPriority(filtered, options.priorities);
     }
 
     if (options.search) {

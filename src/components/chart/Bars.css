@@ -278,3 +278,50 @@
 .wx-cascade-trigger.wx-GKbcLEGA:active {
   cursor: grabbing;
 }
+
+/* Priority visual indicators - colored left border on task bars */
+.wx-bar.wx-priority-0.wx-GKbcLEGA {
+  border-left: 4px solid #dc2626 !important;
+}
+
+.wx-bar.wx-priority-1.wx-GKbcLEGA {
+  border-left: 4px solid #ea580c !important;
+}
+
+.wx-bar.wx-priority-2.wx-GKbcLEGA {
+  border-left: 4px solid #ca8a04 !important;
+}
+
+.wx-bar.wx-priority-3.wx-GKbcLEGA {
+  border-left: 4px solid #2563eb !important;
+}
+
+.wx-bar.wx-priority-4.wx-GKbcLEGA {
+  border-left: 4px solid #9ca3af !important;
+}
+
+/* Dark mode priority colors */
+[data-theme='dark'] .wx-bar.wx-priority-0.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-0.wx-GKbcLEGA {
+  border-left: 4px solid #ef4444 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-1.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-1.wx-GKbcLEGA {
+  border-left: 4px solid #f97316 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-2.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-2.wx-GKbcLEGA {
+  border-left: 4px solid #eab308 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-3.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-3.wx-GKbcLEGA {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-4.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-4.wx-GKbcLEGA {
+  border-left: 4px solid #6b7280 !important;
+}

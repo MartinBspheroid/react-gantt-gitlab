@@ -197,6 +197,11 @@ interface WorkItem {
         iid: string;
       }>;
     };
+    priority?: {
+      priority?: string;
+      icon?: string;
+      iconName?: string;
+    };
   }>;
 }
 
@@ -617,19 +622,10 @@ export class GitLabGraphQLProvider {
                     }
                   }
                 }
-                ... on WorkItemWidgetLinkedItems {
-                  linkedItems {
-                    nodes {
-                      linkId
-                      linkType
-                      linkCreatedAt
-                      linkUpdatedAt
-                      workItem {
-                        id
-                        iid
-                      }
-                    }
-                  }
+                ... on WorkItemWidgetPriority {
+                  priority
+                  icon
+                  iconName
                 }
               }
             }
@@ -1147,9 +1143,19 @@ export class GitLabGraphQLProvider {
                               iid
                             }
                           }
+                          ... on WorkItemWidgetPriority {
+                            priority
+                            icon
+                            iconName
+                          }
                         }
                       }
                     }
+                  }
+                  ... on WorkItemWidgetPriority {
+                    priority
+                    icon
+                    iconName
                   }
                 }
               }
@@ -1157,7 +1163,6 @@ export class GitLabGraphQLProvider {
           }
         }
       `;
-
       // Collect all tasks from issue children
       const allTasks: WorkItem[] = [];
 
@@ -1815,6 +1820,28 @@ export class GitLabGraphQLProvider {
       (w) => w.parent !== undefined || w.children !== undefined,
     );
 
+    const priorityWidget = workItem.widgets.find(
+      (w) => w.priority !== undefined,
+    );
+
+    // Map GitLab priority string to numeric value (0-4)
+    // P0=CRITICAL (most urgent), P1=HIGH, P2=MEDIUM, P3=LOW, P4=NONE/UNKNOWN
+    const mapPriorityToNumber = (priorityStr?: string): number | undefined => {
+      if (!priorityStr) return undefined;
+      const priorityMap: Record<string, number> = {
+        CRITICAL: 0,
+        HIGH: 1,
+        MEDIUM: 2,
+        LOW: 3,
+        UNKNOWN: 4,
+      };
+      return priorityMap[priorityStr.toUpperCase()] ?? 4;
+    };
+
+    const taskPriority = mapPriorityToNumber(
+      priorityWidget?.priority?.priority,
+    );
+
     // Determine start date: use startDate if available, otherwise use createdAt
     const startDate = dateWidget?.startDate
       ? new Date(dateWidget.startDate + 'T00:00:00')
@@ -1973,6 +2000,7 @@ export class GitLabGraphQLProvider {
       weight: weightWidget?.weight ?? 0,
       state: workItem.state,
       web_url: workItem.webUrl,
+      priority: taskPriority,
       $isIssue: isIssue, // Custom flag: true for GitLab Issue, false for GitLab Task
       $custom:
         finalOrder !== null && finalOrder !== undefined

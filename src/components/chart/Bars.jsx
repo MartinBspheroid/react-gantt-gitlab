@@ -624,6 +624,9 @@ function Bars(props) {
           (task.$isMilestone || task._gitlab?.type === 'milestone'
             ? ' wx-gitlab-milestone'
             : '') +
+          (task.priority !== undefined && task.priority !== null
+            ? ` wx-priority-${task.priority}`
+            : '') +
           stripeClass;
         const leftLinkClass =
           'wx-link wx-left' +
