@@ -1,5 +1,15 @@
 import type { ITask, ILink } from '@svar-ui/gantt-store';
 
+export type TaskPriority = 0 | 1 | 2 | 3 | 4;
+
+export interface ADOExtendedTaskFields {
+  priority?: TaskPriority;
+  workItemType?: string;
+  acceptanceCriteria?: string;
+}
+
+export type ADOTask = ITask & ADOExtendedTaskFields;
+
 export type ADOLinkType =
   | 'System.LinkTypes.Dependency-Forward'
   | 'System.LinkTypes.Dependency-Reverse'
