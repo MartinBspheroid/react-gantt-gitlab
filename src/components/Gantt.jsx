@@ -69,6 +69,7 @@ const Gantt = forwardRef(function Gantt(
     autoScale = true,
     unscheduledTasks = false,
     colorRules = [],
+    summary = null,
     ...restProps
   },
   ref,
@@ -142,6 +143,127 @@ const Gantt = forwardRef(function Gantt(
   useEffect(() => {
     if (!initOnceRef.current) {
       if (init) init(api);
+
+      if (summary && (summary.autoProgress || summary.autoConvert)) {
+        const { autoProgress, autoConvert } = summary;
+
+        const dayDiff = (next, prev) => {
+          const d = (new Date(next) - new Date(prev)) / 1000 / 60 / 60 / 24;
+          return Math.ceil(Math.abs(d));
+        };
+
+        const collectProgressFromKids = (id) => {
+          let totalProgress = 0,
+            totalDuration = 0;
+          const kids = api.getTask(id).data;
+
+          kids?.forEach((kid) => {
+            let duration = 0;
+            if (kid.type !== 'milestone' && kid.type !== 'summary') {
+              duration = kid.duration || dayDiff(kid.end, kid.start);
+              totalDuration += duration;
+              totalProgress += duration * kid.progress;
+            }
+
+            const [p, d] = collectProgressFromKids(kid.id);
+            totalProgress += p;
+            totalDuration += d;
+          });
+          return [totalProgress, totalDuration];
+        };
+
+        const getSummaryProgress = (id) => {
+          const [totalProgress, totalDuration] = collectProgressFromKids(id);
+          const res = totalProgress / totalDuration;
+          return isNaN(res) ? 0 : Math.round(res);
+        };
+
+        const recalcSummaryProgress = (id, self) => {
+          const { tasks } = api.getState();
+          const task = api.getTask(id);
+
+          if (task.type != 'milestone') {
+            const summaryId =
+              self && task.type === 'summary' ? id : tasks.getSummaryId(id);
+
+            if (summaryId) {
+              const progress = getSummaryProgress(summaryId);
+              api.exec('update-task', {
+                id: summaryId,
+                task: { progress },
+              });
+            }
+          }
+        };
+
+        const toSummary = (id, self) => {
+          const task = api.getTask(id);
+          if (!self) id = task.parent;
+
+          if (id && task.type !== 'summary') {
+            api.exec('update-task', {
+              id,
+              task: { type: 'summary' },
+            });
+          }
+        };
+
+        const toTask = (id) => {
+          const obj = api.getTask(id);
+          if (obj && !obj.data?.length) {
+            api.exec('update-task', {
+              id,
+              task: { type: 'task' },
+            });
+          }
+        };
+
+        if (autoProgress) {
+          api.getState().tasks.forEach((task) => {
+            recalcSummaryProgress(task.id, true);
+          });
+        }
+
+        if (autoConvert) {
+          api.getState().tasks.forEach((task) => {
+            if (task.data?.length && task.type !== 'summary') {
+              toSummary(task.id, true);
+            }
+          });
+        }
+
+        api.on('add-task', ({ id, mode }) => {
+          if (autoConvert && mode === 'child') toSummary(id);
+          if (autoProgress) recalcSummaryProgress(id);
+        });
+
+        api.on('update-task', ({ id }) => {
+          if (autoProgress) recalcSummaryProgress(id);
+        });
+
+        api.on('delete-task', ({ source }) => {
+          if (autoConvert) toTask(source);
+          if (autoProgress) recalcSummaryProgress(source, true);
+        });
+
+        api.on('copy-task', ({ id }) => {
+          if (autoProgress) recalcSummaryProgress(id);
+        });
+
+        api.on('move-task', ({ id, source, mode, inProgress }) => {
+          if (inProgress) return;
+
+          if (autoConvert) {
+            if (mode == 'child') toSummary(id);
+            else toTask(source);
+          }
+          if (autoProgress) {
+            const task = api.getTask(id);
+            if (task.parent != source) recalcSummaryProgress(source, true);
+            recalcSummaryProgress(id);
+          }
+        });
+      }
     } else {
       // Preserve sort state before re-init (dataStore.init resets it)
       const currentSort = dataStore.getState()._sort;

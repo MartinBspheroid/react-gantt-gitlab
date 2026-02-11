@@ -34,6 +34,11 @@ export interface IProjectConfig {
   projectEnd?: Date | null;
 }
 
+export interface ISummaryConfig {
+  autoProgress?: boolean;
+  autoConvert?: boolean;
+}
+
 export interface IGanttApi extends IApi {
   getProjectBoundaries(): IProjectBoundaries;
 }
@@ -50,6 +55,7 @@ export declare const Gantt: FC<
     cellBorders?: 'column' | 'full';
     highlightTime?: (date: Date, unit: 'day' | 'hour') => string;
     init?: (api: IGanttApi) => void;
+    summary?: ISummaryConfig;
   } & IConfig &
     IProjectConfig &
     GanttActions<TMethodsConfig>

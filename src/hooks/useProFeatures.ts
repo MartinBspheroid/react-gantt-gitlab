@@ -41,7 +41,22 @@ import {
   detectCircularDependencies,
   removeInvalidLinks,
 } from '../pro-features/Schedule';
-import type { IScheduleConfig, IScheduleOptions } from '../pro-features/types';
+import {
+  calculateSummaryProgress,
+  calculateSummaryDateRange,
+  updateSummaryProgress,
+  updateSummaryDateRange,
+  convertToSummary,
+  convertToTask,
+  shouldConvertToSummary,
+  shouldConvertToTask,
+  getSummaryChain,
+} from '../pro-features/SummaryBehavior';
+import type {
+  IScheduleConfig,
+  IScheduleOptions,
+  ISummaryConfig,
+} from '../pro-features/types';
 
 export interface IUseCriticalPathResult {
   criticalTasks: ICriticalPathTask[];
@@ -468,6 +483,130 @@ export function useAutoSchedule(): IUseAutoScheduleResult {
     getAffectedSuccessors: handleGetAffectedSuccessors,
     detectCircularDependencies: handleDetectCircularDependencies,
     removeInvalidLinks: handleRemoveInvalidLinks,
+  };
+}
+
+export interface IUseSummaryBehaviorResult {
+  recalculateProgress: (taskId: TID) => void;
+  recalculateDateRange: (taskId: TID) => void;
+  handleAddTask: (ev: { id: TID; mode?: string }) => void;
+  handleUpdateTask: (ev: { id: TID }) => void;
+  handleDeleteTask: (ev: { source: TID }) => void;
+  handleMoveTask: (ev: {
+    id: TID;
+    source: TID;
+    mode?: string;
+    inProgress?: boolean;
+  }) => void;
+  handleCopyTask: (ev: { id: TID }) => void;
+}
+
+export function useSummaryBehavior(
+  api: IApi | null,
+  config: ISummaryConfig = {},
+): IUseSummaryBehaviorResult {
+  const { autoProgress = false, autoConvert = false } = config;
+
+  const recalculateProgress = useCallback(
+    (taskId: TID) => {
+      if (!api || !autoProgress) return;
+      const summaryChain = getSummaryChain(api, taskId);
+      for (const summaryId of summaryChain) {
+        updateSummaryProgress(api, summaryId);
+      }
+    },
+    [api, autoProgress],
+  );
+
+  const recalculateDateRange = useCallback(
+    (taskId: TID) => {
+      if (!api) return;
+      const summaryChain = getSummaryChain(api, taskId);
+      for (const summaryId of summaryChain) {
+        updateSummaryDateRange(api, summaryId);
+      }
+    },
+    [api],
+  );
+
+  const handleAddTask = useCallback(
+    (ev: { id: TID; mode?: string }) => {
+      if (!api) return;
+
+      if (autoConvert && ev.mode === 'child') {
+        convertToSummary(api, ev.id);
+      }
+
+      recalculateProgress(ev.id);
+      recalculateDateRange(ev.id);
+    },
+    [api, autoConvert, recalculateProgress, recalculateDateRange],
+  );
+
+  const handleUpdateTask = useCallback(
+    (ev: { id: TID }) => {
+      recalculateProgress(ev.id);
+      recalculateDateRange(ev.id);
+    },
+    [recalculateProgress, recalculateDateRange],
+  );
+
+  const handleDeleteTask = useCallback(
+    (ev: { source: TID }) => {
+      if (!api) return;
+
+      if (autoConvert) {
+        const task = api.getTask(ev.source);
+        if (task?.type === 'summary' && !task.data?.length) {
+          convertToTask(api, ev.source);
+        }
+      }
+
+      recalculateProgress(ev.source);
+      recalculateDateRange(ev.source);
+    },
+    [api, autoConvert, recalculateProgress, recalculateDateRange],
+  );
+
+  const handleMoveTask = useCallback(
+    (ev: { id: TID; source: TID; mode?: string; inProgress?: boolean }) => {
+      if (!api || ev.inProgress) return;
+
+      if (autoConvert) {
+        if (ev.mode === 'child') {
+          convertToSummary(api, ev.id);
+        } else {
+          const sourceTask = api.getTask(ev.source);
+          if (sourceTask?.type === 'summary' && !sourceTask.data?.length) {
+            convertToTask(api, ev.source);
+          }
+        }
+      }
+
+      recalculateProgress(ev.id);
+      recalculateProgress(ev.source);
+      recalculateDateRange(ev.id);
+      recalculateDateRange(ev.source);
+    },
+    [api, autoConvert, recalculateProgress, recalculateDateRange],
+  );
+
+  const handleCopyTask = useCallback(
+    (ev: { id: TID }) => {
+      recalculateProgress(ev.id);
+      recalculateDateRange(ev.id);
+    },
+    [recalculateProgress, recalculateDateRange],
+  );
+
+  return {
+    recalculateProgress,
+    recalculateDateRange,
+    handleAddTask,
+    handleUpdateTask,
+    handleDeleteTask,
+    handleMoveTask,
+    handleCopyTask,
   };
 }
 

@@ -97,3 +97,8 @@ export interface IScheduleOptions {
 export interface ILinkWithLag extends ILink {
   lag?: number;
 }
+
+export interface ISummaryConfig {
+  autoProgress?: boolean;
+  autoConvert?: boolean;
+}
