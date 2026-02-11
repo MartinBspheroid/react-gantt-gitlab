@@ -222,7 +222,7 @@ export function WorkloadView({ initialConfigId }) {
         // Only restore if arrays exist
         if (Array.isArray(assignees)) setSelectedAssignees(assignees);
         if (Array.isArray(labels)) setSelectedLabels(labels);
-      } catch (e) {
+      } catch {
         // Ignore parse errors
       }
     } else {

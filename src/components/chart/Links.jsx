@@ -229,6 +229,9 @@ export default function Links() {
     return new Set([link.source, link.target]);
   }, [hoveredLink, selectedLink]);
 
+  // Use highlightedTaskIds for visual feedback on linked tasks
+  console.debug('highlightedTaskIds', highlightedTaskIds);
+
   const processedLinks = useMemo(() => {
     return (links || [])
       .map((link) => {

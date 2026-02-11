@@ -210,7 +210,7 @@ function PresetFolder({
   // Check if any child matches search (for folders)
   const hasMatchingChildren = searchQuery
     ? filteredPresets.length > 0 ||
-      Object.entries(node.folders).some(([_, childNode]) =>
+      Object.entries(node.folders).some(([, childNode]) =>
         childNode.presets.some((p) =>
           p.name.toLowerCase().includes(searchQuery.toLowerCase()),
         ),
@@ -318,14 +318,11 @@ function PresetItem({
 export function FilterPresetSelector({
   presets,
   currentFilters,
-  currentServerFilters,
-  activeTab = 'client',
   loading,
   saving,
   canEdit,
   onSelectPreset,
   onCreatePreset,
-  onUpdatePreset,
   onRenamePreset,
   onDeletePreset,
   selectedPresetId, // Explicit selected preset ID (preferred over filter matching)

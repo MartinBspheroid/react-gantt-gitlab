@@ -246,20 +246,23 @@ export function MoveInModal({
   // Get display text for selected target
   const getSelectedTargetText = () => {
     switch (activeTab) {
-      case 'parent':
+      case 'parent': {
         if (selectedParent === null) return 'None (Remove Parent)';
         const parentTask = availableParentIssues.find(
           (t) => t.id === selectedParent,
         );
         return parentTask ? `#${parentTask.id} ${parentTask.text}` : '';
-      case 'milestone':
+      }
+      case 'milestone': {
         if (selectedMilestone === null) return 'None (Remove Milestone)';
         const milestone = milestones.find((m) => m.iid === selectedMilestone);
         return milestone ? milestone.title : '';
-      case 'epic':
+      }
+      case 'epic': {
         if (selectedEpic === null) return 'None (Remove Epic)';
         const epic = epics.find((e) => e.iid === selectedEpic);
         return epic ? epic.title : '';
+      }
       default:
         return '';
     }
