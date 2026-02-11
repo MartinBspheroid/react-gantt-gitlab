@@ -1,9 +1,19 @@
 #!/bin/bash
 
-# Simple HTTP server for kitchen sink demo
+# Vite preview server for kitchen sink demo
 
 PORT=3001
+OUTDIR="dist-demos"
 
+echo "Building Kitchen Sink Demo..."
+npm run build:demo
+
+if [ $? -ne 0 ]; then
+  echo "Build failed!"
+  exit 1
+fi
+
+echo ""
 echo "Starting Kitchen Sink Demo Server..."
 echo "Demo will be available at: http://localhost:${PORT}/kitchen-sink-demo.html"
 echo ""
@@ -11,23 +21,23 @@ echo ""
 # Kill any existing process on the port
 lsof -ti:${PORT} | xargs kill -9 2>/dev/null || true
 
-# Start the server
-python3 -m http.server ${PORT} &
+# Start the Vite preview server
+npx vite preview --port ${PORT} --host --outDir ${OUTDIR} &
 SERVER_PID=$!
 
 # Wait for server to start
 sleep 2
 
 # Open browser
-if command -v xdg-open &> /dev/null; then
-    xdg-open "http://localhost:${PORT}/kitchen-sink-demo.html"
-elif command -v open &> /dev/null; then
-    open "http://localhost:${PORT}/kitchen-sink-demo.html"
-elif command -v start &> /dev/null; then
-    start "http://localhost:${PORT}/kitchen-sink-demo.html"
+if command -v xdg-open &>/dev/null; then
+  xdg-open "http://localhost:${PORT}/kitchen-sink-demo.html"
+elif command -v open &>/dev/null; then
+  open "http://localhost:${PORT}/kitchen-sink-demo.html"
+elif command -v start &>/dev/null; then
+  start "http://localhost:${PORT}/kitchen-sink-demo.html"
 else
-    echo "Browser auto-open not supported on this system"
-    echo "Please open: http://localhost:${PORT}/kitchen-sink-demo.html"
+  echo "Browser auto-open not supported on this system"
+  echo "Please open: http://localhost:${PORT}/kitchen-sink-demo.html"
 fi
 
 echo ""

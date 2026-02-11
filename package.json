@@ -79,6 +79,7 @@
     "@svar-ui/react-grid": "2.3.1",
     "@svar-ui/react-menu": "2.3.1",
     "@svar-ui/react-toolbar": "2.3.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "uuid": "^13.0.0"
   },
   "homepage": "https://svar.dev/react/gantt/",
