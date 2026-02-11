@@ -13,6 +13,10 @@ import { normalizeDates } from '@svar-ui/gantt-store';
 import { Grid as WxGrid } from '@svar-ui/react-grid';
 import TextCell from './TextCell.jsx';
 import ActionCell from './ActionCell.jsx';
+import {
+  SelectionCheckboxCell,
+  SelectionHeaderCell,
+} from './SelectionCheckboxCell.jsx';
 import { useWritableProp, useStore } from '@svar-ui/lib-react';
 import storeContext from '../../context';
 import './Grid.css';
@@ -205,9 +209,23 @@ export default function Grid(props) {
       }
     }
 
+    // Add selection checkbox column at the beginning
+    const selectionCol = {
+      id: 'selection',
+      header: {
+        cell: () => <SelectionHeaderCell api={api} visibleTasks={tasks} />,
+      },
+      width: 36,
+      minWidth: 36,
+      maxWidth: 36,
+      resize: false,
+      cell: SelectionCheckboxCell,
+    };
+    cols.unshift(selectionCol);
+
     if (cols.length > 0) cols[cols.length - 1].resize = false;
     return cols;
-  }, [columnsVal, _, readonly, compactMode, colorRules]);
+  }, [columnsVal, _, readonly, compactMode, colorRules, api, tasks]);
 
   const basis = useMemo(() => {
     if (display === 'all') return `${width}px`;

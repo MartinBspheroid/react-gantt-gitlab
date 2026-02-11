@@ -55,6 +55,8 @@ import {
   validateLinkGitLabMetadata,
 } from '../../utils/LinkUtils';
 import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
+import { BulkOperationsBar } from '../BulkOperationsBar';
+import { useStore } from '@svar-ui/lib-react';
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -283,6 +285,33 @@ export function GanttView({
   const [deleteDialogItems, setDeleteDialogItems] = useState([]);
   const [discardChangesDialogOpen, setDiscardChangesDialogOpen] =
     useState(false);
+
+  // Track selected tasks for bulk operations
+  const selectedIds = useStore(api, 'selected');
+  const selectedTasksForBulk = useMemo(() => {
+    if (!api || !selectedIds || selectedIds.length === 0) return [];
+    return selectedIds
+      .map((id) => api.getTask(id))
+      .filter((task) => task != null);
+  }, [api, selectedIds]);
+
+  // Handler to deselect all
+  const handleDeselectAll = useCallback(() => {
+    if (api) {
+      api.exec('clear-selection');
+    }
+  }, [api]);
+
+  // Escape key handler to deselect all
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && selectedTasksForBulk.length > 0) {
+        handleDeselectAll();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedTasksForBulk.length, handleDeselectAll]);
 
   // Date editing mode state (true = dates can be edited in grid cells)
   // NOTE: setDateEditable is not used yet but kept for future feature to toggle date editing
@@ -3139,6 +3168,17 @@ export function GanttView({
         message="You have unsaved changes. Do you want to discard them?"
         severity="warning"
         confirmLabel="Discard"
+      />
+
+      {/* Bulk Operations Bar - shows when multiple items are selected */}
+      <BulkOperationsBar
+        selectedTasks={selectedTasksForBulk}
+        api={api}
+        provider={provider}
+        assigneeOptions={assigneeOptions}
+        onSync={sync}
+        showToast={showToast}
+        onDeselectAll={handleDeselectAll}
       />
     </div>
   );
