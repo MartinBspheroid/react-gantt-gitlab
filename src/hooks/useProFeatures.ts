@@ -31,9 +31,14 @@ import {
 import {
   exportData,
   downloadExport,
+  downloadBlob,
   importData,
   importFromFile,
   importFromMSProjectXML,
+  exportToExcel,
+  exportToMSProjectXML,
+  exportToPNG,
+  exportToPDF,
 } from '../pro-features/DataIO';
 import {
   scheduleTasks,
@@ -289,11 +294,30 @@ export interface IUseDataExportResult {
     links: ILink[],
     options?: Partial<IExportOptions>,
   ) => string;
+  exportToExcel: (
+    tasks: ITask[],
+    links: ILink[],
+    options?: Partial<IExportOptions>,
+  ) => Blob;
+  exportToMSProjectXML: (
+    tasks: ITask[],
+    links: ILink[],
+    options?: Partial<IExportOptions>,
+  ) => string;
+  exportToPNG: (
+    element: HTMLElement,
+    options?: Partial<IExportOptions>,
+  ) => Promise<Blob>;
+  exportToPDF: (
+    element: HTMLElement,
+    options?: Partial<IExportOptions>,
+  ) => Promise<Blob>;
   downloadExport: (
-    data: string,
+    data: string | Blob,
     filename: string,
-    format: 'json' | 'csv',
+    format: 'json' | 'csv' | 'xlsx' | 'mspx' | 'pdf' | 'png',
   ) => void;
+  downloadBlob: (blob: Blob | Promise<Blob>, filename: string) => Promise<void>;
   importFromJSON: (
     jsonString: string,
     options?: Partial<IImportOptions>,
@@ -315,19 +339,52 @@ export interface IUseDataExportResult {
 export function useDataExport(): IUseDataExportResult {
   const handleExportToJSON = useCallback(
     (tasks: ITask[], links: ILink[], options?: Partial<IExportOptions>) =>
-      exportData(tasks, links, { ...options, format: 'json' }),
+      exportData(tasks, links, { ...options, format: 'json' }) as string,
     [],
   );
 
   const handleExportToCSV = useCallback(
     (tasks: ITask[], links: ILink[], options?: Partial<IExportOptions>) =>
-      exportData(tasks, links, { ...options, format: 'csv' }),
+      exportData(tasks, links, { ...options, format: 'csv' }) as string,
+    [],
+  );
+
+  const handleExportToExcel = useCallback(
+    (tasks: ITask[], links: ILink[], options?: Partial<IExportOptions>) =>
+      exportToExcel(tasks, links, { ...options, format: 'xlsx' }),
+    [],
+  );
+
+  const handleExportToMSProjectXML = useCallback(
+    (tasks: ITask[], links: ILink[], options?: Partial<IExportOptions>) =>
+      exportToMSProjectXML(tasks, links, { ...options, format: 'mspx' }),
+    [],
+  );
+
+  const handleExportToPNG = useCallback(
+    (element: HTMLElement, options?: Partial<IExportOptions>) =>
+      exportToPNG(element, { ...options, format: 'png' }),
+    [],
+  );
+
+  const handleExportToPDF = useCallback(
+    (element: HTMLElement, options?: Partial<IExportOptions>) =>
+      exportToPDF(element, { ...options, format: 'pdf' }),
     [],
   );
 
   const handleDownload = useCallback(
-    (data: string, filename: string, format: 'json' | 'csv') =>
-      downloadExport(data, filename, format),
+    (
+      data: string | Blob,
+      filename: string,
+      format: 'json' | 'csv' | 'xlsx' | 'mspx' | 'pdf' | 'png',
+    ) => downloadExport(data, filename, format),
+    [],
+  );
+
+  const handleDownloadBlob = useCallback(
+    (blob: Blob | Promise<Blob>, filename: string) =>
+      downloadBlob(blob, filename),
     [],
   );
 
@@ -358,7 +415,12 @@ export function useDataExport(): IUseDataExportResult {
   return {
     exportToJSON: handleExportToJSON,
     exportToCSV: handleExportToCSV,
+    exportToExcel: handleExportToExcel,
+    exportToMSProjectXML: handleExportToMSProjectXML,
+    exportToPNG: handleExportToPNG,
+    exportToPDF: handleExportToPDF,
     downloadExport: handleDownload,
+    downloadBlob: handleDownloadBlob,
     importFromJSON: handleImportJSON,
     importFromCSV: handleImportCSV,
     importFromMSProjectXML: handleImportMSProjectXML,
