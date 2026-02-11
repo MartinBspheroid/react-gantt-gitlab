@@ -1394,7 +1394,9 @@ export function GanttView({
           ev.task.duration !== undefined;
 
         const hasTextChange =
-          ev.task.text !== undefined || ev.task.details !== undefined;
+          ev.task.text !== undefined ||
+          ev.task.details !== undefined ||
+          ev.task.acceptanceCriteria !== undefined;
 
         if (isEditorOpenRef.current && hasTextChange && !hasDateChange) {
           // Editor is open and ONLY text fields changed - save for later
@@ -1422,6 +1424,9 @@ export function GanttView({
           }
           if (ev.task.details !== undefined) {
             taskChanges.details = ev.task.details;
+          }
+          if (ev.task.acceptanceCriteria !== undefined) {
+            taskChanges.acceptanceCriteria = ev.task.acceptanceCriteria;
           }
 
           // Date fields - support null values for clearing dates
@@ -2477,10 +2482,21 @@ export function GanttView({
   const editorItems = useMemo(() => {
     return [
       { key: 'text', comp: 'text', label: 'Title' },
-      { key: 'details', comp: 'textarea', label: 'Description' },
       { key: 'start', comp: 'nullable-date', label: 'Start Date' },
       { key: 'end', comp: 'nullable-date', label: 'Due Date' },
       { key: 'workdays', comp: 'workdays', label: 'Workdays' },
+      {
+        key: 'details',
+        comp: 'textarea',
+        label: 'Description',
+        config: { placeholder: 'No description' },
+      },
+      {
+        key: 'acceptanceCriteria',
+        comp: 'textarea',
+        label: 'Acceptance Criteria',
+        config: { placeholder: 'No acceptance criteria' },
+      },
       { key: 'links', comp: 'links', label: 'Links' },
     ];
   }, []);

@@ -41,6 +41,7 @@ export interface ADOWorkItem {
     'Microsoft.VSTS.Scheduling.Effort'?: number;
     'System.Tags'?: string;
     'System.Description'?: string;
+    'Microsoft.VSTS.Common.AcceptanceCriteria'?: string;
     'System.IterationPath'?: string;
     'System.AreaPath'?: string;
     'System.Parent'?: number;

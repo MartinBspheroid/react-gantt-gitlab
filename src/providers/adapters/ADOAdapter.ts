@@ -24,6 +24,7 @@ const ADO_WORK_ITEM_FIELDS = [
   'Microsoft.VSTS.Scheduling.RemainingWork',
   'System.Tags',
   'System.Description',
+  'Microsoft.VSTS.Common.AcceptanceCriteria',
   'System.IterationPath',
   'System.AreaPath',
   'System.Parent',
@@ -186,6 +187,7 @@ export class ADOAdapter implements DataProviderInterface {
       type: this.mapWorkItemType(fields['System.WorkItemType']),
       parent: fields['System.Parent'],
       details: fields['System.Description'],
+      acceptanceCriteria: fields['Microsoft.VSTS.Common.AcceptanceCriteria'],
       unscheduled: !startDate,
       _ado: {
         id: wi.id,
