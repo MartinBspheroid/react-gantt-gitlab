@@ -161,12 +161,14 @@ function sortByDeletionOrder(taskIds, allTasks) {
  *                                      FilterPanel is always shown regardless of this prop.
  * @param {boolean} showSettings - Control settings modal visibility from parent
  * @param {function} onSettingsClose - Callback when settings modal is closed
+ * @param {boolean} readonly - When true, blocks all modifications (edit, drag, delete, etc.)
  */
 export function GanttView({
   hideSharedToolbar = false,
   showSettings: externalShowSettings,
   onSettingsClose,
   externalShowViewOptions,
+  readonly = false,
 }) {
   // === Get data from GitLabDataContext ===
   const {
@@ -3197,7 +3199,7 @@ export function GanttView({
                         cellHeight={cellHeight}
                         highlightTime={highlightTime}
                         countWorkdays={countWorkdays}
-                        readonly={false}
+                        readonly={readonly}
                         baselines={true}
                         taskTemplate={SmartTaskContent}
                         autoScale={false}

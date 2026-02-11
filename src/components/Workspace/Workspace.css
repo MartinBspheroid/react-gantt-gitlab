@@ -21,3 +21,12 @@
   flex: 1;
   overflow: hidden;
 }
+
+/* Readonly mode - subtle top border indicator */
+.gitlab-workspace.readonly-mode {
+  border-top: 3px solid #f59e0b;
+}
+
+.gitlab-workspace.readonly-mode .gitlab-workspace-content {
+  opacity: 0.98;
+}

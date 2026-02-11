@@ -19,6 +19,7 @@ import { SharedFilterPanel } from './SharedFilterPanel';
 import './Workspace.css';
 
 const VIEW_MODE_KEY = 'gitlab-gantt-view-mode';
+const READONLY_KEY = 'gitlab-gantt-readonly';
 
 function getStoredViewMode() {
   try {
@@ -40,10 +41,27 @@ function storeViewMode(mode) {
   }
 }
 
+function getStoredReadonly() {
+  try {
+    return localStorage.getItem(READONLY_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function storeReadonly(readonly) {
+  try {
+    localStorage.setItem(READONLY_KEY, String(readonly));
+  } catch {
+    // localStorage not available
+  }
+}
+
 export function Workspace({ initialConfigId, autoSync = false }) {
   const [activeView, setActiveView] = useState(getStoredViewMode); // 'gantt' | 'kanban'
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
+  const [readonly, setReadonly] = useState(getStoredReadonly);
 
   // Handle view change and persist to localStorage
   const handleViewChange = useCallback((newView) => {
@@ -51,9 +69,18 @@ export function Workspace({ initialConfigId, autoSync = false }) {
     storeViewMode(newView);
   }, []);
 
+  // Handle readonly toggle and persist to localStorage
+  const handleReadonlyToggle = useCallback(() => {
+    setReadonly((prev) => {
+      const newValue = !prev;
+      storeReadonly(newValue);
+      return newValue;
+    });
+  }, []);
+
   return (
     <GitLabDataProvider initialConfigId={initialConfigId} autoSync={autoSync}>
-      <div className="gitlab-workspace">
+      <div className={`gitlab-workspace${readonly ? ' readonly-mode' : ''}`}>
         {/* Shared Toolbar */}
         <SharedToolbar
           activeView={activeView}
@@ -61,6 +88,8 @@ export function Workspace({ initialConfigId, autoSync = false }) {
           onSettingsClick={() => setShowSettings(true)}
           showViewOptions={showViewOptions}
           onViewOptionsToggle={() => setShowViewOptions((prev) => !prev)}
+          readonly={readonly}
+          onReadonlyToggle={handleReadonlyToggle}
         />
 
         {/* View Options Container - GanttView will render its controls here via portal */}
@@ -77,6 +106,7 @@ export function Workspace({ initialConfigId, autoSync = false }) {
               showSettings={showSettings}
               onSettingsClose={() => setShowSettings(false)}
               externalShowViewOptions={showViewOptions}
+              readonly={readonly}
             />
           )}
           {activeView === 'kanban' && (
