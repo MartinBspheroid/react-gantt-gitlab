@@ -13,6 +13,11 @@ import type {
   Sprint,
   ADOTask,
   TaskPriority,
+  ADOAssignedTo,
+} from '../../types/azure-devops';
+import {
+  validateADOWorkItemFields,
+  extractHierarchyParent,
 } from '../../types/azure-devops';
 import { ADOApiClient } from '../ado/ADOApiClient';
 
@@ -163,6 +168,18 @@ export class ADOAdapter implements DataProviderInterface {
   private convertToTask(wi: ADOWorkItem): ADOTask {
     const fields = wi.fields;
 
+    const validation = validateADOWorkItemFields(fields);
+    if (!validation.isValid) {
+      console.warn(
+        `[ADO] Work item ${wi.id} missing required fields: ${validation.missingFields.join(', ')}`,
+      );
+    }
+    if (validation.warnings.length > 0) {
+      console.debug(
+        `[ADO] Work item ${wi.id} field warnings: ${validation.warnings.join(', ')}`,
+      );
+    }
+
     const startDate = fields['Microsoft.VSTS.Scheduling.StartDate']
       ? new Date(fields['Microsoft.VSTS.Scheduling.StartDate'])
       : undefined;
@@ -189,7 +206,12 @@ export class ADOAdapter implements DataProviderInterface {
         ? (Math.min(4, Math.max(0, adoPriority)) as TaskPriority)
         : 2;
 
-    const workItemType = fields['System.WorkItemType'];
+    const workItemType = fields['System.WorkItemType'] || 'Task';
+
+    const hierarchyParent = extractHierarchyParent(wi.relations);
+    const parent = fields['System.Parent'] ?? hierarchyParent ?? undefined;
+
+    const assignedTo = fields['System.AssignedTo'];
 
     return {
       id: wi.id,
@@ -199,7 +221,7 @@ export class ADOAdapter implements DataProviderInterface {
       duration,
       progress,
       type: this.mapWorkItemType(workItemType),
-      parent: fields['System.Parent'],
+      parent,
       details: fields['System.Description'],
       priority,
       workItemType,
@@ -210,12 +232,13 @@ export class ADOAdapter implements DataProviderInterface {
         rev: wi.rev,
         url: wi.url,
         webUrl: wi._links?.html?.href,
-        state: fields['System.State'],
+        state: fields['System.State'] || 'Unknown',
         workItemType,
-        assignedTo: fields['System.AssignedTo']
+        assignedTo: assignedTo
           ? {
-              displayName: fields['System.AssignedTo'].displayName,
-              uniqueName: fields['System.AssignedTo'].uniqueName,
+              displayName: assignedTo.displayName || 'Unknown',
+              uniqueName: assignedTo.uniqueName || '',
+              imageUrl: (assignedTo as ADOAssignedTo).imageUrl,
             }
           : null,
         priority: adoPriority,
@@ -236,7 +259,11 @@ export class ADOAdapter implements DataProviderInterface {
         webUrl?: string;
         state: string;
         workItemType: string;
-        assignedTo: { displayName: string; uniqueName: string } | null;
+        assignedTo: {
+          displayName: string;
+          uniqueName: string;
+          imageUrl?: string;
+        } | null;
         priority?: number;
         tags: string[];
         iterationPath?: string;

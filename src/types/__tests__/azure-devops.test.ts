@@ -6,8 +6,11 @@ import {
   convertADODependencyToILink,
   detectCircularDependencies,
   filterCircularDependencies,
+  validateADOWorkItemFields,
+  extractHierarchyParent,
+  extractHierarchyChildren,
 } from '../azure-devops';
-import type { ADODependencyLink } from '../azure-devops';
+import type { ADODependencyLink, ADOWorkItem } from '../azure-devops';
 
 describe('azure-devops', () => {
   describe('mapADOLinkTypeToGantt', () => {
@@ -303,6 +306,123 @@ describe('azure-devops', () => {
       expect(circularLinks.length).toBe(0);
       expect(validLinks[0].lag).toBe(3);
       expect(validLinks[1].lag).toBe(-2);
+    });
+  });
+
+  describe('validateADOWorkItemFields', () => {
+    it('should validate work item with all required fields', () => {
+      const fields = {
+        'System.Id': 123,
+        'System.Title': 'Test Task',
+        'System.State': 'Active',
+        'System.WorkItemType': 'Task',
+      } as ADOWorkItem['fields'];
+
+      const result = validateADOWorkItemFields(fields);
+      expect(result.isValid).toBe(true);
+      expect(result.missingFields).toHaveLength(0);
+    });
+
+    it('should detect missing required fields', () => {
+      const fields = {
+        'System.Id': 123,
+        'System.Title': 'Test Task',
+      } as ADOWorkItem['fields'];
+
+      const result = validateADOWorkItemFields(fields);
+      expect(result.isValid).toBe(false);
+      expect(result.missingFields).toContain('System.State');
+      expect(result.missingFields).toContain('System.WorkItemType');
+    });
+
+    it('should warn about missing optional fields', () => {
+      const fields = {
+        'System.Id': 123,
+        'System.Title': 'Test Task',
+        'System.State': 'Active',
+        'System.WorkItemType': 'Task',
+      } as ADOWorkItem['fields'];
+
+      const result = validateADOWorkItemFields(fields);
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings.some((w) => w.includes('AssignedTo'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Priority'))).toBe(true);
+    });
+  });
+
+  describe('extractHierarchyParent', () => {
+    it('should extract parent from hierarchy-reverse relation', () => {
+      const relations = [
+        {
+          rel: 'System.LinkTypes.Hierarchy-Reverse' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/100',
+          attributes: {},
+        },
+      ];
+
+      const parentId = extractHierarchyParent(relations);
+      expect(parentId).toBe(100);
+    });
+
+    it('should return null when no hierarchy relation exists', () => {
+      const relations = [
+        {
+          rel: 'System.LinkTypes.Dependency-Forward' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/200',
+          attributes: {},
+        },
+      ];
+
+      const parentId = extractHierarchyParent(relations);
+      expect(parentId).toBeNull();
+    });
+
+    it('should return null when relations is undefined', () => {
+      const parentId = extractHierarchyParent(undefined);
+      expect(parentId).toBeNull();
+    });
+  });
+
+  describe('extractHierarchyChildren', () => {
+    it('should extract children from hierarchy-forward relations', () => {
+      const relations = [
+        {
+          rel: 'System.LinkTypes.Hierarchy-Forward' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/101',
+          attributes: {},
+        },
+        {
+          rel: 'System.LinkTypes.Hierarchy-Forward' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/102',
+          attributes: {},
+        },
+        {
+          rel: 'System.LinkTypes.Dependency-Forward' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/200',
+          attributes: {},
+        },
+      ];
+
+      const childIds = extractHierarchyChildren(relations);
+      expect(childIds).toEqual([101, 102]);
+    });
+
+    it('should return empty array when no hierarchy-forward relations', () => {
+      const relations = [
+        {
+          rel: 'System.LinkTypes.Dependency-Forward' as const,
+          url: 'https://dev.azure.com/org/_apis/wit/workItems/200',
+          attributes: {},
+        },
+      ];
+
+      const childIds = extractHierarchyChildren(relations);
+      expect(childIds).toEqual([]);
+    });
+
+    it('should return empty array when relations is undefined', () => {
+      const childIds = extractHierarchyChildren(undefined);
+      expect(childIds).toEqual([]);
     });
   });
 });

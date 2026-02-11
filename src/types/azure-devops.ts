@@ -27,6 +27,14 @@ export interface ADOLinkRelation {
   };
 }
 
+export interface ADOAssignedTo {
+  displayName: string;
+  uniqueName: string;
+  id: string;
+  imageUrl?: string;
+  url?: string;
+}
+
 export interface ADOWorkItem {
   id: number;
   rev?: number;
@@ -36,11 +44,7 @@ export interface ADOWorkItem {
     'System.Title': string;
     'System.State': string;
     'System.WorkItemType': string;
-    'System.AssignedTo'?: {
-      displayName: string;
-      uniqueName: string;
-      id: string;
-    };
+    'System.AssignedTo'?: ADOAssignedTo;
     'Microsoft.VSTS.Common.Priority'?: number;
     'Microsoft.VSTS.Common.Activity'?: string;
     'Microsoft.VSTS.Scheduling.StartDate'?: string;
@@ -365,4 +369,78 @@ export interface SprintCapacityInfo {
   assignedWork: number;
   remainingWork: number;
   status: 'under' | 'near' | 'over';
+}
+
+export interface ADOFieldValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+  warnings: string[];
+}
+
+const REQUIRED_TASK_FIELDS = [
+  'System.Id',
+  'System.Title',
+  'System.State',
+  'System.WorkItemType',
+] as const;
+
+const OPTIONAL_BUT_RECOMMENDED_FIELDS = [
+  'System.AssignedTo',
+  'Microsoft.VSTS.Common.Priority',
+  'Microsoft.VSTS.Scheduling.StartDate',
+  'Microsoft.VSTS.Scheduling.FinishDate',
+  'System.IterationPath',
+  'System.Parent',
+] as const;
+
+export function validateADOWorkItemFields(
+  fields: ADOWorkItem['fields'],
+): ADOFieldValidationResult {
+  const missingFields: string[] = [];
+  const warnings: string[] = [];
+
+  for (const requiredField of REQUIRED_TASK_FIELDS) {
+    if (fields[requiredField] === undefined || fields[requiredField] === null) {
+      missingFields.push(requiredField);
+    }
+  }
+
+  for (const optionalField of OPTIONAL_BUT_RECOMMENDED_FIELDS) {
+    if (fields[optionalField] === undefined || fields[optionalField] === null) {
+      warnings.push(`Missing optional field: ${optionalField}`);
+    }
+  }
+
+  return {
+    isValid: missingFields.length === 0,
+    missingFields,
+    warnings,
+  };
+}
+
+export function extractHierarchyParent(
+  relations?: ADOLinkRelation[],
+): number | null {
+  if (!relations) return null;
+
+  const hierarchyRelation = relations.find(
+    (r) => r.rel === 'System.LinkTypes.Hierarchy-Reverse',
+  );
+
+  if (hierarchyRelation) {
+    return extractWorkItemIdFromUrl(hierarchyRelation.url);
+  }
+
+  return null;
+}
+
+export function extractHierarchyChildren(
+  relations?: ADOLinkRelation[],
+): number[] {
+  if (!relations) return [];
+
+  return relations
+    .filter((r) => r.rel === 'System.LinkTypes.Hierarchy-Forward')
+    .map((r) => extractWorkItemIdFromUrl(r.url))
+    .filter((id): id is number => id !== null);
 }
