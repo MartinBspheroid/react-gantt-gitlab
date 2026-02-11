@@ -7,7 +7,13 @@ import type {
   FilterOptionsData,
   SyncOptions,
 } from '../core/DataProviderInterface';
-import type { ADOConfig, ADOWorkItem, Sprint } from '../../types/azure-devops';
+import type {
+  ADOConfig,
+  ADOWorkItem,
+  Sprint,
+  ADOTask,
+  TaskPriority,
+} from '../../types/azure-devops';
 import { ADOApiClient } from '../ado/ADOApiClient';
 
 const ADO_WORK_ITEM_FIELDS = [
@@ -154,7 +160,7 @@ export class ADOAdapter implements DataProviderInterface {
     return `SELECT [System.Id] FROM WorkItems WHERE ${whereClause} ORDER BY [System.Id]`;
   }
 
-  private convertToTask(wi: ADOWorkItem): ITask {
+  private convertToTask(wi: ADOWorkItem): ADOTask {
     const fields = wi.fields;
 
     const startDate = fields['Microsoft.VSTS.Scheduling.StartDate']
@@ -177,6 +183,14 @@ export class ADOAdapter implements DataProviderInterface {
         fields['Microsoft.VSTS.Scheduling.RemainingWork'],
     );
 
+    const adoPriority = fields['Microsoft.VSTS.Common.Priority'];
+    const priority: TaskPriority =
+      adoPriority !== undefined
+        ? (Math.min(4, Math.max(0, adoPriority)) as TaskPriority)
+        : 2;
+
+    const workItemType = fields['System.WorkItemType'];
+
     return {
       id: wi.id,
       text: fields['System.Title'] || 'Untitled',
@@ -184,9 +198,11 @@ export class ADOAdapter implements DataProviderInterface {
       end: endDate,
       duration,
       progress,
-      type: this.mapWorkItemType(fields['System.WorkItemType']),
+      type: this.mapWorkItemType(workItemType),
       parent: fields['System.Parent'],
       details: fields['System.Description'],
+      priority,
+      workItemType,
       acceptanceCriteria: fields['Microsoft.VSTS.Common.AcceptanceCriteria'],
       unscheduled: !startDate,
       _ado: {
@@ -195,14 +211,14 @@ export class ADOAdapter implements DataProviderInterface {
         url: wi.url,
         webUrl: wi._links?.html?.href,
         state: fields['System.State'],
-        workItemType: fields['System.WorkItemType'],
+        workItemType,
         assignedTo: fields['System.AssignedTo']
           ? {
               displayName: fields['System.AssignedTo'].displayName,
               uniqueName: fields['System.AssignedTo'].uniqueName,
             }
           : null,
-        priority: fields['Microsoft.VSTS.Common.Priority'],
+        priority: adoPriority,
         tags: fields['System.Tags']
           ? fields['System.Tags'].split(';').map((t) => t.trim())
           : [],
@@ -212,7 +228,7 @@ export class ADOAdapter implements DataProviderInterface {
         completedWork: fields['Microsoft.VSTS.Scheduling.CompletedWork'],
         remainingWork: fields['Microsoft.VSTS.Scheduling.RemainingWork'],
       },
-    } as ITask & {
+    } as ADOTask & {
       _ado: {
         id: number;
         rev?: number;
