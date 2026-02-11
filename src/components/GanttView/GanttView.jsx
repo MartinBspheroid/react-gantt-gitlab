@@ -54,6 +54,7 @@ import {
   findLinkBySourceTarget,
   validateLinkGitLabMetadata,
 } from '../../utils/LinkUtils';
+import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -226,6 +227,23 @@ export function GanttView({
 
   // === GanttView-specific State ===
   const [api, setApi] = useState(null);
+
+  // Undo/Redo feature
+  const undoRedo = useUndoRedoActions({
+    enabled: true,
+    maxHistory: 50,
+    api,
+  });
+
+  // Refs for undo/redo recording functions (to access in init callback)
+  const recordTaskActionRef = useRef(undoRedo.recordTaskAction);
+  const recordLinkActionRef = useRef(undoRedo.recordLinkAction);
+
+  // Keep refs updated
+  useEffect(() => {
+    recordTaskActionRef.current = undoRedo.recordTaskAction;
+    recordLinkActionRef.current = undoRedo.recordLinkAction;
+  }, [undoRedo.recordTaskAction, undoRedo.recordLinkAction]);
   // Settings modal can be controlled externally (from GitLabWorkspace) or internally
   const [internalShowSettings, setInternalShowSettings] = useState(false);
   const showSettings =
@@ -1161,6 +1179,15 @@ export function GanttView({
           return true;
         }
 
+        // Record undo: capture before state before update
+        if (!ev.skipUndo) {
+          const task = ganttApi.getTask(ev.id);
+          if (task && !ev.skipSync) {
+            // Store before state for later recording
+            ev._undoBefore = { ...task };
+          }
+        }
+
         // Only process move mode drags (not resize)
         // GitLab milestones have start and end dates, so they also need workdays adjustment
         if (ev.mode === 'move' && ev.diff) {
@@ -1318,6 +1345,16 @@ export function GanttView({
         // Skip sync if marked as skipSync (UI-only update)
         if (ev.skipSync) {
           return;
+        }
+
+        // Record undo for update-task (if we captured before state)
+        if (ev._undoBefore && !ev.skipUndo) {
+          const afterTask = ganttApi.getTask(ev.id);
+          if (afterTask) {
+            recordTaskActionRef.current('update', ev._undoBefore, {
+              ...afterTask,
+            });
+          }
         }
 
         // Determine if this is a visual change (dates) or text change
@@ -2828,6 +2865,7 @@ export function GanttView({
             api={api}
             onAddMilestone={handleAddMilestone}
             onOpenBlueprints={() => setShowBlueprintManager(true)}
+            undoRedo={undoRedo}
           />
         </div>
         <div className="gantt-chart-container">

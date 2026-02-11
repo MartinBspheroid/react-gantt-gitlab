@@ -23,6 +23,7 @@ export default function Toolbar({
   items = [...defaultToolbarButtons],
   onAddMilestone = null,
   onOpenBlueprints = null,
+  undoRedo = null,
 }) {
   const i18nCtx = useContext(context.i18n);
   const i18nLocal = useMemo(
@@ -80,8 +81,33 @@ export default function Toolbar({
       });
     }
 
+    // Add undo/redo buttons if undoRedo is provided
+    if (undoRedo) {
+      const undoRedoItems = [
+        {
+          id: 'undo',
+          comp: 'button',
+          icon: 'wxi-undo',
+          text: 'Undo',
+          tooltip: undoRedo.undoDescription || 'Undo (Ctrl+Z)',
+          disabled: !undoRedo.canUndo,
+          handler: undoRedo.undo,
+        },
+        {
+          id: 'redo',
+          comp: 'button',
+          icon: 'wxi-redo',
+          text: 'Redo',
+          tooltip: undoRedo.redoDescription || 'Redo (Ctrl+Y)',
+          disabled: !undoRedo.canRedo,
+          handler: undoRedo.redo,
+        },
+      ];
+      baseItems.push(...undoRedoItems);
+    }
+
     return baseItems;
-  }, [items, api, _, onAddMilestone, onOpenBlueprints]);
+  }, [items, api, _, onAddMilestone, onOpenBlueprints, undoRedo]);
 
   const buttons = useMemo(() => {
     if (api && rSelected?.length) {
@@ -92,12 +118,14 @@ export default function Toolbar({
         return { ...item, disabled: isDisabled };
       });
     }
-    // When no tasks are selected, show only add-task, add-milestone, and blueprints buttons
+    // When no tasks are selected, show add-task, add-milestone, blueprints, and undo/redo buttons
     return finalItems.filter(
       (item) =>
         item.id === 'add-task' ||
         item.id === 'add-milestone' ||
-        item.id === 'blueprints',
+        item.id === 'blueprints' ||
+        item.id === 'undo' ||
+        item.id === 'redo',
     );
   }, [api, rSelected, rTasks, finalItems]);
 
