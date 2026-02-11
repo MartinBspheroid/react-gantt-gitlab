@@ -7,6 +7,10 @@ import type {
   ADOFetchDependenciesOptions,
   ADOFetchDependenciesResult,
   ADOLinkType,
+  ADOIteration,
+  ADOIterationsResponse,
+  Sprint,
+  SprintCapacityInfo,
 } from '../types/azure-devops';
 import {
   extractWorkItemIdFromUrl,
@@ -14,7 +18,7 @@ import {
   validateADOLink,
   convertADODependencyToILink,
 } from '../types/azure-devops';
-import type { ILink } from '@svar-ui/gantt-store';
+import type { ILink, ITask } from '@svar-ui/gantt-store';
 
 const DEPENDENCY_LINK_TYPES: ADOLinkType[] = [
   'System.LinkTypes.Dependency-Forward',
@@ -180,6 +184,127 @@ export class ADOApiClient {
     } catch {
       return false;
     }
+  }
+
+  async fetchTeamIterations(): Promise<ADOIteration[]> {
+    if (!this.config.team) {
+      console.warn('[ADO] Team not configured, cannot fetch iterations');
+      return [];
+    }
+
+    const team = encodeURIComponent(this.config.team);
+    const project = encodeURIComponent(this.config.project);
+
+    const result = await this.fetchApi<{
+      count: number;
+      value: ADOIteration[];
+    }>(`/work/teamsettings/iterations?$top=100`);
+
+    return result.value || [];
+  }
+
+  async fetchProjectIterations(): Promise<ADOIteration[]> {
+    const project = encodeURIComponent(this.config.project);
+
+    const result = await this.fetchApi<{
+      count: number;
+      value: ADOIteration[];
+    }>(`/wit/classificationnodes/${project}?depth=2&$expand=children`);
+
+    return result.value || [];
+  }
+
+  calculateSprintCapacity(
+    sprint: ADOIteration,
+    tasks: ITask[],
+  ): SprintCapacityInfo {
+    const sprintPath = sprint.path;
+    const sprintStartDate = sprint.attributes?.startDate
+      ? new Date(sprint.attributes.startDate)
+      : sprint.startDate
+        ? new Date(sprint.startDate)
+        : null;
+    const sprintFinishDate = sprint.attributes?.finishDate
+      ? new Date(sprint.attributes.finishDate)
+      : sprint.finishDate
+        ? new Date(sprint.finishDate)
+        : null;
+
+    let assignedWork = 0;
+    let remainingWork = 0;
+
+    for (const task of tasks) {
+      const adoData = (task as ITask & { _ado?: { iterationPath?: string } })
+        ._ado;
+      if (adoData?.iterationPath === sprintPath) {
+        const effort =
+          adoData &&
+          'remainingWork' in adoData &&
+          typeof adoData.remainingWork === 'number'
+            ? adoData.remainingWork
+            : 0;
+        assignedWork += effort;
+        remainingWork += effort;
+      }
+    }
+
+    let teamCapacity = 0;
+    if (sprintStartDate && sprintFinishDate) {
+      const days = Math.ceil(
+        (sprintFinishDate.getTime() - sprintStartDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+      teamCapacity = days * 8 * 5;
+    }
+
+    let status: 'under' | 'near' | 'over' = 'under';
+    if (teamCapacity > 0) {
+      const utilization = assignedWork / teamCapacity;
+      if (utilization > 1) {
+        status = 'over';
+      } else if (utilization > 0.85) {
+        status = 'near';
+      }
+    }
+
+    return {
+      sprintId: sprint.id,
+      teamCapacity,
+      assignedWork,
+      remainingWork,
+      status,
+    };
+  }
+
+  convertToSprint(iteration: ADOIteration, tasks: ITask[]): Sprint {
+    const capacityInfo = this.calculateSprintCapacity(iteration, tasks);
+
+    const startDate = iteration.attributes?.startDate || iteration.startDate;
+    const finishDate = iteration.attributes?.finishDate || iteration.finishDate;
+
+    return {
+      id: iteration.id,
+      name: iteration.name,
+      path: iteration.path,
+      startDate: startDate ? new Date(startDate) : null,
+      finishDate: finishDate ? new Date(finishDate) : null,
+      isCurrent: iteration.attributes?.timeFrame === 'current',
+      capacity: capacityInfo.teamCapacity,
+      assignedWork: capacityInfo.assignedWork,
+      remainingWork: capacityInfo.remainingWork,
+    };
+  }
+
+  async fetchSprintsWithCapacity(tasks: ITask[]): Promise<Sprint[]> {
+    let iterations: ADOIteration[];
+
+    if (this.config.team) {
+      iterations = await this.fetchTeamIterations();
+    } else {
+      iterations = [];
+    }
+
+    return iterations.map((iter) => this.convertToSprint(iter, tasks));
   }
 }
 

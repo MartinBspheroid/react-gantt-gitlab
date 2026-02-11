@@ -1,8 +1,3 @@
-/**
- * useGitLabSync Hook
- * React hook for managing GitLab data synchronization with Gantt
- */
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ITask, ILink } from '@svar-ui/gantt-store';
 import { GitLabDataProvider } from '../providers/GitLabDataProvider';
@@ -13,6 +8,7 @@ import type {
   GitLabEpic,
 } from '../types/gitlab';
 import type { SyncProgress } from '../types/syncProgress';
+import type { Sprint } from '../types/azure-devops';
 
 export interface SyncState {
   isLoading: boolean;
@@ -33,6 +29,7 @@ export interface GitLabSyncResult {
   links: ILink[];
   milestones: GitLabMilestone[];
   epics: GitLabEpic[];
+  sprints: Sprint[];
   syncState: SyncState;
   sync: (options?: GitLabSyncOptions) => Promise<void>;
   syncTask: (id: number | string, updates: Partial<ITask>) => Promise<void>;
@@ -55,7 +52,7 @@ export interface GitLabSyncResult {
 export function useGitLabSync(
   provider: GitLabDataProvider | GitLabGraphQLProvider | null,
   autoSync = false,
-  syncInterval = 60000, // 60 seconds
+  syncInterval = 60000,
   options: UseGitLabSyncOptions = {},
 ): GitLabSyncResult {
   const { onWarning } = options;
@@ -63,6 +60,7 @@ export function useGitLabSync(
   const [links, setLinks] = useState<ILink[]>([]);
   const [milestones, setMilestones] = useState<GitLabMilestone[]>([]);
   const [epics, setEpics] = useState<GitLabEpic[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [syncState, setSyncState] = useState<SyncState>({
     isLoading: true,
     isSyncing: false,
@@ -151,6 +149,7 @@ export function useGitLabSync(
           setLinks(data.links);
           setMilestones(data.milestones || []);
           setEpics(data.epics || []);
+          setSprints((data as { sprints?: Sprint[] }).sprints || []);
 
           setSyncState({
             isLoading: false,
@@ -653,6 +652,7 @@ export function useGitLabSync(
     links,
     milestones,
     epics,
+    sprints,
     syncState,
     sync,
     syncTask,

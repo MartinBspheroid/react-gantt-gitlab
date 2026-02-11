@@ -151,3 +151,68 @@ export function convertADODependencyToILink(
     },
   } as ILink & { _ado: { relationType: ADOLinkType; lag?: number } };
 }
+
+export interface ADOIteration {
+  id: string;
+  name: string;
+  path: string;
+  startDate?: string;
+  finishDate?: string;
+  attributes?: {
+    startDate?: string;
+    finishDate?: string;
+    timeFrame?: 'past' | 'current' | 'future';
+  };
+}
+
+export interface ADOIterationsResponse {
+  count: number;
+  value: ADOIteration[];
+}
+
+export interface ADOTeamIterationsResponse {
+  count: number;
+  value: Array<{
+    id: string;
+    name: string;
+    path: string;
+    attributes: {
+      startDate?: string;
+      finishDate?: string;
+      timeFrame?: 'past' | 'current' | 'future';
+    };
+    url: string;
+  }>;
+}
+
+export interface ADOTeamCapacity {
+  teamId: string;
+  iterations: Array<{
+    id: string;
+    name: string;
+    capacity?: number;
+    daysOff?: number;
+    totalCapacity?: number;
+    remainingCapacity?: number;
+  }>;
+}
+
+export interface Sprint {
+  id: string;
+  name: string;
+  path: string;
+  startDate: Date | null;
+  finishDate: Date | null;
+  isCurrent: boolean;
+  capacity?: number;
+  assignedWork?: number;
+  remainingWork?: number;
+}
+
+export interface SprintCapacityInfo {
+  sprintId: string;
+  teamCapacity: number;
+  assignedWork: number;
+  remainingWork: number;
+  status: 'under' | 'near' | 'over';
+}

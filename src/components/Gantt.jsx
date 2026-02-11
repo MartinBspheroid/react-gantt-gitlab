@@ -65,11 +65,13 @@ const Gantt = forwardRef(function Gantt(
     baselines = false,
     highlightTime = null,
     countWorkdays = null,
+    calculateEndDateByWorkdays = null,
     init = null,
     autoScale = true,
     unscheduledTasks = false,
     colorRules = [],
     summary = null,
+    sprints = [],
     ...restProps
   },
   ref,
@@ -375,8 +377,10 @@ const Gantt = forwardRef(function Gantt(
           cellBorders={cellBorders}
           highlightTime={highlightTime}
           countWorkdays={countWorkdays}
+          calculateEndDateByWorkdays={calculateEndDateByWorkdays}
           onTableAPIChange={setTableAPI}
           colorRules={colorRules}
+          sprints={sprints}
         />
       </StoreContext.Provider>
     </Locale>

@@ -9,6 +9,7 @@ import type { FilterPreset } from '../types/filterPreset';
 import type { GitLabDataProvider } from '../providers/GitLabDataProvider';
 import type { GitLabGraphQLProvider } from '../providers/GitLabGraphQLProvider';
 import type { HolidayEntry } from '../providers/GitLabSnippetApi';
+import type { Sprint } from '../types/azure-devops';
 
 /** Server filter options from GitLab (labels, milestones, members) */
 export interface ServerFilterOptions {
@@ -45,6 +46,7 @@ export interface GitLabDataContextValue {
   links: ILink[];
   milestones: GitLabMilestone[];
   epics: GitLabEpic[];
+  sprints: Sprint[];
 
   // === Sync State & Actions ===
   syncState: SyncState;

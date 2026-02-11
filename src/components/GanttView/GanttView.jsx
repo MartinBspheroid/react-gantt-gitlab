@@ -168,6 +168,7 @@ export function GanttView({
     links,
     milestones,
     epics,
+    sprints,
     // Sync State & Actions
     syncState,
     sync,
@@ -3000,6 +3001,7 @@ export function GanttView({
                       taskTemplate={SmartTaskContent}
                       autoScale={false}
                       colorRules={colorRules}
+                      sprints={sprints}
                     />
                   );
                 } catch (error) {

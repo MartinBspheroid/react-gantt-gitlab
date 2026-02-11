@@ -1,0 +1,260 @@
+/**
+ * SprintOverlay Styles
+ *
+ * Displays sprint/iteration bands with capacity bars on the Gantt timeline.
+ * Features:
+ * - Shaded vertical bands for each sprint
+ * - Sprint name and dates in header
+ * - Capacity bar with color coding (green/yellow/red)
+ * - Current sprint highlighting
+ * - Click interaction for team details
+ */
+
+.sprint-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.sprint-band {
+  position: absolute;
+  top: 0;
+  height: 60px;
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 2px solid rgba(59, 130, 246, 0.3);
+  border-right: 1px solid rgba(59, 130, 246, 0.15);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sprint-band:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.sprint-band.sprint-current {
+  background: rgba(34, 197, 94, 0.1);
+  border-left-color: rgba(34, 197, 94, 0.5);
+  border-right-color: rgba(34, 197, 94, 0.3);
+}
+
+.sprint-band.sprint-current:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.sprint-header {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  gap: 2px;
+}
+
+.sprint-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wx-gantt-sprint-name-color, #1e40af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sprint-current .sprint-name {
+  color: var(--wx-gantt-sprint-current-name-color, #166534);
+}
+
+.sprint-dates {
+  font-size: 10px;
+  color: var(--wx-gantt-sprint-dates-color, #64748b);
+  white-space: nowrap;
+}
+
+.sprint-capacity-bar {
+  position: absolute;
+  bottom: 4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sprint-capacity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.sprint-capacity-fill.sprint-status-under {
+  background: linear-gradient(90deg, #22c55e 0%, #4ade80 100%);
+}
+
+.sprint-capacity-fill.sprint-status-near {
+  background: linear-gradient(90deg, #eab308 0%, #facc15 100%);
+}
+
+.sprint-capacity-fill.sprint-status-over {
+  background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+}
+
+.sprint-detail-modal {
+  background: var(--wx-gantt-modal-background, #ffffff);
+  border: 1px solid var(--wx-gantt-modal-border, #e2e8f0);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  max-width: 300px;
+  font-size: 13px;
+}
+
+.sprint-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--wx-gantt-modal-border, #e2e8f0);
+  background: var(--wx-gantt-modal-header-background, #f8fafc);
+  border-radius: 8px 8px 0 0;
+}
+
+.sprint-detail-name {
+  font-weight: 600;
+  color: var(--wx-gantt-modal-text, #1e293b);
+}
+
+.sprint-detail-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--wx-gantt-modal-hint-text, #94a3b8);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.sprint-detail-close:hover {
+  color: var(--wx-gantt-modal-text, #1e293b);
+}
+
+.sprint-detail-content {
+  padding: 12px;
+}
+
+.sprint-detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sprint-detail-label {
+  color: var(--wx-gantt-modal-hint-text, #64748b);
+}
+
+.sprint-detail-value {
+  font-weight: 500;
+  color: var(--wx-gantt-modal-text, #1e293b);
+}
+
+.sprint-detail-progress {
+  margin-top: 12px;
+}
+
+.sprint-detail-progress-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sprint-detail-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.sprint-detail-progress-fill.sprint-status-under {
+  background: #22c55e;
+}
+
+.sprint-detail-progress-fill.sprint-status-near {
+  background: #eab308;
+}
+
+.sprint-detail-progress-fill.sprint-status-over {
+  background: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sprint-band {
+    background: rgba(59, 130, 246, 0.15);
+    border-left-color: rgba(59, 130, 246, 0.4);
+    border-right-color: rgba(59, 130, 246, 0.25);
+  }
+
+  .sprint-band:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+
+  .sprint-band.sprint-current {
+    background: rgba(34, 197, 94, 0.15);
+    border-left-color: rgba(34, 197, 94, 0.5);
+    border-right-color: rgba(34, 197, 94, 0.35);
+  }
+
+  .sprint-band.sprint-current:hover {
+    background: rgba(34, 197, 94, 0.2);
+  }
+
+  .sprint-name {
+    color: #93c5fd;
+  }
+
+  .sprint-current .sprint-name {
+    color: #86efac;
+  }
+
+  .sprint-dates {
+    color: #94a3b8;
+  }
+
+  .sprint-capacity-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .sprint-detail-modal {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .sprint-detail-header {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  .sprint-detail-name {
+    color: #f1f5f9;
+  }
+
+  .sprint-detail-close {
+    color: #64748b;
+  }
+
+  .sprint-detail-close:hover {
+    color: #f1f5f9;
+  }
+
+  .sprint-detail-label {
+    color: #94a3b8;
+  }
+
+  .sprint-detail-value {
+    color: #f1f5f9;
+  }
+
+  .sprint-detail-progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

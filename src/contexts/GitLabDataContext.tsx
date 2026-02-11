@@ -151,6 +151,7 @@ export function GitLabDataProvider({
     links,
     milestones,
     epics,
+    sprints,
     syncState,
     sync,
     syncTask,
@@ -626,6 +627,7 @@ export function GitLabDataProvider({
       links,
       milestones,
       epics,
+      sprints,
 
       // Sync State & Actions
       syncState,
@@ -698,6 +700,7 @@ export function GitLabDataProvider({
       links,
       milestones,
       epics,
+      sprints,
       syncState,
       syncWithFilters,
       syncTask,

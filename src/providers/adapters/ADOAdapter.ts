@@ -7,8 +7,8 @@ import type {
   FilterOptionsData,
   SyncOptions,
 } from '../core/DataProviderInterface';
-import type { ADOConfig, ADOWorkItem } from '../../types/azure-devops';
-import { ADOApiClient } from './ADOApiClient';
+import type { ADOConfig, ADOWorkItem, Sprint } from '../../types/azure-devops';
+import { ADOApiClient } from '../ado/ADOApiClient';
 
 const ADO_WORK_ITEM_FIELDS = [
   'System.Id',
@@ -97,7 +97,8 @@ export class ADOAdapter implements DataProviderInterface {
     const workItemIds = queryResult.workItems.map((wi) => wi.id);
 
     if (workItemIds.length === 0) {
-      return { tasks: [], links: [] };
+      const emptySprints = await this.apiClient.fetchSprintsWithCapacity([]);
+      return { tasks: [], links: [], metadata: { sprints: emptySprints } };
     }
 
     const workItems =
@@ -109,12 +110,15 @@ export class ADOAdapter implements DataProviderInterface {
       workItemIds,
     });
 
+    const sprints = await this.apiClient.fetchSprintsWithCapacity(tasks);
+
     return {
       tasks,
       links: depResult.links,
       metadata: {
         errors: depResult.errors,
         totalWorkItems: workItemIds.length,
+        sprints,
       },
     };
   }
