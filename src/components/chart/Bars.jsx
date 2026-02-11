@@ -549,7 +549,7 @@ function Bars(props) {
       }}
     >
       {tasks.map((task) => {
-        if (task.$skip) return null;
+        if (task.$skip || task.unscheduled) return null;
 
         // Color rules matching
         const matchedRules = getMatchingRules(

@@ -29,6 +29,7 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
   const pickerRef = useRef(null);
 
   const isMilestone = row.$isMilestone || row._gitlab?.type === 'milestone';
+  const isUnscheduled = row.unscheduled === true;
 
   // Always use _gitlab.startDate/_gitlab.dueDate as the source of truth
   // This ensures we show "None" when GitLab has no date, regardless of what svar gantt does
@@ -112,7 +113,7 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showPicker]);
 
-  const displayValue = formatDateDisplay(date);
+  const displayValue = isUnscheduled ? '-' : formatDateDisplay(date);
   const isNone = displayValue === 'None';
 
   // Style for "None" text - using --wx-color-font-alt because --wx-color-secondary is transparent in willow theme
@@ -121,7 +122,7 @@ function DateEditCell({ row, column, readonly = false, onDateChange }) {
     : {};
 
   // Readonly mode - just display
-  if (readonly) {
+  if (readonly || isUnscheduled) {
     return <span style={noneStyle}>{displayValue}</span>;
   }
 
