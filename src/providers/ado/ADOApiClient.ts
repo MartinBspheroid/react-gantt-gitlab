@@ -17,6 +17,7 @@ import {
   mapADOLinkTypeToGantt,
   validateADOLink,
   convertADODependencyToILink,
+  filterCircularDependencies,
 } from '../types/azure-devops';
 import type { ILink, ITask } from '@svar-ui/gantt-store';
 
@@ -90,6 +91,7 @@ export class ADOApiClient {
     const errors: string[] = [];
     const links: ILink[] = [];
     const processedLinks = new Set<string>();
+    const adoDependencies: ADODependencyLink[] = [];
 
     if (workItemIds.length === 0) {
       return { links, errors };
@@ -150,10 +152,23 @@ export class ADOApiClient {
         }
         processedLinks.add(linkKey);
 
-        const iLink = convertADODependencyToILink(dependency);
-        links.push(iLink);
+        adoDependencies.push(dependency);
       }
     }
+
+    const { validLinks, circularLinks } =
+      filterCircularDependencies(adoDependencies);
+
+    if (circularLinks.length > 0) {
+      console.warn(
+        `[ADO] Filtered out ${circularLinks.length} circular dependency links`,
+      );
+    }
+
+    validLinks.forEach((dep) => {
+      const iLink = convertADODependencyToILink(dep);
+      links.push(iLink);
+    });
 
     console.log(
       `[ADO] Fetched ${links.length} dependency links from ${workItems.length} work items`,
