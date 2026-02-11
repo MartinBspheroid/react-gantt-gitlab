@@ -1,11 +1,15 @@
+import { renderWorkItemIcon } from '../../utils/WorkItemTypeIcons';
 import './SmartTaskContent.css';
 
-/**
- * Smart Task Content Component
- * Always shows text outside the bar (on the right) for better readability
- */
 function SmartTaskContent({ data }) {
-  return <div className="wx-smart-task wx-text-out">{data.text || ''}</div>;
+  const icon = renderWorkItemIcon(data, 'fontawesome');
+
+  return (
+    <div className="wx-smart-task wx-text-out">
+      {icon && <span className="wx-task-type-icon">{icon}</span>}
+      <span className="wx-task-text">{data.text || ''}</span>
+    </div>
+  );
 }
 
 export default SmartTaskContent;

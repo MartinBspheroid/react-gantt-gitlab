@@ -8,13 +8,31 @@
 
 .wx-smart-task.wx-text-out {
   position: absolute;
-  /* 使用 CSS 變數動態設定偏移，避開 link 轉折區域
-     變數由父元素 (.wx-bar) 透過 inline style 設定 */
   left: calc(100% + var(--wx-label-offset, 8px));
   line-height: normal;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--wx-color-font);
   pointer-events: none;
   white-space: nowrap;
   z-index: 2;
+}
+
+.wx-smart-task .wx-task-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.wx-smart-task .wx-task-type-icon i {
+  font-size: 12px;
+}
+
+.wx-smart-task .wx-task-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

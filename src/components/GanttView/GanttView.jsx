@@ -28,6 +28,7 @@ import {
   createStartDate,
   createEndDate,
 } from '../../utils/dateUtils.js';
+import { renderWorkItemIcon } from '../../utils/WorkItemTypeIcons';
 import { ProjectSelector } from '../ProjectSelector.jsx';
 import { SyncButton } from '../SyncButton.jsx';
 import { FilterPanel } from '../FilterPanel.jsx';
@@ -2490,30 +2491,13 @@ export function GanttView({
     [countWorkdays],
   );
 
-  // Custom cell component for Task Title with icons
   const TaskTitleCell = useCallback(({ row }) => {
     const data = row;
-    let icon;
-    let iconColor;
-
-    // Determine icon and color based on GitLab type
-    if (data.$isMilestone || data._gitlab?.type === 'milestone') {
-      // Milestone - purple
-      icon = <i className="far fa-flag"></i>;
-      iconColor = '#ad44ab';
-    } else if (data._gitlab?.workItemType === 'Task') {
-      // Task/Subtask (GitLab work item type is 'Task') - green
-      icon = <i className="far fa-square-check"></i>;
-      iconColor = '#00ba94';
-    } else {
-      // Issue (GitLab work item type is 'Issue' or other) - blue
-      icon = <i className="far fa-clipboard"></i>;
-      iconColor = '#3983eb';
-    }
+    const icon = renderWorkItemIcon(data, 'fontawesome');
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span style={{ marginRight: '8px', color: iconColor }}>{icon}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {icon && <span className="wx-task-title-icon">{icon}</span>}
         <span>{data.text}</span>
       </div>
     );

@@ -647,3 +647,17 @@
 .wx-bar.wx-parent-task {
   z-index: 2 !important;
 }
+
+/* Work item type icon in grid */
+.wx-task-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.wx-task-title-icon i {
+  font-size: 14px;
+}
