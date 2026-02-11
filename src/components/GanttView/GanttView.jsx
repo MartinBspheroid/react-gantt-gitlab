@@ -57,6 +57,8 @@ import {
   validateLinkGitLabMetadata,
 } from '../../utils/LinkUtils';
 import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { BulkOperationsBar } from '../BulkOperationsBar';
 import { useStore } from '@svar-ui/lib-react';
 
@@ -315,6 +317,69 @@ export function GanttView({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedTasksForBulk.length, handleDeselectAll]);
+
+  // Keyboard shortcuts help modal state
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    api,
+    undoRedo: {
+      canUndo: undoRedo.canUndo,
+      canRedo: undoRedo.canRedo,
+      undo: undoRedo.undo,
+      redo: undoRedo.redo,
+    },
+    onOpenEditor: (taskId) => {
+      if (api) {
+        api.exec('open-editor', { id: taskId });
+      }
+    },
+    onCloseEditor: () => {
+      if (api) {
+        api.exec('close-editor');
+      }
+    },
+    onClearSelection: handleDeselectAll,
+    onFocusSearch: () => {
+      const searchInput = document.querySelector('.filter-search-input');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    },
+    onGoToToday: () => {
+      if (api) {
+        const now = new Date();
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+        const state = api.getState();
+        const cellWidth = state?.cellWidth || 40;
+        const start = state?.start;
+
+        if (start) {
+          const daysDiff = Math.floor(
+            (today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+          );
+          const scrollLeft = Math.max(0, daysDiff * cellWidth);
+          api.exec('scroll-chart', { left: scrollLeft });
+        }
+      }
+    },
+    onShowManagedMessage: () => {
+      showToast(
+        'Delete action is managed in Azure DevOps. Please use ADO to delete items.',
+        'info',
+      );
+    },
+    onShowHelp: () => {
+      setShowKeyboardHelp(true);
+    },
+    enabled: true,
+  });
 
   // Date editing mode state (true = dates can be edited in grid cells)
   // NOTE: setDateEditable is not used yet but kept for future feature to toggle date editing
@@ -3284,6 +3349,12 @@ export function GanttView({
         onSync={sync}
         showToast={showToast}
         onDeselectAll={handleDeselectAll}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
       />
     </div>
   );
