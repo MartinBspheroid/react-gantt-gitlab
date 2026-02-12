@@ -403,8 +403,14 @@ function Bars(props) {
     (e) => {
       if (!readonly) {
         const id = locateID(e.target);
-        if (id && !e.target.classList.contains('wx-link'))
-          api.exec('show-editor', { id });
+        if (id && !e.target.classList.contains('wx-link')) {
+          const task = api.getTask(id);
+          if (task && (task.data?.length > 0 || task.lazy)) {
+            api.exec('open-task', { id, mode: !task.open });
+          } else {
+            api.exec('show-editor', { id });
+          }
+        }
       }
     },
     [api, readonly],
@@ -614,6 +620,9 @@ function Bars(props) {
             : '') +
           (task.$isMilestone || task.type === 'milestone'
             ? ' wx-milestone-bar'
+            : '') +
+          (task.priority !== undefined && task.priority !== null
+            ? ` wx-priority-${task.priority}`
             : '') +
           stripeClass;
         const leftLinkClass =

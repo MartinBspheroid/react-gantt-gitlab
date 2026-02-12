@@ -30,6 +30,11 @@ export interface FilterOptions {
   assignees?: string[];
   states?: string[];
   search?: string;
+  priorities?: number[];
+
+  // Critical path filter
+  criticalPathOnly?: boolean;
+  criticalTaskIds?: (string | number)[];
 
   // Filter type indicator for Preset
   filterType?: 'client' | 'server';
@@ -233,6 +238,23 @@ export class DataFilters {
   }
 
   /**
+   * Filter tasks by priority (0-4)
+   * Supports filtering for tasks without priority (undefined/null)
+   */
+  static filterByPriority(tasks: ITask[], priorities: number[]): ITask[] {
+    if (priorities.length === 0) {
+      return tasks;
+    }
+
+    return tasks.filter((task) => {
+      const taskPriority = task.priority;
+      // If task has no priority, it's treated as P4 (lowest)
+      const effectivePriority = taskPriority ?? 4;
+      return priorities.includes(effectivePriority);
+    });
+  }
+
+  /**
    * Search tasks by text
    */
   static searchTasks(tasks: ITask[], searchText: string): ITask[] {
@@ -250,6 +272,21 @@ export class DataFilters {
         task.assigned?.toString().toLowerCase().includes(search)
       );
     });
+  }
+
+  /**
+   * Filter tasks to show only critical path
+   */
+  static filterByCriticalPath(
+    tasks: ITask[],
+    criticalTaskIds: (string | number)[],
+  ): ITask[] {
+    if (!criticalTaskIds || criticalTaskIds.length === 0) {
+      return tasks;
+    }
+
+    const criticalSet = new Set(criticalTaskIds);
+    return tasks.filter((task) => criticalSet.has(task.id!));
   }
 
   /**
@@ -278,8 +315,16 @@ export class DataFilters {
       filtered = this.filterByState(filtered, options.states);
     }
 
+    if (options.priorities && options.priorities.length > 0) {
+      filtered = this.filterByPriority(filtered, options.priorities);
+    }
+
     if (options.search) {
       filtered = this.searchTasks(filtered, options.search);
+    }
+
+    if (options.criticalPathOnly && options.criticalTaskIds) {
+      filtered = this.filterByCriticalPath(filtered, options.criticalTaskIds);
     }
 
     // Ensure parent-child integrity: include all necessary parent tasks

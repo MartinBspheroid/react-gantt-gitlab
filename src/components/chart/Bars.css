@@ -5,7 +5,10 @@
   z-index: 1;
 }
 .wx-baseline.wx-milestone.wx-GKbcLEGA {
-  background-color: var(--wx-color-accent-light, #37a9ef); /* Blue color for milestone baseline (contains issues) */
+  background-color: var(
+    --wx-color-accent-light,
+    #37a9ef
+  ); /* Blue color for milestone baseline (contains issues) */
 }
 
 /* Parent task bracket baseline - 向下包覆形式 /────────\ */
@@ -261,9 +264,19 @@
   cursor: grab;
   opacity: 0;
   z-index: 5;
-  color: color-mix(in srgb, var(--wx-color-text-inverse, #fff) 95%, transparent);
-  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--wx-color-text-primary, #333) 50%, transparent))
-    drop-shadow(0 2px 3px color-mix(in srgb, var(--wx-color-text-primary, #333) 40%, transparent));
+  color: color-mix(
+    in srgb,
+    var(--wx-color-text-inverse, #fff) 95%,
+    transparent
+  );
+  filter: drop-shadow(
+      0 1px 1px
+        color-mix(in srgb, var(--wx-color-text-primary, #333) 50%, transparent)
+    )
+    drop-shadow(
+      0 2px 3px
+        color-mix(in srgb, var(--wx-color-text-primary, #333) 40%, transparent)
+    );
   transition: opacity 0.15s ease;
 }
 
@@ -277,4 +290,51 @@
 
 .wx-cascade-trigger.wx-GKbcLEGA:active {
   cursor: grabbing;
+}
+
+/* Priority visual indicators - colored left border on task bars */
+.wx-bar.wx-priority-0.wx-GKbcLEGA {
+  border-left: 4px solid #dc2626 !important;
+}
+
+.wx-bar.wx-priority-1.wx-GKbcLEGA {
+  border-left: 4px solid #ea580c !important;
+}
+
+.wx-bar.wx-priority-2.wx-GKbcLEGA {
+  border-left: 4px solid #ca8a04 !important;
+}
+
+.wx-bar.wx-priority-3.wx-GKbcLEGA {
+  border-left: 4px solid #2563eb !important;
+}
+
+.wx-bar.wx-priority-4.wx-GKbcLEGA {
+  border-left: 4px solid #9ca3af !important;
+}
+
+/* Dark mode priority colors */
+[data-theme='dark'] .wx-bar.wx-priority-0.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-0.wx-GKbcLEGA {
+  border-left: 4px solid #ef4444 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-1.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-1.wx-GKbcLEGA {
+  border-left: 4px solid #f97316 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-2.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-2.wx-GKbcLEGA {
+  border-left: 4px solid #eab308 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-3.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-3.wx-GKbcLEGA {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+[data-theme='dark'] .wx-bar.wx-priority-4.wx-GKbcLEGA,
+.wx-gantt-dark .wx-bar.wx-priority-4.wx-GKbcLEGA {
+  border-left: 4px solid #6b7280 !important;
 }

@@ -24,8 +24,10 @@ function Layout(props) {
     cellBorders,
     highlightTime,
     countWorkdays,
+    calculateEndDateByWorkdays,
     onTableAPIChange,
     colorRules,
+    sprints,
   } = props;
 
   const api = useContext(storeContext);
@@ -323,7 +325,9 @@ function Layout(props) {
                 cellBorders={cellBorders}
                 highlightTime={highlightTime}
                 countWorkdays={countWorkdays}
+                calculateEndDateByWorkdays={calculateEndDateByWorkdays}
                 colorRules={colorRules}
+                sprints={sprints}
               />
             </div>
           </div>

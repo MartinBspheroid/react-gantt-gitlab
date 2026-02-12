@@ -11,6 +11,7 @@ import Bars from './Bars.jsx';
 import Links from './Links.jsx';
 import RowHoverOverlay from './RowHoverOverlay.jsx';
 import OffscreenArrows from './OffscreenArrows.jsx';
+import SprintOverlay from './SprintOverlay.tsx';
 import { hotkeys } from '@svar-ui/grid-store';
 import storeContext from '../../context';
 import '../shared/TodayMarker.css';
@@ -28,7 +29,9 @@ function Chart(props) {
     cellBorders,
     highlightTime,
     countWorkdays,
+    calculateEndDateByWorkdays,
     colorRules,
+    sprints,
   } = props;
 
   const api = useContext(storeContext);
@@ -264,6 +267,16 @@ function Chart(props) {
         </div>
       ) : null}
 
+      {sprints && sprints.length > 0 && (
+        <SprintOverlay
+          sprints={sprints}
+          scales={scales}
+          scrollLeft={rScrollLeft}
+          chartWidth={chartWidth}
+          chartRef={chartRef}
+        />
+      )}
+
       <div
         ref={areaRef}
         className="wx-mR7v2Xag wx-area"
@@ -331,6 +344,7 @@ function Chart(props) {
         api={api}
         scales={scales}
         countWorkdays={countWorkdays}
+        calculateEndDateByWorkdays={calculateEndDateByWorkdays}
         areaRef={areaRef}
         chartRef={chartRef}
       />
