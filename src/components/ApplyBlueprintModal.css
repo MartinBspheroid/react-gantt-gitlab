@@ -32,7 +32,7 @@
 
 .blueprint-modal select:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .blueprint-modal input[type='date'] {
@@ -47,7 +47,7 @@
 
 .blueprint-modal input[type='date']:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .form-hint {
@@ -134,8 +134,8 @@
 }
 
 .result-status.success {
-  background: #ecfdf5;
-  color: #059669;
+  background: color-mix(in srgb, var(--wx-color-success, #059669) 10%, var(--wx-color-background, #fff));
+  color: var(--wx-color-status-success-dark, #059669);
 }
 
 .result-status.success i {
@@ -143,8 +143,8 @@
 }
 
 .result-status.partial {
-  background: #fffbeb;
-  color: #d97706;
+  background: var(--wx-color-background-warning, #fffbeb);
+  color: var(--wx-color-warning, #d97706);
 }
 
 .result-status.partial i {
@@ -196,23 +196,23 @@
 }
 
 .result-item.milestone {
-  background: rgba(31, 117, 203, 0.1);
+  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .result-item.milestone i {
-  color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
 }
 
 .result-item.success i {
-  color: #059669;
+  color: var(--wx-color-status-success-dark, #059669);
 }
 
 .result-item.failed {
-  background: #fef2f2;
+  background: var(--wx-color-background-error, #fef2f2);
 }
 
 .result-item.failed i {
-  color: #dc2626;
+  color: var(--wx-color-status-error, #dc2626);
 }
 
 .result-item .item-type {
@@ -225,7 +225,7 @@
 
 .result-item .item-error {
   font-size: 11px;
-  color: #dc2626;
+  color: var(--wx-color-status-error, #dc2626);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -238,7 +238,7 @@
 }
 
 .result-item .item-link:hover {
-  color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
 }
 
 .result-more {
@@ -255,9 +255,9 @@
 }
 
 .result-stats .stat-success {
-  color: #059669;
+  color: var(--wx-color-status-success-dark, #059669);
 }
 
 .result-stats .stat-failed {
-  color: #dc2626;
+  color: var(--wx-color-status-error, #dc2626);
 }

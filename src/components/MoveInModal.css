@@ -19,14 +19,14 @@
 
 /* Modal Container */
 .move-in-modal {
-  background: var(--wx-gantt-modal-background, #fff);
+  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
   border-radius: 8px;
   width: 500px;
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
 }
 
 /* Modal Header - Reuse from ColorRulesEditor */
@@ -86,8 +86,8 @@
 }
 
 .move-in-tab.active {
-  color: #1f75cb;
-  border-bottom-color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
+  border-bottom-color: var(--wx-color-primary, #1f75cb);
   background: transparent;
 }
 
@@ -106,8 +106,8 @@
 }
 
 .move-in-tab.active .tab-badge {
-  background: #1f75cb;
-  color: white;
+  background: var(--wx-color-primary, #1f75cb);
+  color: var(--wx-color-text-inverse, white);
 }
 
 /* Tab Content */
@@ -146,7 +146,7 @@
 
 .target-search-input:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 /* Target Options List */
@@ -190,7 +190,7 @@
 }
 
 .target-option.selected {
-  background: rgba(31, 117, 203, 0.1);
+  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .target-option input[type='radio'] {
@@ -348,14 +348,14 @@
 }
 
 .move-in-modal .btn-primary {
-  background: #1f75cb;
-  border: 1px solid #1f75cb;
-  color: white;
+  background: var(--wx-color-primary, #1f75cb);
+  border: 1px solid var(--wx-color-primary, #1f75cb);
+  color: var(--wx-color-text-inverse, white);
 }
 
 .move-in-modal .btn-primary:hover:not(:disabled) {
-  background: #1a65b3;
-  border-color: #1a65b3;
+  background: var(--wx-color-primary-hover, #1a65b3);
+  border-color: var(--wx-color-primary-hover, #1a65b3);
 }
 
 /* Empty State */
