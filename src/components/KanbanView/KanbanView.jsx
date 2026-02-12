@@ -26,13 +26,14 @@ import { BoardSettingsModal } from './BoardSettingsModal';
 import { ListEditDialog } from './ListEditDialog';
 import { DataFilters } from '../../utils/DataFilters';
 import { useDragOperations } from '../../hooks/useDragOperations';
+import { cn } from '../../utils/cn';
 // ProjectSelector removed - data source is provided via DataProvider
 import { ColorRulesEditor } from '../ColorRulesEditor';
 import './KanbanView.css';
 import '../shared/SettingsModal.css';
 import '../shared/modal-close-button.css';
 
-export function KanbanView({ showSettings, onSettingsClose }) {
+export function KanbanView({ showSettings, onSettingsClose, className }) {
   // Get shared data from context
   const {
     tasks: allTasks,
@@ -298,7 +299,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
   );
 
   return (
-    <div className="kanban-view">
+    <div className={cn('kanban-view', className)}>
       {/* Board Selector */}
       <BoardSelector
         boards={boards}
