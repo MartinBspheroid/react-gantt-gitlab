@@ -31,6 +31,7 @@ import ContextMenu from './cases/ContextMenu.jsx';
 import ContextMenuHandler from './cases/ContextMenuHandler.jsx';
 import ContextMenuOptions from './cases/ContextMenuOptions.jsx';
 import GanttHolidays from './cases/GanttHolidays.jsx';
+import GanttWorkingDays from './cases/GanttWorkingDays.jsx';
 import GanttSort from './cases/GanttSort.jsx';
 import GanttCustomSort from './cases/GanttCustomSort.jsx';
 import GanttSummariesProgress from './cases/GanttSummariesProgress.jsx';
@@ -93,6 +94,12 @@ export const links = [
   ],
 
   ['/holidays/:skin', 'Holidays', GanttHolidays, 'GanttHolidays'],
+  [
+    '/working-days/:skin',
+    'Working Days Calendar',
+    GanttWorkingDays,
+    'GanttWorkingDays',
+  ],
 
   ['/templates/:skin', 'Custom text', GanttText, 'GanttText'],
   ['/tooltips/:skin', 'Tooltips', GanttTooltips, 'GanttTooltips'],

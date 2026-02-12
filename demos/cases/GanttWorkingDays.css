@@ -1,0 +1,140 @@
+/* Working Days Calendar Demo Styles */
+
+.wx-working-days-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 12px;
+}
+
+.wx-working-days-demo .explanation-banner {
+  margin-bottom: 8px;
+}
+
+.wx-working-days-demo .explanation-banner .highlight-weekend {
+  font-weight: bold;
+  color: #666;
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.wx-working-days-demo .explanation-banner .highlight-holiday {
+  font-weight: bold;
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.wx-working-days-demo .info-panel {
+  margin-bottom: 8px;
+}
+
+.wx-working-days-demo .info-panel .skip-info {
+  color: #666;
+  font-style: italic;
+}
+
+.wx-working-days-demo .legend {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.wx-working-days-demo .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wx-working-days-demo .legend-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.wx-working-days-demo .weekend-box {
+  background-color: #e0e0e0;
+}
+
+.wx-working-days-demo .working-day-box {
+  background-color: #ffffff;
+}
+
+.wx-working-days-demo .holiday-box {
+  background-color: #ffebee;
+  border-color: #d32f2f;
+}
+
+.wx-working-days-demo .special-workday-box {
+  background-color: #e8f5e9;
+  border-color: #4caf50;
+}
+
+.wx-working-days-demo .gantt-container {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Holiday marker styling */
+.wx-gantt .holiday-marker {
+  background-color: #d32f2f !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+/* Weekend highlighting - make it more obvious */
+.wx-gantt .wx-weekend {
+  background-color: #e0e0e0 !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.03) 10px,
+    rgba(0, 0, 0, 0.03) 20px
+  ) !important;
+}
+
+/* Weekend day text styling */
+.wx-gantt .wx-weekend .wx-day-text {
+  color: #666;
+  font-weight: bold;
+}
+
+/* Holiday cell styling */
+.wx-gantt .wx-holiday {
+  background-color: #ffebee !important;
+  border-left: 2px solid #d32f2f !important;
+  border-right: 2px solid #d32f2f !important;
+}
+
+/* Special working day styling */
+.wx-gantt .wx-special-workday {
+  background-color: #e8f5e9 !important;
+  border: 2px solid #4caf50 !important;
+}
+
+.wx-gantt .wx-special-workday .wx-day-text {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* Task bar styling on weekends */
+.wx-gantt .wx-task-bar {
+  z-index: 10;
+}
+
+/* Ensure weekend highlighting doesn't obscure task bars */
+.wx-gantt .wx-chart-cells {
+  z-index: 1;
+}
+
+.wx-gantt .wx-task-layers {
+  z-index: 5;
+}
