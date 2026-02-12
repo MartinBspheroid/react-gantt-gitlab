@@ -31,6 +31,7 @@ import ContextMenu from './cases/ContextMenu.jsx';
 import ContextMenuHandler from './cases/ContextMenuHandler.jsx';
 import ContextMenuOptions from './cases/ContextMenuOptions.jsx';
 import GanttHolidays from './cases/GanttHolidays.jsx';
+import GanttWorkingDays from './cases/GanttWorkingDays.jsx';
 import GanttSort from './cases/GanttSort.jsx';
 import GanttCustomSort from './cases/GanttCustomSort.jsx';
 import GanttSummariesProgress from './cases/GanttSummariesProgress.jsx';
@@ -53,6 +54,8 @@ import AzureDevOpsPortfolio from './cases/AzureDevOpsPortfolio.jsx';
 import WorkloadViewDemo from './cases/WorkloadView.jsx';
 import GanttProjectBoundaries from './cases/GanttProjectBoundaries.jsx';
 import GanttRowGrouping from './cases/GanttRowGrouping.jsx';
+import GanttBaselines from './cases/GanttBaselines.jsx';
+import ShadcnVisualVerification from './cases/ShadcnVisualVerification.jsx';
 
 export const links = [
   [
@@ -68,6 +71,18 @@ export const links = [
     'Project Boundaries',
     GanttProjectBoundaries,
     'GanttProjectBoundaries',
+  ],
+  [
+    '/baselines/:skin',
+    'Baselines Visualization',
+    GanttBaselines,
+    'GanttBaselines',
+  ],
+  [
+    '/shadcn-visual/:skin',
+    'Shadcn Visual Verification',
+    ShadcnVisualVerification,
+    'ShadcnVisualVerification',
   ],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
@@ -95,6 +110,12 @@ export const links = [
   ],
 
   ['/holidays/:skin', 'Holidays', GanttHolidays, 'GanttHolidays'],
+  [
+    '/working-days/:skin',
+    'Working Days Calendar',
+    GanttWorkingDays,
+    'GanttWorkingDays',
+  ],
 
   ['/templates/:skin', 'Custom text', GanttText, 'GanttText'],
   ['/tooltips/:skin', 'Tooltips', GanttTooltips, 'GanttTooltips'],
