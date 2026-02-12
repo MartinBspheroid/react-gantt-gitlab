@@ -51,6 +51,7 @@ import GanttEditorReadonly from './cases/GanttEditorReadonly.jsx';
 import GanttEditorValidation from './cases/GanttEditorValidation.jsx';
 import AzureDevOpsPortfolio from './cases/AzureDevOpsPortfolio.jsx';
 import WorkloadViewDemo from './cases/WorkloadView.jsx';
+import GanttProjectBoundaries from './cases/GanttProjectBoundaries.jsx';
 
 export const links = [
   [
@@ -60,6 +61,12 @@ export const links = [
     'AzureDevOpsPortfolio',
   ],
   ['/workload/:skin', 'Workload View', WorkloadViewDemo, 'WorkloadView'],
+  [
+    '/boundaries/:skin',
+    'Project Boundaries',
+    GanttProjectBoundaries,
+    'GanttProjectBoundaries',
+  ],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 
