@@ -51,6 +51,7 @@ import GanttEditorReadonly from './cases/GanttEditorReadonly.jsx';
 import GanttEditorValidation from './cases/GanttEditorValidation.jsx';
 import AzureDevOpsPortfolio from './cases/AzureDevOpsPortfolio.jsx';
 import WorkloadViewDemo from './cases/WorkloadView.jsx';
+import GanttColorRules from './cases/GanttColorRules.jsx';
 
 export const links = [
   [
@@ -60,6 +61,7 @@ export const links = [
     'AzureDevOpsPortfolio',
   ],
   ['/workload/:skin', 'Workload View', WorkloadViewDemo, 'WorkloadView'],
+  ['/color-rules/:skin', 'Color Rules', GanttColorRules, 'GanttColorRules'],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 
