@@ -192,8 +192,12 @@
   top: 100%;
   left: 0;
   margin-top: 4px;
-  background: var(--wx-gantt-dropdown-background, var(--wx-color-background, white));
-  border: 1px solid var(--wx-gantt-dropdown-border, var(--wx-color-border, #ddd));
+  background: var(
+    --wx-gantt-dropdown-background,
+    var(--wx-color-background, white)
+  );
+  border: 1px solid
+    var(--wx-gantt-dropdown-border, var(--wx-color-border, #ddd));
   border-radius: 4px;
   box-shadow: 0 2px 8px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
   z-index: 1000;
@@ -211,7 +215,8 @@
   padding: 0 12px 8px;
   font-size: 11px;
   color: var(--wx-gantt-dropdown-hint, var(--wx-color-text-light, #888));
-  border-bottom: 1px solid var(--wx-gantt-dropdown-border, var(--wx-color-border-minimal, #eee));
+  border-bottom: 1px solid
+    var(--wx-gantt-dropdown-border, var(--wx-color-border-minimal, #eee));
 }
 
 .column-settings-list {
@@ -227,16 +232,23 @@
 }
 
 .column-item:hover {
-  background: var(--wx-gantt-dropdown-hover, var(--wx-color-background-muted, #f5f5f5));
+  background: var(
+    --wx-gantt-dropdown-hover,
+    var(--wx-color-background-muted, #f5f5f5)
+  );
 }
 
 .column-item.dragging {
   opacity: 0.5;
-  background: var(--wx-gantt-dropdown-hover, var(--wx-color-background-neutral, #f0f0f0));
+  background: var(
+    --wx-gantt-dropdown-hover,
+    var(--wx-color-background-neutral, #f0f0f0)
+  );
 }
 
 .column-item.drag-over {
-  border-top: 2px solid var(--wx-gantt-primary, var(--wx-color-primary, #1f75cb));
+  border-top: 2px solid
+    var(--wx-gantt-primary, var(--wx-color-primary, #1f75cb));
 }
 
 .column-drop-zone-end {
@@ -623,14 +635,20 @@
 /* Baseline bar styling - keep default height with padding */
 .wx-baseline {
   pointer-events: none !important;
-  background-color: var(--wx-color-success, #00ba94) !important; /* Green - represents Task original range */
+  background-color: var(
+    --wx-color-success,
+    #00ba94
+  ) !important; /* Green - represents Task original range */
   z-index: 1 !important;
   opacity: 0.7 !important;
 }
 
 /* Milestone baseline should be blue (contains issues) */
 .wx-baseline.wx-milestone {
-  background-color: var(--wx-color-accent-light, #37a9ef) !important; /* Blue - represents Issue original range */
+  background-color: var(
+    --wx-color-accent-light,
+    #37a9ef
+  ) !important; /* Blue - represents Issue original range */
 }
 
 /* Parent task bracket baseline */

@@ -283,13 +283,21 @@
 .resize-handle-left {
   left: 0;
   border-radius: 4px 0 0 4px;
-  background: linear-gradient(to right, color-mix(in srgb, var(--wx-color-text-inverse, white) 30%, transparent), transparent);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--wx-color-text-inverse, white) 30%, transparent),
+    transparent
+  );
 }
 
 .resize-handle-right {
   right: 0;
   border-radius: 0 4px 4px 0;
-  background: linear-gradient(to left, color-mix(in srgb, var(--wx-color-text-inverse, white) 30%, transparent), transparent);
+  background: linear-gradient(
+    to left,
+    color-mix(in srgb, var(--wx-color-text-inverse, white) 30%, transparent),
+    transparent
+  );
 }
 
 /* Today marker - see shared/TodayMarker.css */

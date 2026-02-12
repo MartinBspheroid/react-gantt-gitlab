@@ -14,7 +14,10 @@
   height: 100%;
   font-size: 11px;
   border: 1px solid var(--wx-color-border-input, #d1d5db);
-  background: var(--wx-color-background-gray, #f3f4f6); /* Gray background for default state */
+  background: var(
+    --wx-color-background-gray,
+    #f3f4f6
+  ); /* Gray background for default state */
   cursor: pointer;
   color: var(--wx-color-text-gray, #6b7280);
 }
@@ -100,13 +103,18 @@
 .sort-control-order-btn:hover {
   border-color: var(--wx-color-primary, #1f75cb);
   color: var(--wx-color-primary, #1f75cb);
-  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, var(--wx-color-background, #fff));
+  background: color-mix(
+    in srgb,
+    var(--wx-color-primary, #1f75cb) 10%,
+    var(--wx-color-background, #fff)
+  );
 }
 
 .sort-control-order-btn:focus {
   outline: none;
   border-color: var(--wx-color-primary, #1f75cb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 /* Others list variant */
@@ -153,7 +161,8 @@
 .sort-control-reset-btn:focus {
   outline: none;
   border-color: var(--wx-color-warning, #d97706);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-warning, #d97706) 10%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--wx-color-warning, #d97706) 10%, transparent);
 }
 
 /* Others list variant */

@@ -48,7 +48,7 @@ export default function GanttProjectBoundaries({ skinSettings }) {
         type: 'task',
       },
     ],
-    []
+    [],
   );
 
   const links = useMemo(() => [], []);
@@ -58,7 +58,7 @@ export default function GanttProjectBoundaries({ skinSettings }) {
       { unit: 'month', step: 1, format: 'MMMM yyyy' },
       { unit: 'day', step: 1, format: 'd' },
     ],
-    []
+    [],
   );
 
   const [api, setApi] = useState();
@@ -77,7 +77,7 @@ export default function GanttProjectBoundaries({ skinSettings }) {
         css: 'project-end-boundary',
       },
     ],
-    [projectStart, projectEnd]
+    [projectStart, projectEnd],
   );
 
   // Initialize Gantt API and set up drag constraints
@@ -104,7 +104,7 @@ export default function GanttProjectBoundaries({ skinSettings }) {
         return true; // Allow the drag
       });
     },
-    [projectStart, projectEnd]
+    [projectStart, projectEnd],
   );
 
   return (
@@ -112,7 +112,10 @@ export default function GanttProjectBoundaries({ skinSettings }) {
       <Locale>
         <div className="wx-boundaries-demo explanation-banner">
           <Alert type="info">
-            <strong>Project Boundaries Demo:</strong> Tasks cannot be dragged outside the project start and end dates. Try dragging any task - it will be constrained within the boundaries marked by the green (start) and red (end) vertical lines.
+            <strong>Project Boundaries Demo:</strong> Tasks cannot be dragged
+            outside the project start and end dates. Try dragging any task - it
+            will be constrained within the boundaries marked by the green
+            (start) and red (end) vertical lines.
           </Alert>
         </div>
 

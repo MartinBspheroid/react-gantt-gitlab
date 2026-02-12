@@ -19,7 +19,10 @@
 
 /* Modal Container */
 .move-in-modal {
-  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
+  background: var(
+    --wx-gantt-modal-background,
+    var(--wx-color-background, #fff)
+  );
   border-radius: 8px;
   width: 500px;
   max-width: 90vw;
@@ -190,7 +193,11 @@
 }
 
 .target-option.selected {
-  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-primary, #1f75cb) 10%,
+    transparent
+  );
 }
 
 .target-option input[type='radio'] {

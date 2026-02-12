@@ -86,7 +86,11 @@
 }
 
 .kanban-list-over .kanban-list-content {
-  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 10%, var(--wx-color-background, #fff));
+  background: color-mix(
+    in srgb,
+    var(--wx-color-accent-blue-alt, #3b82f6) 10%,
+    var(--wx-color-background, #fff)
+  );
 }
 
 .kanban-list-over .kanban-list-empty {
@@ -107,12 +111,20 @@
 }
 
 .wx-willow-dark-theme .kanban-list-header-others {
-  background: color-mix(in srgb, var(--wx-color-warning, #d97706) 20%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-warning, #d97706) 20%,
+    transparent
+  );
   border-bottom-color: var(--wx-color-warning, #d97706);
 }
 
 .wx-willow-dark-theme .kanban-list-header-closed {
-  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 20%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-accent-blue-alt, #3b82f6) 20%,
+    transparent
+  );
   border-bottom-color: var(--wx-color-accent-blue-alt, #3b82f6);
 }
 
@@ -129,14 +141,26 @@
 }
 
 .wx-willow-dark-theme .kanban-list-over {
-  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 15%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-accent-blue-alt, #3b82f6) 15%,
+    transparent
+  );
 }
 
 .wx-willow-dark-theme .kanban-list-over .kanban-list-content {
-  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-accent-blue-alt, #3b82f6) 10%,
+    transparent
+  );
 }
 
 .wx-willow-dark-theme .kanban-list-over .kanban-list-empty {
   border-color: var(--wx-color-accent-blue-alt, #3b82f6);
-  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 20%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-accent-blue-alt, #3b82f6) 20%,
+    transparent
+  );
 }

@@ -52,6 +52,7 @@ import GanttEditorValidation from './cases/GanttEditorValidation.jsx';
 import AzureDevOpsPortfolio from './cases/AzureDevOpsPortfolio.jsx';
 import WorkloadViewDemo from './cases/WorkloadView.jsx';
 import GanttProjectBoundaries from './cases/GanttProjectBoundaries.jsx';
+import GanttRowGrouping from './cases/GanttRowGrouping.jsx';
 
 export const links = [
   [
@@ -61,6 +62,7 @@ export const links = [
     'AzureDevOpsPortfolio',
   ],
   ['/workload/:skin', 'Workload View', WorkloadViewDemo, 'WorkloadView'],
+  ['/grouping/:skin', 'Row Grouping', GanttRowGrouping, 'GanttRowGrouping'],
   [
     '/boundaries/:skin',
     'Project Boundaries',
