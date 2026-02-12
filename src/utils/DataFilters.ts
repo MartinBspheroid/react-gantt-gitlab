@@ -558,6 +558,194 @@ export class DataFilters {
   }
 
   /**
+   * Create a filter function for SVAR's filter-rows action
+   * This function determines which tasks should be visible based on filter options
+   *
+   * The filter function checks if a task should be visible AND includes parent chains
+   * to maintain hierarchy integrity in the Gantt chart.
+   *
+   * @param allTasks - All tasks in the data store
+   * @param options - Filter options
+   * @returns A function that returns true if a task should be visible
+   */
+  static createSvarFilterFunction(
+    allTasks: ITask[],
+    options: FilterOptions,
+  ): (task: ITask) => boolean {
+    const visibleTaskIds = new Set<number | string>();
+
+    const matchesBasicFilters = (task: ITask): boolean => {
+      if (options.milestoneIds && options.milestoneIds.length > 0) {
+        const milestoneIids = options.milestoneIds;
+        const includeNoMilestone = milestoneIids.includes(0);
+        const otherMilestoneIids = milestoneIids.filter((id) => id !== 0);
+
+        if (task._gitlab?.type === 'milestone') {
+          if (!otherMilestoneIids.includes(task._gitlab?.iid as number)) {
+            return false;
+          }
+        } else {
+          const taskMilestoneIid = task._gitlab?.milestoneIid;
+          if (includeNoMilestone && !taskMilestoneIid) {
+          } else if (taskMilestoneIid && otherMilestoneIids.length > 0) {
+            if (!otherMilestoneIids.includes(taskMilestoneIid)) {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }
+      }
+
+      if (options.epicIds && options.epicIds.length > 0) {
+        const epicIds = options.epicIds;
+        const includeNoEpic = epicIds.includes(0);
+        const otherEpicIds = epicIds.filter((id) => id !== 0);
+        const epicParentId = task._gitlab?.epicParentId;
+
+        if (includeNoEpic && !epicParentId) {
+        } else if (epicParentId && otherEpicIds.length > 0) {
+          if (!otherEpicIds.includes(epicParentId)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      if (options.labels && options.labels.length > 0) {
+        const labels = options.labels;
+        const includeNoLabels = labels.includes('NONE');
+        const otherLabels = labels.filter((l) => l !== 'NONE');
+        const taskLabels =
+          typeof task.labels === 'string'
+            ? task.labels
+                .split(',')
+                .map((l) => l.trim())
+                .filter((l) => l)
+            : task.labels || [];
+
+        if (includeNoLabels && taskLabels.length === 0) {
+        } else if (otherLabels.length > 0 && taskLabels.length > 0) {
+          if (!otherLabels.some((label) => taskLabels.includes(label))) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      if (options.assignees && options.assignees.length > 0) {
+        const assignees = options.assignees;
+        const includeUnassigned = assignees.includes('NONE');
+        const otherAssignees = assignees.filter((a) => a !== 'NONE');
+
+        if (includeUnassigned && !task.assigned) {
+        } else if (otherAssignees.length === 0) {
+          return false;
+        } else if (!task.assigned) {
+          return false;
+        } else {
+          const taskAssignees =
+            typeof task.assigned === 'string'
+              ? task.assigned.split(',').map((a) => a.trim())
+              : [task.assigned];
+          if (
+            !otherAssignees.some((assignee) =>
+              taskAssignees.some((ta) =>
+                ta.toLowerCase().includes(assignee.toLowerCase()),
+              ),
+            )
+          ) {
+            return false;
+          }
+        }
+      }
+
+      if (options.states && options.states.length > 0) {
+        const normalizedStates = options.states.map((s) => {
+          const lower = s.toLowerCase();
+          if (lower === 'opened' || lower === 'open') return 'OPEN';
+          if (lower === 'closed' || lower === 'close') return 'CLOSED';
+          return s.toUpperCase();
+        });
+        if (
+          !task.state ||
+          !normalizedStates.includes(task.state.toUpperCase())
+        ) {
+          return false;
+        }
+      }
+
+      if (options.priorities && options.priorities.length > 0) {
+        const taskPriority = task.priority;
+        const effectivePriority = taskPriority ?? 4;
+        if (!options.priorities.includes(effectivePriority)) {
+          return false;
+        }
+      }
+
+      if (options.search) {
+        const search = options.search.toLowerCase();
+        if (
+          !task.text?.toLowerCase().includes(search) &&
+          !task.details?.toLowerCase().includes(search) &&
+          !task.labels?.toString().toLowerCase().includes(search) &&
+          !task.assigned?.toString().toLowerCase().includes(search)
+        ) {
+          return false;
+        }
+      }
+
+      if (options.criticalPathOnly && options.criticalTaskIds) {
+        const criticalSet = new Set(options.criticalTaskIds);
+        if (!criticalSet.has(task.id!)) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    const taskMap = new Map<number | string, ITask>();
+    allTasks.forEach((task) => taskMap.set(task.id!, task));
+
+    const addParentChain = (taskId: number | string) => {
+      if (visibleTaskIds.has(taskId)) return;
+      visibleTaskIds.add(taskId);
+
+      const task = taskMap.get(taskId);
+      if (task?.parent && task.parent !== 0) {
+        addParentChain(task.parent);
+      }
+    };
+
+    allTasks.forEach((task) => {
+      if (matchesBasicFilters(task)) {
+        addParentChain(task.id!);
+      }
+    });
+
+    return (task: ITask) => visibleTaskIds.has(task.id!);
+  }
+
+  /**
+   * Check if any client-side filters are active
+   */
+  static hasActiveFilters(options: FilterOptions): boolean {
+    return (
+      (options.milestoneIds?.length ?? 0) > 0 ||
+      (options.epicIds?.length ?? 0) > 0 ||
+      (options.labels?.length ?? 0) > 0 ||
+      (options.assignees?.length ?? 0) > 0 ||
+      (options.states?.length ?? 0) > 0 ||
+      (options.priorities?.length ?? 0) > 0 ||
+      !!options.search ||
+      !!options.criticalPathOnly
+    );
+  }
+
+  /**
    * Calculate statistics for filtered tasks
    */
   static calculateStats(tasks: ITask[]): {

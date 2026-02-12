@@ -565,6 +565,27 @@ export function GanttView({
     return DataFilters.calculateStats(filteredTasks);
   }, [filteredTasks]);
 
+  // Apply native SVAR filter-rows for better performance and animation
+  // This replaces React-based filtering for the visual display
+  useEffect(() => {
+    if (!api || tasksWithWorkdays.length === 0) return;
+
+    const tableAPI = api.getTable();
+    if (!tableAPI) return;
+
+    const hasFilters = DataFilters.hasActiveFilters(filterOptions);
+
+    if (hasFilters) {
+      const filterFn = DataFilters.createSvarFilterFunction(
+        tasksWithWorkdays,
+        filterOptions,
+      );
+      tableAPI.exec('filter-rows', { filter: filterFn });
+    } else {
+      tableAPI.exec('filter-rows', { filter: null });
+    }
+  }, [api, tasksWithWorkdays, filterOptions]);
+
   // Dynamic scales based on lengthUnit (lengthUnit = the smallest time unit to display)
   const scales = useMemo(() => {
     switch (lengthUnit) {
@@ -2947,7 +2968,7 @@ export function GanttView({
             >
               {(() => {
                 // Validate tasks structure before passing to Gantt
-                const invalidTasks = filteredTasks.filter((task) => {
+                const invalidTasks = tasksWithWorkdays.filter((task) => {
                   return !task.id || !task.text || !task.start;
                 });
 
@@ -2961,8 +2982,8 @@ export function GanttView({
                 // Log all tasks with their parent relationships to find the problematic structure
 
                 // Check for orphaned children (parent doesn't exist in the list)
-                const taskIds = new Set(filteredTasks.map((t) => t.id));
-                const orphanedTasks = filteredTasks.filter((task) => {
+                const taskIds = new Set(tasksWithWorkdays.map((t) => t.id));
+                const orphanedTasks = tasksWithWorkdays.filter((task) => {
                   return (
                     task.parent &&
                     task.parent !== 0 &&
@@ -3026,6 +3047,7 @@ export function GanttView({
 
                 try {
                   return (
+<<<<<<< HEAD
                     <Gantt
                       key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
                       init={(api) => {
@@ -3067,6 +3089,55 @@ export function GanttView({
                       autoScale={false}
                       colorRules={colorRules}
                     />
+=======
+                    <Tooltip api={api} content={TaskTooltipContent}>
+                      <Gantt
+                        key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
+                        init={(api) => {
+                          try {
+                            const result = init(api);
+                            return result;
+                          } catch (error) {
+                            console.error(
+                              '[Gantt init] ERROR in init callback:',
+                              error,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR name:',
+                              error.name,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR message:',
+                              error.message,
+                            );
+                            console.error(
+                              '[Gantt init] ERROR stack:',
+                              error.stack,
+                            );
+                            throw error;
+                          }
+                        }}
+                        tasks={tasksWithWorkdays}
+                        links={links}
+                        markers={markers}
+                        scales={scales}
+                        lengthUnit={lengthUnit}
+                        start={dateRange.start}
+                        end={dateRange.end}
+                        columns={columns}
+                        cellWidth={effectiveCellWidth}
+                        cellHeight={cellHeight}
+                        highlightTime={highlightTime}
+                        countWorkdays={countWorkdays}
+                        readonly={false}
+                        baselines={true}
+                        taskTemplate={SmartTaskContent}
+                        autoScale={false}
+                        colorRules={colorRules}
+                        sprints={sprints}
+                      />
+                    </Tooltip>
+>>>>>>> ralph-parallel/react-gantt-gitlab-qgl.17
                   );
                 } catch (error) {
                   console.error(
