@@ -1,0 +1,168 @@
+/* Shadcn Visual Verification Demo Styles */
+
+.shadcn-verification-container {
+  padding: 20px;
+  min-height: 100vh;
+  background: var(--wx-background, #ffffff);
+}
+
+/* Theme Switcher */
+.shadcn-theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--wx-background-alt, #f5f5f5);
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: var(--wx-radius, 0.5rem);
+}
+
+.shadcn-theme-label {
+  font-family: var(--wx-font-family, system-ui);
+  font-size: var(--wx-font-size, 14px);
+  font-weight: var(--wx-font-weight-md, 500);
+  color: var(--wx-color-font, #0a0a0a);
+}
+
+.shadcn-theme-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.shadcn-theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--wx-font-family, system-ui);
+  font-size: var(--wx-font-size, 14px);
+  font-weight: var(--wx-font-weight, 400);
+  color: var(--wx-color-font, #0a0a0a);
+  background: var(--wx-gantt-button-background, #ffffff);
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: var(--wx-radius, 0.5rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shadcn-theme-btn:hover {
+  background: var(--wx-gantt-button-hover-background, #f5f5f5);
+  color: var(--wx-gantt-button-hover-text, #0a0a0a);
+}
+
+.shadcn-theme-btn.active {
+  background: var(--wx-color-primary, #18181b);
+  color: var(--wx-color-primary-font, #fafafa);
+  border-color: var(--wx-color-primary, #18181b);
+}
+
+.shadcn-theme-icon {
+  font-size: 16px;
+}
+
+/* Verification Panel */
+.shadcn-verification-panel {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--wx-gantt-filter-background, #f5f5f5);
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: var(--wx-radius, 0.5rem);
+}
+
+.shadcn-panel-title {
+  margin: 0 0 16px 0;
+  font-family: var(--wx-font-family, system-ui);
+  font-size: 16px;
+  font-weight: var(--wx-font-weight-md, 500);
+  color: var(--wx-color-font, #0a0a0a);
+}
+
+.shadcn-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.shadcn-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--wx-font-family, system-ui);
+  font-size: var(--wx-font-size, 14px);
+  color: var(--wx-color-font-secondary, #737373);
+}
+
+.shadcn-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--wx-color-primary, #18181b);
+  color: var(--wx-color-primary-font, #fafafa);
+  border-radius: calc(var(--wx-radius, 0.5rem) / 2);
+  font-size: 12px;
+}
+
+/* Gantt Wrapper */
+.shadcn-gantt-wrapper {
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: var(--wx-radius, 0.5rem);
+  overflow: hidden;
+  min-height: 500px;
+}
+
+/* Theme Info */
+.shadcn-theme-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--wx-background-alt, #f5f5f5);
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: var(--wx-radius, 0.5rem);
+  font-family: var(--wx-font-family, system-ui);
+  font-size: var(--wx-font-size, 14px);
+  color: var(--wx-color-font, #0a0a0a);
+}
+
+.shadcn-theme-info p {
+  margin: 0 0 8px 0;
+}
+
+.shadcn-theme-info p:last-child {
+  margin-bottom: 0;
+}
+
+.shadcn-theme-class code {
+  padding: 2px 6px;
+  background: var(--wx-gantt-control-background, #f5f5f5);
+  border: var(--wx-border, 1px solid #e4e4e7);
+  border-radius: calc(var(--wx-radius, 0.5rem) / 2);
+  font-family: monospace;
+  font-size: 12px;
+}
+
+/* Dark mode adjustments */
+.wx-shadcn-dark-theme .shadcn-verification-container {
+  background: var(--wx-background, #09090b);
+}
+
+.wx-shadcn-dark-theme .shadcn-theme-switcher,
+.wx-shadcn-dark-theme .shadcn-verification-panel,
+.wx-shadcn-dark-theme .shadcn-theme-info {
+  background: var(--wx-background-alt, #27272a);
+  border-color: var(--wx-border-color, #27272a);
+}
+
+.wx-shadcn-dark-theme .shadcn-theme-label,
+.wx-shadcn-dark-theme .shadcn-panel-title,
+.wx-shadcn-dark-theme .shadcn-theme-info {
+  color: var(--wx-color-font, #fafafa);
+}
+
+.wx-shadcn-dark-theme .shadcn-checklist-item {
+  color: var(--wx-color-font-secondary, #a1a1aa);
+}

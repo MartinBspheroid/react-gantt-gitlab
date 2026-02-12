@@ -54,6 +54,7 @@ import AzureDevOpsPortfolio from './cases/AzureDevOpsPortfolio.jsx';
 import WorkloadViewDemo from './cases/WorkloadView.jsx';
 import GanttProjectBoundaries from './cases/GanttProjectBoundaries.jsx';
 import GanttBaselines from './cases/GanttBaselines.jsx';
+import ShadcnVisualVerification from './cases/ShadcnVisualVerification.jsx';
 
 export const links = [
   [
@@ -74,6 +75,12 @@ export const links = [
     'Baselines Visualization',
     GanttBaselines,
     'GanttBaselines',
+  ],
+  [
+    '/shadcn-visual/:skin',
+    'Shadcn Visual Verification',
+    ShadcnVisualVerification,
+    'ShadcnVisualVerification',
   ],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],

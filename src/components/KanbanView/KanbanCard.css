@@ -184,7 +184,11 @@
 
 .wx-willow-dark-theme .kanban-card-due-overdue {
   color: var(--wx-color-status-error, #f87171);
-  background: color-mix(in srgb, var(--wx-color-status-error, #dc2626) 20%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-status-error, #dc2626) 20%,
+    transparent
+  );
 }
 
 .wx-willow-dark-theme .kanban-card-title {
