@@ -77,6 +77,8 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { BulkOperationsBar } from '../BulkOperationsBar';
 import { useStore } from '@svar-ui/lib-react';
+import Tooltip from '../../widgets/Tooltip.jsx';
+import TaskTooltipContent from '../TaskTooltipContent.jsx';
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -206,11 +208,11 @@ export function GanttView({
     currentConfig,
     provider,
     configs,
-    reloadConfigs,
-    handleConfigChange,
+    reloadConfigs: _reloadConfigs,
+    handleConfigChange: _handleConfigChange,
     handleQuickSwitch,
-    projectPath,
-    proxyConfig,
+    projectPath: _projectPath,
+    proxyConfig: _proxyConfig,
     // Filter State
     filterOptions,
     serverFilterOptions,
@@ -653,7 +655,7 @@ export function GanttView({
   }, [tasksWithWorkdays, filterOptions]);
 
   // Apply grouping to filtered tasks
-  const { tasks: groupedTasks, groupCount } = useMemo(() => {
+  const { tasks: _groupedTasks, groupCount } = useMemo(() => {
     return DataFilters.groupTasks(filteredTasks, groupBy, collapsedGroups);
   }, [filteredTasks, groupBy, collapsedGroups]);
 
