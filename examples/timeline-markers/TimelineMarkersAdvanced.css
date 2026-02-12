@@ -1,0 +1,178 @@
+/** Timeline Markers Advanced - CSS Styles */
+
+.timeline-advanced-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.timeline-controls {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.timeline-controls h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.control-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-add:hover {
+  background: #2563eb;
+}
+
+.btn-remove {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-remove:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.btn-reset {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-reset:hover {
+  background: #4b5563;
+}
+
+.marker-list {
+  margin-top: 16px;
+}
+
+.marker-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+}
+
+.marker-item {
+  padding: 4px 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+  font-size: 13px;
+  border-left: 4px solid transparent;
+}
+
+.marker-item.marker-today {
+  background: #fef2f2;
+  border-left-color: #ef4444;
+}
+
+.marker-item.marker-review {
+  background: #eff6ff;
+  border-left-color: #3b82f6;
+}
+
+.marker-item.marker-freeze {
+  background: #fff7ed;
+  border-left-color: #f97316;
+}
+
+.marker-item.marker-release {
+  background: #f0fdf4;
+  border-left-color: #22c55e;
+}
+
+.marker-item.marker-custom {
+  background: #f3f4f6;
+  border-left-color: #6b7280;
+}
+
+.marker-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.legend-color.marker-today {
+  background: #ef4444;
+}
+
+.legend-color.marker-review {
+  background: #3b82f6;
+}
+
+.legend-color.marker-freeze {
+  background: #f97316;
+}
+
+.legend-color.marker-release {
+  background: #22c55e;
+}
+
+.timeline-chart {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Custom marker styles for Gantt */
+.wx-gantt .marker-today {
+  --marker-color: #ef4444;
+}
+
+.wx-gantt .marker-review {
+  --marker-color: #3b82f6;
+}
+
+.wx-gantt .marker-freeze {
+  --marker-color: #f97316;
+}
+
+.wx-gantt .marker-release {
+  --marker-color: #22c55e;
+}
+
+.wx-gantt .marker-custom {
+  --marker-color: #6b7280;
+}

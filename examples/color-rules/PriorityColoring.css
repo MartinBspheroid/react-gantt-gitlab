@@ -1,0 +1,80 @@
+/** Priority-Based Coloring - CSS Styles */
+
+.priority-coloring-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.coloring-info {
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.coloring-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.coloring-info p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.priority-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.priority-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.priority-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Priority colors */
+.priority-item.critical .priority-color {
+  background: #dc2626;
+}
+
+.priority-item.high .priority-color {
+  background: #ea580c;
+}
+
+.priority-item.medium .priority-color {
+  background: #ca8a04;
+}
+
+.priority-item.low .priority-color {
+  background: #16a34a;
+}
+
+.gantt-container {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}

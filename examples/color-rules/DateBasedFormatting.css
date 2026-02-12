@@ -1,0 +1,103 @@
+/** Date-Based Formatting - CSS Styles */
+
+.date-formatting-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.formatting-info {
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.formatting-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.formatting-info p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.date-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.date-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.date-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.date-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.date-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.date-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Date-based colors */
+.date-item.overdue .date-indicator {
+  background: #dc2626;
+}
+
+.date-item.due-soon .date-indicator {
+  background: #f59e0b;
+}
+
+.date-item.upcoming .date-indicator {
+  background: #3b82f6;
+}
+
+.implementation-note {
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+  font-size: 13px;
+  color: #92400e;
+}
+
+.implementation-note strong {
+  font-weight: 600;
+}
+
+.gantt-container {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}

@@ -1,0 +1,68 @@
+/** Group by Epic - CSS Styles */
+
+.group-by-epic-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.grouping-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.grouping-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.grouping-info p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.epic-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.epic-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.epic-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.epic-name {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.gantt-container {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}

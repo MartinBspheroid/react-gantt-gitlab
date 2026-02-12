@@ -1,0 +1,102 @@
+/** Custom Variable Overrides - CSS Styles
+ *
+ * This file demonstrates how to override shadcn CSS custom properties
+ * to customize the Gantt chart appearance.
+ */
+
+.custom-variables-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.custom-variables-info {
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.custom-variables-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.custom-variables-info p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.overrides-list h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #334155;
+}
+
+.overrides-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.overrides-list li {
+  padding: 8px 12px;
+  margin: 4px 0;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #8b5cf6;
+  font-size: 13px;
+  color: #475569;
+}
+
+.overrides-list code {
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.custom-gantt-wrapper {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Custom theme overrides within the shadcn wrapper */
+.custom-theme-override {
+  height: 100%;
+
+  /* Override primary brand color */
+  --wx-primary: #8b5cf6;
+  --wx-primary-hover: #7c3aed;
+  --wx-primary-active: #6d28d9;
+
+  /* Override border radius for rounder elements */
+  --wx-border-radius: 12px;
+  --wx-button-border-radius: 8px;
+
+  /* Task bar styling */
+  --wx-task-bar-height: 32px;
+  --wx-task-bar-radius: 8px;
+
+  /* Grid lines */
+  --wx-grid-line-color: #e2e8f0;
+  --wx-grid-line-width: 1px;
+
+  /* Header styling */
+  --wx-header-bg: #f8fafc;
+  --wx-header-text: #1e293b;
+  --wx-header-border: #e2e8f0;
+
+  /* Selection colors */
+  --wx-selection-bg: rgba(139, 92, 246, 0.1);
+  --wx-selection-border: #8b5cf6;
+}

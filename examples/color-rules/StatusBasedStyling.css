@@ -1,0 +1,97 @@
+/** Status-Based Styling - CSS Styles */
+
+.status-styling-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.styling-info {
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.styling-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.styling-info p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.status-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.status-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.status-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Status colors */
+.status-item.completed .status-indicator {
+  background: #16a34a;
+}
+
+.status-item.in-progress .status-indicator {
+  background: #2563eb;
+}
+
+.status-item.blocked .status-indicator {
+  background: #dc2626;
+}
+
+.status-item.review .status-indicator {
+  background: #9333ea;
+}
+
+.status-item.pending .status-indicator {
+  background: #6b7280;
+}
+
+.gantt-container {
+  flex: 1;
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
