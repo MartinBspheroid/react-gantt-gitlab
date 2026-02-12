@@ -3,6 +3,7 @@
  * Manual sync button with loading state and last sync time display
  */
 
+import React from 'react';
 import { useState } from 'react';
 import './SyncButton.css';
 

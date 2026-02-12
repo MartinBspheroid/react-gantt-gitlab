@@ -4,14 +4,52 @@
  * Supports multiple stacked toasts
  */
 
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './Toast.css';
+
+export type ToastType = 'error' | 'success' | 'warning' | 'info';
+
+export interface ToastItemData {
+  id: number;
+  message: string;
+  type: ToastType;
+}
+
+interface ToastItemProps {
+  id: number;
+  message: string;
+  type: ToastType;
+  onClose: (id: number) => void;
+  duration: number;
+}
+
+interface ToastContainerProps {
+  toasts: ToastItemData[];
+  onRemove: (id: number) => void;
+  duration?: number;
+  position?: 'top-right' | 'top-center' | 'bottom-right' | 'bottom-center';
+}
+
+interface ToastProps {
+  message?: string;
+  type?: ToastType;
+  onClose: (id: number) => void;
+  duration?: number;
+  position?: 'top-right' | 'top-center' | 'bottom-right' | 'bottom-center';
+}
+
+interface ToastHookReturn {
+  toasts: ToastItemData[];
+  showToast: (message: string, type?: ToastType) => number;
+  removeToast: (id: number) => void;
+  clearToasts: () => void;
+}
 
 /**
  * Toast types with corresponding styles
  */
-const TOAST_TYPES = {
+const TOAST_TYPES: Record<ToastType, { icon: string; className: string }> = {
   error: {
     icon: 'fa-exclamation-circle',
     className: 'toast-error',
@@ -33,7 +71,7 @@ const TOAST_TYPES = {
 /**
  * Single Toast Item Component
  */
-function ToastItem({ id, message, type, onClose, duration }) {
+function ToastItem({ id, message, type, onClose, duration }: ToastItemProps): ReactNode {
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.error;
 
   useEffect(() => {
@@ -56,17 +94,13 @@ function ToastItem({ id, message, type, onClose, duration }) {
 
 /**
  * Toast Container Component - manages multiple toasts
- * @param {Array} toasts - Array of toast objects { id, message, type }
- * @param {function} onRemove - Callback to remove a toast by id
- * @param {number} duration - Auto-dismiss duration in ms (0 to disable)
- * @param {string} position - Position: 'top-right' | 'top-center' | 'bottom-right' | 'bottom-center'
  */
 export function ToastContainer({
   toasts = [],
   onRemove,
   duration = 5000,
   position = 'top-right',
-}) {
+}: ToastContainerProps): ReactNode | null {
   if (toasts.length === 0) return null;
 
   const toastContent = (
@@ -97,8 +131,8 @@ export function Toast({
   onClose,
   duration = 5000,
   position = 'top-right',
-}) {
-  const toasts = message ? [{ id: 'single', message, type }] : [];
+}: ToastProps): ReactNode | null {
+  const toasts: ToastItemData[] = message ? [{ id: 1, message, type }] : [];
   return (
     <ToastContainer
       toasts={toasts}
@@ -111,23 +145,22 @@ export function Toast({
 
 /**
  * Hook for managing multiple toasts
- * @returns {{ toasts, showToast, removeToast, clearToasts }}
  */
-export function useToast() {
-  const [toasts, setToasts] = useState([]);
+export function useToast(): ToastHookReturn {
+  const [toasts, setToasts] = useState<ToastItemData[]>([]);
   const idCounter = useRef(0);
 
-  const showToast = useCallback((message, type = 'error') => {
+  const showToast = useCallback((message: string, type: ToastType = 'error'): number => {
     const id = ++idCounter.current;
     setToasts((prev) => [...prev, { id, message, type }]);
     return id;
   }, []);
 
-  const removeToast = useCallback((id) => {
+  const removeToast = useCallback((id: number): void => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const clearToasts = useCallback(() => {
+  const clearToasts = useCallback((): void => {
     setToasts([]);
   }, []);
 

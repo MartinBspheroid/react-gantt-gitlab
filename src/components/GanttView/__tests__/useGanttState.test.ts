@@ -4,7 +4,7 @@
  * and effective cell width calculation per unit.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGanttState } from '../useGanttState';
 
@@ -12,6 +12,14 @@ describe('useGanttState', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.useFakeTimers();
+    // Re-initialize localStorage mock after restoreAllMocks clears it
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    };
+    global.localStorage = localStorageMock as any;
     // Reset localStorage mock to return null by default (no saved values)
     (localStorage.getItem as any).mockReturnValue(null);
     (localStorage.setItem as any).mockClear();

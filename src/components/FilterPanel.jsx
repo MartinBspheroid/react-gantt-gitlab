@@ -4,6 +4,7 @@
  * Supports both client-side and server-side filtering with Tab switch.
  */
 
+import React from 'react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DataFilters } from '../utils/DataFilters';
 import { FilterPresetSelector } from './FilterPresetSelector';

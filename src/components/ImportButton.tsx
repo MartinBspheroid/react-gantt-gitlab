@@ -9,6 +9,14 @@ interface ImportButtonProps {
   className?: string;
 }
 
+async function parseImport(
+  content: string,
+  format: 'json' | 'csv' | 'ms-xml',
+): Promise<{ tasks: ITask[]; links: ILink[] }> {
+  const { importData } = await import('../pro-features/DataIO');
+  return importData(content, { format });
+}
+
 export function ImportButton({
   onImport,
   onError,
@@ -30,7 +38,7 @@ export function ImportButton({
       try {
         const content = await readFileAsText(file);
         const format = detectFormat(file.name, content);
-        const { tasks, links } = parseImport(content, format);
+        const { tasks, links } = await parseImport(content, format);
         onImport(tasks, links);
       } catch (error) {
         onError?.(error instanceof Error ? error : new Error(String(error)));
@@ -80,12 +88,4 @@ function detectFormat(filename: string, content: string): 'json' | 'csv' | 'ms-x
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
   if (trimmed.startsWith('<')) return 'ms-xml';
   return 'csv';
-}
-
-function parseImport(
-  content: string,
-  format: 'json' | 'csv' | 'ms-xml',
-): { tasks: ITask[]; links: ILink[] } {
-  const { importData } = require('../pro-features/DataIO');
-  return importData(content, { format });
 }

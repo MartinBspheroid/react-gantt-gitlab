@@ -73,7 +73,7 @@ import {
   validateLinkMetadata,
 } from '../../utils/LinkUtils';
 import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { BulkOperationsBar } from '../BulkOperationsBar';
 import { useStore } from '@svar-ui/lib-react';

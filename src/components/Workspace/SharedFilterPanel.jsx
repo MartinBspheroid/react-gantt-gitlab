@@ -8,6 +8,7 @@
  * shared between Gantt and Kanban views.
  */
 
+import React from 'react';
 import { useData } from '../../contexts/DataContext';
 import { FilterPanel } from '../FilterPanel';
 

@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -9,15 +12,22 @@ export default defineConfig(({ command, mode }) => {
   // Check if we're building full CSS
   const isFullCssBuild = process.env.BUILD_FULL_CSS === 'true';
 
+  // Common resolve configuration for all builds
+  const resolveConfig = {
+    // Enable tsconfig paths resolution (Vite 8+ feature)
+    tsconfigPaths: true,
+    // Ensure TypeScript extensions are resolved
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
+  };
+
   if (isDemoBuild) {
     // Demo build configuration - includes all dependencies
-    // Use relative path for static hosting compatibility
-    // Some hosts use root path '/' while GitHub Pages may use subpath
     const base = process.env.VITE_BASE_PATH || '/';
 
     return {
       plugins: [react()],
       base: base,
+      resolve: resolveConfig,
       build: {
         outDir: 'dist-demos',
         rollupOptions: {
@@ -43,17 +53,14 @@ export default defineConfig(({ command, mode }) => {
 
   const rollupOptionsStrict = {
     ...rollupOptions,
-    external: [
-      ...rollupOptions.external,
-      /^@wx\//, // matches all modules starting with "@wx/"
-      /^@svar-ui\//, // matches all modules starting with "@svar-ui/"
-    ],
+    external: [...rollupOptions.external, /^@wx\//, /^@svar-ui\//],
   };
 
   if (isFullCssBuild) {
-    // Full CSS build configuration - includes base styles and component styles
+    // Full CSS build configuration
     return {
       plugins: [react()],
+      resolve: resolveConfig,
       build: {
         outDir: 'dist-full',
         lib: {
@@ -66,19 +73,18 @@ export default defineConfig(({ command, mode }) => {
     };
   }
 
-  // Library build configuration (original)
+  // Library build configuration (default)
   return {
     plugins: [react()],
+    resolve: resolveConfig,
     server: {
       proxy: {
         '/api/data-proxy': {
-          // Default target - will be dynamically changed per-request
           target: 'https://example.com',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/data-proxy/, ''),
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req, res) => {
-              // Forward the Authorization header
               if (req.headers['x-auth-token']) {
                 proxyReq.setHeader(
                   'Authorization',
@@ -92,7 +98,6 @@ export default defineConfig(({ command, mode }) => {
     },
     build: {
       lib: {
-        //eslint-disable-next-line no-undef
         entry: resolve(__dirname, 'src/index.js'),
         fileName: (format) => (format === 'cjs' ? 'index.cjs' : 'index.es.js'),
         formats: ['es', 'cjs'],

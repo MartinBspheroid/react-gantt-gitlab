@@ -7,27 +7,24 @@
  * the Workspace behavior.
  */
 
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock the DataContext module to avoid real provider initialization
 const mockUseData = vi.fn();
 vi.mock('../../../contexts/DataContext', () => ({
-  DataProvider: ({ children }) => (
-    <div data-testid="data-provider">{children}</div>
-  ),
+  DataProvider: ({ children }) => React.createElement('div', { 'data-testid': 'data-provider' }, children),
   useData: () => mockUseData(),
 }));
 
 // Mock GanttView and KanbanView since they are heavy components
 vi.mock('../../GanttView/GanttView', () => ({
-  GanttView: (props) => (
-    <div data-testid="gantt-view" data-hide-toolbar={props.hideSharedToolbar} />
-  ),
+  GanttView: (props) => React.createElement('div', { 'data-testid': 'gantt-view', 'data-hide-toolbar': props.hideSharedToolbar }),
 }));
 
 vi.mock('../../KanbanView/KanbanView', () => ({
-  KanbanView: (_props) => <div data-testid="kanban-view" />,
+  KanbanView: (_props) => React.createElement('div', { 'data-testid': 'kanban-view' }),
 }));
 
 // Mock CSS import

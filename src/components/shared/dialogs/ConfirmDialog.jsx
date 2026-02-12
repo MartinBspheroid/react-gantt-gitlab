@@ -6,7 +6,7 @@
  * - alert 模式：只顯示確認按鈕 (showCancel=false)
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { BaseDialog } from './BaseDialog';
 import './BaseDialog.css';
 

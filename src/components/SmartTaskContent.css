@@ -151,11 +151,8 @@
 
 .wx-smart-task.wx-text-out {
   position: absolute;
-<<<<<<< HEAD
-=======
   /* Use CSS variable for dynamic offset to avoid link turn areas
      Variable is set by parent (.wx-bar) via inline style */
->>>>>>> ralph-session/f5ae8dc2
   left: calc(100% + var(--wx-label-offset, 8px));
   line-height: normal;
   display: flex;

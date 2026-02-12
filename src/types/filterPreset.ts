@@ -3,7 +3,7 @@
  * Types for saving and managing filter presets stored in Snippets
  */
 
-import type { FilterOptions } from '../../utils/DataFilters';
+import type { FilterOptions } from '../utils/DataFilters';
 
 /**
  * A single filter preset

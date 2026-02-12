@@ -18,6 +18,7 @@ export interface FilterOptions {
   labels?: Array<{ title: string; color?: string }>;
   milestones?: Array<{ id: string | number; title: string }>;
   members?: Array<{ username: string; name: string }>;
+  assignees?: Array<{ username: string; name: string } | string>;
 }
 
 /** Generic data source configuration */

@@ -1,5 +1,5 @@
 import type { ITask, ILink, TID } from '@svar-ui/gantt-store';
-import type { ICalendar, ITaskConstraint } from './types';
+import type { ICalendar, ITaskConstraint, IScheduleConfig } from './types';
 import { isWorkday, addWorkdays, countWorkdays } from './Calendar';
 
 export interface IScheduleResult {
@@ -12,13 +12,6 @@ export interface IScheduleConflict {
   taskId: TID;
   type: 'constraint_violation' | 'circular_dependency' | 'invalid_dates';
   message: string;
-}
-
-export interface IScheduleConfig {
-  auto?: boolean;
-  projectStart?: Date;
-  projectEnd?: Date;
-  respectCalendar?: boolean;
 }
 
 export type ScheduleTaskCallback = (

@@ -208,12 +208,16 @@ export function exportToMSProjectXML(
 
   const getLinkTypeCode = (type: string | undefined): string => {
     switch (type) {
+      case 's2s': // start_to_start
       case 'start_to_start':
         return '1';
+      case 'e2e': // finish_to_finish / end_to_end
       case 'finish_to_finish':
         return '2';
+      case 's2e': // start_to_finish / start_to_end
       case 'start_to_finish':
         return '3';
+      case 'e2s': // finish_to_start / end_to_start
       case 'finish_to_start':
       default:
         return '0';
@@ -699,24 +703,18 @@ function parseMSProjectDuration(durationStr: string): number {
   return 1;
 }
 
-function mapMSProjectLinkType(
-  type: string,
-):
-  | 'finish_to_start'
-  | 'start_to_start'
-  | 'finish_to_finish'
-  | 'start_to_finish' {
+function mapMSProjectLinkType(type: string): 'e2s' | 's2s' | 'e2e' | 's2e' {
   switch (type) {
     case '0':
-      return 'finish_to_start';
+      return 'e2s'; // finish_to_start
     case '1':
-      return 'start_to_start';
+      return 's2s'; // start_to_start
     case '2':
-      return 'finish_to_finish';
+      return 'e2e'; // finish_to_finish
     case '3':
-      return 'start_to_finish';
+      return 's2e'; // start_to_finish
     default:
-      return 'finish_to_start';
+      return 'e2s'; // finish_to_start (default)
   }
 }
 

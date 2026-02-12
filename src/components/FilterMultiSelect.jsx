@@ -3,6 +3,7 @@
  * Reusable multi-select component with search functionality for filter panels
  */
 
+import React from 'react';
 import { useState, useMemo } from 'react';
 import './FilterMultiSelect.css';
 

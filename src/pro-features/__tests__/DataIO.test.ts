@@ -249,7 +249,7 @@ describe('DataIO', () => {
       expect(result.links).toHaveLength(1);
       expect(result.links[0].source).toBe('ms-1');
       expect(result.links[0].target).toBe('ms-2');
-      expect(result.links[0].type).toBe('finish_to_start');
+      expect(result.links[0].type).toBe('e2s'); // finish_to_start
     });
 
     it('should map link types correctly', () => {
@@ -267,7 +267,7 @@ describe('DataIO', () => {
 </Project>`;
 
       const result = importFromMSProjectXML(startToStartXML);
-      expect(result.links[0].type).toBe('start_to_start');
+      expect(result.links[0].type).toBe('s2s'); // start_to_start
     });
 
     it('should handle empty tasks', () => {
@@ -395,7 +395,7 @@ describe('DataIO', () => {
         id: '1-2',
         source: '1',
         target: '2',
-        type: 'start_to_start',
+        type: 's2s',
       };
       const xml = exportToMSProjectXML(tasks, [startToStartLink]);
 

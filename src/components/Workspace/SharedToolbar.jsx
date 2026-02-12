@@ -10,6 +10,7 @@
  * Only view-specific callbacks and state are passed as props.
  */
 
+import React from 'react';
 import { useData } from '../../contexts/DataContext';
 import { SyncButton } from '../SyncButton';
 import './SharedToolbar.css';

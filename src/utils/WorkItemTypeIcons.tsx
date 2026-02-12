@@ -91,15 +91,17 @@ export function renderWorkItemIcon(
   const config = getWorkItemIconConfig(task, mode);
   if (!config) return null;
 
-  if (mode === 'emoji' || typeof config.icon === 'string') {
+  const icon = config.icon;
+  if (mode === 'emoji' || typeof icon === 'string') {
+    const iconStr = icon as string;
     if (
-      config.icon.startsWith('fa-') ||
-      config.icon.startsWith('far ') ||
-      config.icon.startsWith('fa-solid ')
+      iconStr.startsWith('fa-') ||
+      iconStr.startsWith('far ') ||
+      iconStr.startsWith('fa-solid ')
     ) {
       return (
         <i
-          className={config.icon}
+          className={iconStr}
           style={{ color: config.color }}
           aria-hidden="true"
         />
@@ -107,7 +109,7 @@ export function renderWorkItemIcon(
     }
     return (
       <span style={{ color: config.color }} aria-hidden="true">
-        {config.icon}
+        {icon}
       </span>
     );
   }

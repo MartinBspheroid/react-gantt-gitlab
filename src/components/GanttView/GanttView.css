@@ -666,7 +666,6 @@
   z-index: 2 !important;
 }
 
-<<<<<<< HEAD
 /* Group header row styling */
 .wx-row[data-group-header='true'] {
   background-color: var(--wx-gantt-group-header-background, #f0f4f8) !important;
@@ -733,7 +732,8 @@
   border-radius: 8px;
   font-size: 10px;
   font-weight: 600;
-=======
+}
+
 /* Work item type icon in grid */
 .wx-task-title-icon {
   display: inline-flex;
@@ -746,5 +746,4 @@
 
 .wx-task-title-icon i {
   font-size: 14px;
->>>>>>> ralph-parallel/react-gantt-gitlab-qgl.11
 }

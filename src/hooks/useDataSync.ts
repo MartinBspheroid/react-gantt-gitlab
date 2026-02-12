@@ -10,8 +10,9 @@ import type { ITask, ILink } from '@svar-ui/gantt-store';
 import type {
   DataProviderInterface,
   SyncOptions,
+  SyncProgress,
+  SyncProgressCallback,
 } from '../providers/core/DataProviderInterface';
-import type { SyncProgress } from '../types/syncProgress';
 
 export interface SyncState {
   isLoading: boolean;
@@ -111,7 +112,7 @@ export function useDataSync(
       }));
 
       // Progress callback that updates state
-      const onProgress = (progress: SyncProgress) => {
+      const onProgress: SyncProgressCallback = (progress) => {
         if (isMountedRef.current && !abortController.signal.aborted) {
           setSyncState((prev) => ({
             ...prev,

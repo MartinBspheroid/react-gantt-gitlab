@@ -11,14 +11,14 @@ import type {
   ADOIterationsResponse,
   Sprint,
   SprintCapacityInfo,
-} from '../types/azure-devops';
+} from '../../types/azure-devops';
 import {
   extractWorkItemIdFromUrl,
   mapADOLinkTypeToGantt,
   validateADOLink,
   convertADODependencyToILink,
   filterCircularDependencies,
-} from '../types/azure-devops';
+} from '../../types/azure-devops';
 import type { ILink, ITask } from '@svar-ui/gantt-store';
 
 const DEPENDENCY_LINK_TYPES: ADOLinkType[] = [

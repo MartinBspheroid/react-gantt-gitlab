@@ -50,6 +50,7 @@ bd dep add <new-id> <depends-on-id>  # Create dependencies
 - Write tests alongside features (see docs/TESTING.md)
 - Current test suite: 114 tests passing
 - Target coverage: Utilities 100%, Hooks 80%+, Components 60%+
+- Build must succeed: 'bun run build' must pas
 
 ## Landing the Plane (Session Completion)
 

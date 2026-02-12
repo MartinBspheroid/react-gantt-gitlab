@@ -3,6 +3,7 @@
  * Tests for toast notifications and hook
  */
 
+import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   render,

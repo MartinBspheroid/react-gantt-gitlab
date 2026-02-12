@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { KEYBOARD_SHORTCUTS_HELP } from '../../hooks/useKeyboardShortcuts';
+import { KEYBOARD_SHORTCUTS_HELP } from '@/hooks/index';
 import './KeyboardShortcutsHelp.css';
 
 interface KeyboardShortcutsHelpProps {

@@ -154,7 +154,7 @@ export function validateADOLink(
 
 export function convertADODependencyToILink(
   dependency: ADODependencyLink,
-): ILink {
+): ILink & { lag?: number; _ado: { relationType: ADOLinkType; lag?: number } } {
   return {
     id: `${dependency.sourceId}-${dependency.targetId}-${dependency.type}`,
     source: dependency.sourceId,
@@ -165,9 +165,6 @@ export function convertADODependencyToILink(
       relationType: dependency.relationType,
       lag: dependency.lag,
     },
-  } as ILink & {
-    lag?: number;
-    _ado: { relationType: ADOLinkType; lag?: number };
   };
 }
 

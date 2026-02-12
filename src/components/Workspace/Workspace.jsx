@@ -7,7 +7,7 @@
  * Provides shared data context, toolbar, and view switching.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { DataProvider } from '../../contexts/DataContext';
 import { GanttView } from '../GanttView/GanttView';
 import { KanbanView } from '../KanbanView/KanbanView';

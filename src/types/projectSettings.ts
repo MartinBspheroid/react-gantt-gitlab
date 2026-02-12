@@ -3,10 +3,7 @@
  * 專案專屬設定的類型定義和 localStorage 工具函數
  */
 
-import type {
-  FilterOptions,
-  ServerFilterOptions,
-} from '../../utils/DataFilters';
+import type { FilterOptions, ServerFilterOptions } from '../utils/DataFilters';
 
 /**
  * 儲存的 Filter 狀態

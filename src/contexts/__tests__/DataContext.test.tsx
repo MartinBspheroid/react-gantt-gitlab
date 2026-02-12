@@ -46,8 +46,11 @@ describe('DataContext', () => {
       deleteLink: vi.fn().mockResolvedValue(undefined),
       reorderTask: vi.fn().mockResolvedValue(undefined),
       getFilterOptions: vi.fn().mockResolvedValue({
-        labels: ['bug', 'feature'],
-        assignees: ['alice', 'bob'],
+        labels: [{ title: 'bug' }, { title: 'feature' }],
+        members: [
+          { username: 'alice', name: 'Alice' },
+          { username: 'bob', name: 'Bob' },
+        ],
       }),
       checkCanEdit: vi.fn().mockResolvedValue(true),
       getConfig: vi.fn().mockReturnValue({ type: 'static' }),
@@ -151,9 +154,9 @@ describe('DataContext', () => {
       const options = await mockProvider.getFilterOptions();
 
       expect(options.labels).toBeDefined();
-      expect(options.assignees).toBeDefined();
-      expect(options.labels).toContain('bug');
-      expect(options.assignees).toContain('alice');
+      expect(options.members).toBeDefined();
+      expect(options.labels[0].title).toBe('bug');
+      expect(options.members[0].username).toBe('alice');
     });
 
     it('should check edit permissions', async () => {

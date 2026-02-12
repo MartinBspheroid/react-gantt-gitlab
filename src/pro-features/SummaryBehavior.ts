@@ -1,9 +1,5 @@
 import type { ITask, IApi, TID } from '@svar-ui/gantt-store';
-
-export interface ISummaryConfig {
-  autoProgress?: boolean;
-  autoConvert?: boolean;
-}
+import type { ISummaryConfig } from './types';
 
 const dayMs = 24 * 60 * 60 * 1000;
 

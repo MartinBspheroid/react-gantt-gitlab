@@ -65,7 +65,7 @@ export interface IExportOptions {
 }
 
 export interface IImportOptions {
-  format: 'json' | 'csv' | 'ms-xml';
+  format?: 'json' | 'csv' | 'ms-xml';
   merge?: boolean;
   updateExisting?: boolean;
 }
@@ -119,6 +119,13 @@ export interface IScheduleOptions {
   projectEnd?: Date;
   respectCalendar?: boolean;
   onScheduleTask?: (taskId: TID, newStart: Date, newEnd: Date) => void;
+}
+
+export interface IScheduleConfig {
+  auto?: boolean;
+  projectStart?: Date;
+  projectEnd?: Date;
+  respectCalendar?: boolean;
 }
 
 export interface ILinkWithLag extends ILink {
