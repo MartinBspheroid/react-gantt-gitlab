@@ -740,7 +740,7 @@ function Bars(props) {
       }}
     >
       {tasks.map((task) => {
-        if (task.$skip) return null;
+        if (task.$skip || task.unscheduled) return null;
 
         // Check if this is a split task - render using SplitTaskSegments
         if (
