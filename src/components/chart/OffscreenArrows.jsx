@@ -88,8 +88,7 @@ function OffscreenArrows({ scrollLeft, viewportWidth, cellHeight, chartRef }) {
       // Milestones: dates stored directly on task.start/end
       // Regular tasks: need at least dueDate
       // (if no startDate, system uses createdAt as fallback to display bar)
-      const isMilestone =
-        task.$isMilestone || task.type === 'milestone';
+      const isMilestone = task.$isMilestone || task.type === 'milestone';
       if (!isMilestone) {
         if (!task.dueDate) return;
       }
@@ -224,10 +223,7 @@ function estimateLabelWidth(text, cellWidth) {
  * Get the bar color based on task type (same logic as Bars.jsx)
  */
 function getTaskColor(task) {
-  if (
-    task.$isMilestone ||
-    task.type === 'milestone'
-  ) {
+  if (task.$isMilestone || task.type === 'milestone') {
     return '#ad44ab'; // Purple for milestones
   }
   if (task.$isIssue) {

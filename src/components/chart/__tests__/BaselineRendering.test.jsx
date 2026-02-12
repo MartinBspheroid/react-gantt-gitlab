@@ -22,7 +22,9 @@ describe('Baseline Rendering Logic', () => {
     });
 
     it('should have arm length smaller than drop height for subtle slant', () => {
-      expect(BRACKET_CONFIG.ARM_LENGTH).toBeLessThanOrEqual(BRACKET_CONFIG.DROP_HEIGHT);
+      expect(BRACKET_CONFIG.ARM_LENGTH).toBeLessThanOrEqual(
+        BRACKET_CONFIG.DROP_HEIGHT,
+      );
     });
   });
 

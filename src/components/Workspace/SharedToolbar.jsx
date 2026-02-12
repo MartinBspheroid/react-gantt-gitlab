@@ -44,13 +44,13 @@ export function SharedToolbar({
   const stats = {
     total: tasks?.length || 0,
     completed:
-      tasks?.filter((t) => t.progress === 100 || t.state === 'closed')
-        .length || 0,
+      tasks?.filter((t) => t.progress === 100 || t.state === 'closed').length ||
+      0,
     inProgress:
       tasks?.filter((t) => t.progress > 0 && t.progress < 100).length || 0,
     notStarted:
-      tasks?.filter((t) => t.progress === 0 && t.state !== 'closed')
-        .length || 0,
+      tasks?.filter((t) => t.progress === 0 && t.state !== 'closed').length ||
+      0,
     overdue:
       tasks?.filter((t) => {
         if (!t.end || t.state === 'closed') return false;

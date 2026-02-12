@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import './SyncButton.css';
 
 export function SyncButton({ onSync, syncState, filterOptions }) {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -76,71 +77,6 @@ export function SyncButton({ onSync, syncState, filterOptions }) {
           </div>
         )}
       </div>
-
-      <style>{`
-        .sync-button {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .sync-btn {
-          height: 24px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 0 8px;
-          background: #1f75cb;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: background 0.2s;
-          font-weight: 500;
-          box-sizing: border-box;
-        }
-
-        .sync-btn:hover:not(:disabled) {
-          background: #1662b0;
-        }
-
-        .sync-btn:disabled {
-          background: #9db8d4;
-          cursor: not-allowed;
-        }
-
-        .sync-icon {
-          display: block;
-        }
-
-        .sync-btn.animating .sync-icon {
-          animation: spin 0.5s linear;
-        }
-
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .sync-info {
-          font-size: 11px;
-          color: var(--wx-gantt-control-text);
-        }
-
-        .sync-time {
-          color: var(--wx-gantt-control-text);
-        }
-
-        .sync-error {
-          color: #dc3545;
-          font-weight: 500;
-        }
-      `}</style>
     </div>
   );
 }

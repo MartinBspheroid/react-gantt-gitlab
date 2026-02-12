@@ -32,11 +32,7 @@ describe('GroupingDropdown', () => {
 
     it('should show group count and task count when groupCount > 0', () => {
       render(
-        <GroupingDropdown
-          value="assignee"
-          groupCount={3}
-          taskCount={15}
-        />,
+        <GroupingDropdown value="assignee" groupCount={3} taskCount={15} />,
       );
       expect(screen.getByText('3 groups, 15 tasks')).toBeInTheDocument();
     });
@@ -138,8 +134,8 @@ describe('GroupingDropdown', () => {
 
       // Find menu items by their class
       const menuItems = document.querySelectorAll('.grouping-dropdown-item');
-      const assigneeItem = Array.from(menuItems).find(
-        (el) => el.textContent?.includes('By Assignee'),
+      const assigneeItem = Array.from(menuItems).find((el) =>
+        el.textContent?.includes('By Assignee'),
       );
       expect(assigneeItem).toHaveClass('selected');
     });
@@ -151,8 +147,8 @@ describe('GroupingDropdown', () => {
       await user.click(screen.getByTitle('Group tasks by...'));
 
       const menuItems = document.querySelectorAll('.grouping-dropdown-item');
-      const epicItem = Array.from(menuItems).find(
-        (el) => el.textContent?.includes('By Epic'),
+      const epicItem = Array.from(menuItems).find((el) =>
+        el.textContent?.includes('By Epic'),
       );
       expect(epicItem).not.toHaveClass('selected');
     });
@@ -174,9 +170,9 @@ describe('GroupingDropdown', () => {
 
       await user.click(screen.getByTitle('Group tasks by...'));
 
-      const options = screen.getAllByRole('button').filter(
-        (btn) => btn.classList.contains('grouping-dropdown-item'),
-      );
+      const options = screen
+        .getAllByRole('button')
+        .filter((btn) => btn.classList.contains('grouping-dropdown-item'));
       expect(options).toHaveLength(4);
     });
 

@@ -574,9 +574,7 @@ function Bars(props) {
         };
 
         // Determine base color based on task type
-        const isMilestone =
-          task.$isMilestone ||
-          task.type === 'milestone';
+        const isMilestone = task.$isMilestone || task.type === 'milestone';
         let baseColor = '#00ba94'; // Default: green for tasks
         if (isMilestone) {
           baseColor = '#ad44ab'; // Purple for milestones
@@ -707,10 +705,7 @@ function Bars(props) {
                 // Parent tasks: 使用括號形式 baseline（向下包覆子任務）
                 <ParentBaselineBracket
                   task={task}
-                  isMilestone={
-                    task.type === 'milestone' ||
-                    task.$isMilestone
-                  }
+                  isMilestone={task.type === 'milestone' || task.$isMilestone}
                   cellWidth={cellWidthValue}
                 />
               ) : (
@@ -718,8 +713,7 @@ function Bars(props) {
                 <div
                   className={
                     'wx-GKbcLEGA wx-baseline' +
-                    (task.type === 'milestone' ||
-                    task.$isMilestone
+                    (task.type === 'milestone' || task.$isMilestone
                       ? ' wx-milestone'
                       : '')
                   }

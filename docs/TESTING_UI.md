@@ -5,13 +5,16 @@ The project uses **Vitest** with a browser-based UI for viewing test results and
 ## Running Tests
 
 ### Run Tests in Browser UI
+
 Open a terminal and run:
+
 ```bash
 npm run test:ui
 ```
 
 This will start the Vitest UI server at:
-- **URL:** http://localhost:51204/__vitest__/
+
+- **URL:** http://localhost:51204/**vitest**/
 - **Port:** 51204 (or next available)
 
 The UI will automatically open in your default browser. If not, manually navigate to the URL above.
@@ -44,11 +47,12 @@ The browser-based UI provides:
 To view the kitchen sink integration tests:
 
 1. Run `npm run test:ui`
-2. Navigate to http://localhost:51204/__vitest__/
+2. Navigate to http://localhost:51204/**vitest**/
 3. Expand the "Kitchen Sink Integration Test" suite
 4. Run individual tests or the entire suite
 
 The kitchen sink tests cover:
+
 - Workspace component integration
 - GanttView component integration
 - KanbanView component integration
@@ -60,6 +64,7 @@ The kitchen sink tests cover:
 ## Configuration
 
 Vitest configuration is in `vitest.config.ts`. Key settings:
+
 - **Environment:** jsdom (DOM simulation)
 - **Globals:** Enabled for test functions
 - **Setup Files:** `./vitest.setup.ts` for test helpers

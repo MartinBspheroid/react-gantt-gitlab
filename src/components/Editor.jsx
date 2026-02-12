@@ -265,8 +265,7 @@ function Editor({
     // Data-source milestones always have dates (stored directly on task.start/end)
     // For regular tasks: check date fields to determine if the source actually has the dates
     // (task.start may be auto-filled with createdAt when source has no startDate)
-    const hasSourceStartDate =
-      isSourceMilestone || activeTask.startDate;
+    const hasSourceStartDate = isSourceMilestone || activeTask.startDate;
     const hasSourceDueDate = isSourceMilestone || activeTask.dueDate;
 
     // If source doesn't have the date, set it to null so Editor shows empty

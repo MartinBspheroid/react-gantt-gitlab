@@ -21,8 +21,7 @@ function DemoExplorerContent({
   const [show, setShow] = useState(false);
 
   const baseLink =
-    'https://github.com/nicejji/react-gantt' +
-    '/tree/main/demos/cases/';
+    'https://github.com/nicejji/react-gantt' + '/tree/main/demos/cases/';
 
   useEffect(() => {
     document.body.className = `wx-willow-theme`;

@@ -1,0 +1,147 @@
+/* DeleteDialog Component Styles */
+
+.delete-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.delete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--wx-gantt-filter-background, #f5f5f5);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.delete-item i {
+  color: var(--wx-gantt-modal-hint-text, #666);
+  font-size: 12px;
+  width: 16px;
+  text-align: center;
+}
+
+.delete-item-title {
+  flex: 1;
+  color: var(--wx-gantt-modal-text, #333);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-item-type {
+  font-size: 11px;
+  color: var(--wx-gantt-modal-hint-text, #666);
+  padding: 2px 6px;
+  background: var(--wx-gantt-modal-background, #fff);
+  border-radius: 3px;
+}
+
+.delete-items-more {
+  font-size: 12px;
+  color: var(--wx-gantt-modal-hint-text, #666);
+  text-align: center;
+  padding: 6px;
+}
+
+.delete-action-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Shared styles for action options (radio) and recursive option (checkbox) */
+.delete-action-option,
+.delete-recursive-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--wx-gantt-filter-input-border, #ddd);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-action-option:hover:not(:has(input:disabled)),
+.delete-recursive-option:hover:not(:has(input:disabled)) {
+  border-color: var(--wx-gantt-accent-color, #1f75cb);
+  background: var(--wx-gantt-action-hover-background, rgba(31, 117, 203, 0.03));
+}
+
+.delete-action-option:has(input:disabled),
+.delete-recursive-option:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-action-option input[type='radio'],
+.delete-recursive-option input[type='checkbox'] {
+  margin: 2px 0 0 0;
+  cursor: pointer;
+}
+
+.delete-action-option input[type='radio']:disabled,
+.delete-recursive-option input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+
+.delete-action-option .option-content,
+.delete-recursive-option .option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.delete-action-option .option-title,
+.delete-recursive-option .option-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gantt-modal-text, #333);
+}
+
+.delete-action-option .option-desc,
+.delete-recursive-option .option-desc {
+  font-size: 12px;
+  color: var(--wx-gantt-modal-hint-text, #666);
+}
+
+/* Recursive option specific: checkbox size and background */
+.delete-recursive-option {
+  background: var(--wx-gantt-recursive-option-background, #f9f9f9);
+}
+
+.delete-recursive-option input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
+.delete-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.delete-warning.danger {
+  background: var(--wx-gantt-danger-background, #fef2f2);
+  border: 1px solid var(--wx-gantt-danger-border, #fecaca);
+  color: var(--wx-gantt-danger-text, #dc2626);
+}
+
+.delete-warning.info {
+  background: var(--wx-gantt-info-background, #eff6ff);
+  border: 1px solid var(--wx-gantt-info-border, #bfdbfe);
+  color: var(--wx-gantt-info-text, #1d4ed8);
+}
+
+.delete-warning i {
+  margin-top: 2px;
+}

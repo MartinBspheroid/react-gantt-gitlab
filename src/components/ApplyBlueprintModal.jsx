@@ -13,8 +13,11 @@ function getNewMilestoneTitle(blueprint, options) {
   return prefix ? `${prefix}${base}` : base;
 }
 function getNewItemTitle(title, options, type) {
-  const { add_issue_prefix, add_task_prefix, prefix } = options.item_naming || {};
-  const shouldPrefix = (type === 'Issue' && add_issue_prefix) || (type === 'Task' && add_task_prefix);
+  const { add_issue_prefix, add_task_prefix, prefix } =
+    options.item_naming || {};
+  const shouldPrefix =
+    (type === 'Issue' && add_issue_prefix) ||
+    (type === 'Task' && add_task_prefix);
   return shouldPrefix && prefix ? `${prefix}${title}` : title;
 }
 import './ApplyBlueprintModal.css';

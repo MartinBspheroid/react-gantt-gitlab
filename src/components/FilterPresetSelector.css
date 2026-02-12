@@ -1,0 +1,442 @@
+/* FilterPresetSelector Component Styles */
+
+.filter-preset-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-filter-preset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--wx-gantt-filter-input-background);
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 36px;
+}
+
+.btn-filter-preset:hover:not(:disabled) {
+  background: var(--wx-gantt-filter-hover-background);
+  border-color: var(--wx-gantt-control-text);
+}
+
+.btn-filter-preset:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-filter-preset.has-preset {
+  background: var(--wx-gantt-preset-active-background, rgba(31, 117, 203, 0.1));
+  border-color: var(--wx-gantt-preset-active-border, rgba(31, 117, 203, 0.3));
+}
+
+.btn-filter-preset .preset-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.btn-filter-preset .preset-spinner {
+  font-size: 10px;
+}
+
+.btn-filter-preset .preset-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.filter-preset-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 280px;
+  max-width: 360px;
+  background: var(--wx-gantt-filter-input-background);
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 8px;
+  box-shadow: var(--wx-gantt-dropdown-shadow, 0 8px 24px rgba(0, 0, 0, 0.2));
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.preset-search {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--wx-gantt-filter-input-border);
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.preset-search .search-icon {
+  color: var(--wx-gantt-control-text);
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.preset-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--wx-gantt-filter-text);
+}
+
+.preset-search-input::placeholder {
+  color: var(--wx-gantt-control-text);
+}
+
+.search-clear {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: var(--wx-gantt-control-text);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.search-clear:hover {
+  color: var(--wx-gantt-filter-text);
+  background: var(--wx-gantt-filter-input-border);
+}
+
+.preset-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--wx-gantt-control-text);
+  font-size: 13px;
+}
+
+.preset-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--wx-gantt-control-text);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.preset-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Folder styles */
+.preset-folder {
+  border-bottom: 1px solid var(--wx-gantt-filter-input-border);
+}
+
+.preset-folder:last-child {
+  border-bottom: none;
+}
+
+.preset-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.preset-folder-header:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.preset-folder-header .folder-arrow {
+  font-size: 10px;
+  color: var(--wx-gantt-control-text);
+  width: 10px;
+}
+
+.preset-folder-header .folder-icon {
+  font-size: 12px;
+  color: var(--wx-gantt-folder-icon-color, #f0ad4e);
+}
+
+.preset-folder-header .folder-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.preset-folder-header .folder-count {
+  font-size: 11px;
+  color: var(--wx-gantt-control-text);
+  background: var(--wx-gantt-filter-input-border);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.preset-folder-content {
+  background: var(--wx-gantt-folder-content-background, rgba(0, 0, 0, 0.02));
+}
+
+/* Preset item styles */
+.preset-item {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 0;
+  border-bottom: 1px solid var(--wx-gantt-filter-input-border);
+}
+
+.preset-item:last-child {
+  border-bottom: none;
+}
+
+.preset-item.active {
+  background: var(--wx-gantt-preset-active-background, rgba(31, 117, 203, 0.1));
+}
+
+.preset-select-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.preset-select-btn:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.preset-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-check {
+  color: var(--wx-gantt-success-color, #28a745);
+  font-size: 12px;
+}
+
+.preset-menu-btn {
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  color: var(--wx-gantt-control-text);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.preset-item:hover .preset-menu-btn {
+  opacity: 1;
+}
+
+.preset-menu-btn:hover {
+  background: var(--wx-gantt-filter-hover-background);
+  color: var(--wx-gantt-filter-text);
+}
+
+.preset-menu-fixed {
+  background: var(--wx-gantt-filter-input-background);
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 6px;
+  box-shadow: var(--wx-gantt-dropdown-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  overflow: hidden;
+}
+
+.preset-menu-fixed button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.preset-menu-fixed button:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.preset-menu-fixed button.delete {
+  color: var(--wx-gantt-danger-text, #dc3545);
+}
+
+.preset-menu-fixed button.delete:hover {
+  background: var(--wx-gantt-danger-hover-background, rgba(220, 53, 69, 0.1));
+}
+
+.preset-actions {
+  padding: 8px;
+  border-top: 1px solid var(--wx-gantt-filter-input-border);
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.btn-save-preset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--wx-gantt-accent-color, #1f75cb);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save-preset:hover:not(:disabled) {
+  background: var(--wx-gantt-accent-color-hover, #1a65b3);
+}
+
+.btn-save-preset:disabled {
+  background: var(--wx-gantt-control-background);
+  color: var(--wx-gantt-control-text);
+  cursor: not-allowed;
+}
+
+.preset-permission-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--wx-gantt-control-text);
+  border-top: 1px solid var(--wx-gantt-filter-input-border);
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.preset-permission-notice i {
+  color: var(--wx-gantt-warning-icon-color, #d97706);
+  font-size: 14px;
+}
+
+/* Dialog Overlay */
+.preset-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--wx-gantt-modal-overlay, rgba(0, 0, 0, 0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.preset-dialog {
+  background: var(--wx-gantt-filter-input-background);
+  border-radius: 12px;
+  box-shadow: var(--wx-gantt-modal-shadow, 0 8px 32px rgba(0, 0, 0, 0.3));
+  width: 360px;
+  max-width: 90vw;
+}
+
+.dialog-header {
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wx-gantt-filter-text);
+  border-bottom: 1px solid var(--wx-gantt-filter-input-border);
+}
+
+.dialog-body {
+  padding: 20px;
+}
+
+.dialog-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gantt-filter-text);
+}
+
+.dialog-body input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 6px;
+  background: var(--wx-gantt-filter-background);
+  color: var(--wx-gantt-filter-text);
+  font-size: 14px;
+}
+
+.dialog-body input:focus {
+  outline: none;
+  border-color: var(--wx-gantt-accent-color, #1f75cb);
+  box-shadow: 0 0 0 3px var(--wx-gantt-focus-shadow, rgba(31, 117, 203, 0.1));
+}
+
+.dialog-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--wx-gantt-control-text);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--wx-gantt-filter-input-border);
+  background: var(--wx-gantt-filter-hover-background);
+  border-radius: 0 0 12px 12px;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  background: none;
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.btn-save {
+  padding: 10px 18px;
+  background: var(--wx-gantt-accent-color, #1f75cb);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: var(--wx-gantt-accent-color-hover, #1a65b3);
+}
+
+.btn-save:disabled {
+  background: var(--wx-gantt-control-background);
+  color: var(--wx-gantt-control-text);
+  cursor: not-allowed;
+}

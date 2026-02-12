@@ -139,9 +139,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
   const filteredTasks = useMemo(() => {
     // Only include issues (not milestones, not Tasks which are child items)
     const issuesOnly = tasksWithPriority.filter(
-      (task) =>
-        task.$isIssue &&
-        task.workItemType !== 'Task',
+      (task) => task.$isIssue && task.workItemType !== 'Task',
     );
     return DataFilters.applyFilters(issuesOnly, filterOptions);
   }, [tasksWithPriority, filterOptions]);
@@ -213,10 +211,7 @@ export function KanbanView({ showSettings, onSettingsClose }) {
   // Handle card double-click (open editor)
   const handleCardDoubleClick = useCallback(
     (task) => {
-      showToast(
-        `Opening editor for #${task.issueId || task.id}...`,
-        'info',
-      );
+      showToast(`Opening editor for #${task.issueId || task.id}...`, 'info');
       // TODO: Implement editor integration
     },
     [showToast],
