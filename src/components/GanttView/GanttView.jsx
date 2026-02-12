@@ -970,9 +970,54 @@ export function GanttView({
   // State to hold selected tasks when modal is opened
   const [selectedTasksForModal, setSelectedTasksForModal] = useState([]);
 
-  // Custom context menu options with Move In... action and Blueprint actions
+  // Custom context menu options with Move In... action, Blueprint actions, and Azure DevOps actions
   const contextMenuOptions = useMemo(() => {
     const options = [...defaultMenuOptions];
+
+    // Find the paste-task option index and insert custom options after it
+    const pasteIndex = options.findIndex((opt) => opt.id === 'paste-task');
+    const insertIndex = pasteIndex !== -1 ? pasteIndex + 1 : options.length;
+
+    // Insert separator and Azure DevOps custom options
+    options.splice(
+      insertIndex,
+      0,
+      { type: 'separator' },
+      {
+        id: 'open-in-ado',
+        text: 'Open in Azure DevOps',
+        icon: 'fas fa-external-link-alt',
+        // Show for all tasks that have a webUrl in their source
+        check: (task) => task?._source?.webUrl || task?._source?.url,
+      },
+      {
+        id: 'change-state',
+        text: 'Change State',
+        icon: 'fas fa-exchange-alt',
+        // Show for all non-milestone tasks with state support
+        check: (task) =>
+          task && !task?.$isMilestone && task?._source?.type !== 'milestone',
+        data: [
+          { id: 'change-state:open', text: 'Open' },
+          { id: 'change-state:closed', text: 'Closed' },
+        ],
+      },
+      {
+        id: 'assign-to',
+        text: 'Assign To',
+        icon: 'fas fa-user-plus',
+        // Show for all non-milestone tasks
+        check: (task) =>
+          task && !task?.$isMilestone && task?._source?.type !== 'milestone',
+        data: [
+          // Dynamic data will be populated based on available members
+          { id: 'assign-to:unassigned', text: 'Unassigned' },
+          { type: 'separator' },
+          // Members will be added dynamically in the filter function
+        ],
+      },
+    );
+
     // Find the delete-task option index and insert Move In... before it
     const deleteIndex = options.findIndex((opt) => opt.id === 'delete-task');
     if (deleteIndex !== -1) {
@@ -1035,7 +1080,7 @@ export function GanttView({
 
   // Handle context menu click events
   const handleContextMenuClick = useCallback(
-    ({ action, context: ctx }) => {
+    async ({ action, context: ctx }) => {
       if (action?.id === 'move-in') {
         // Capture selected tasks at the moment the menu is clicked
         const tasks = getSelectedTasks();
@@ -1067,9 +1112,50 @@ export function GanttView({
       } else if (action?.id === 'create-from-blueprint') {
         // Open Apply Blueprint modal
         setShowApplyBlueprintModal(true);
+      } else if (action?.id === 'open-in-ado') {
+        // Open task in Azure DevOps
+        const webUrl = ctx?._source?.webUrl || ctx?._source?.url;
+        if (webUrl) {
+          window.open(webUrl, '_blank', 'noopener,noreferrer');
+        }
+      } else if (action?.id?.startsWith('change-state:')) {
+        // Change task state
+        const newState = action.id.split(':')[1];
+        if (ctx?.id && newState) {
+          try {
+            await syncTask(ctx.id, { state: newState });
+            showToast(`State changed to ${newState}`, 'success');
+            await sync();
+          } catch (error) {
+            console.error('[GanttView] Failed to change state:', error);
+            showToast(`Failed to change state: ${error.message}`, 'error');
+          }
+        }
+      } else if (action?.id?.startsWith('assign-to:')) {
+        // Assign task to user
+        const assigneeValue = action.id.split(':')[1];
+        if (ctx?.id) {
+          try {
+            const newAssignee =
+              assigneeValue === 'unassigned' ? '' : assigneeValue;
+            await syncTask(ctx.id, { assigned: newAssignee });
+            showToast(
+              newAssignee ? `Assigned to ${newAssignee}` : 'Unassigned',
+              'success',
+            );
+            await sync();
+          } catch (error) {
+            console.error('[GanttView] Failed to assign task:', error);
+            showToast(`Failed to assign: ${error.message}`, 'error');
+          }
+        }
       }
     },
+<<<<<<< HEAD
     [getSelectedTasks, api, showToast],
+=======
+    [getSelectedTasks, syncTask, sync, showToast],
+>>>>>>> ralph-session/f5ae8dc2
   );
 
   // Handle Move In action
@@ -3096,6 +3182,32 @@ export function GanttView({
               api={api}
               options={contextMenuOptions}
               onClick={handleContextMenuClick}
+              filter={(item, _task) => {
+                // Dynamically populate "Assign To" submenu with members
+                if (item.id === 'assign-to' && serverFilterOptions?.members) {
+                  // Build assignee options from server members
+                  const memberOptions = serverFilterOptions.members
+                    .map((member) => ({
+                      id: `assign-to:${member.name}`,
+                      text: member.name,
+                      icon: 'fas fa-user',
+                    }))
+                    .sort((a, b) => a.text.localeCompare(b.text));
+
+                  // Combine unassigned option with members
+                  item.data = [
+                    {
+                      id: 'assign-to:unassigned',
+                      text: 'Unassigned',
+                      icon: 'fas fa-user-slash',
+                    },
+                    { type: 'separator' },
+                    ...memberOptions,
+                  ];
+                }
+                // Always show the item (return true to include in menu)
+                return true;
+              }}
             >
               {(() => {
                 // Validate tasks structure before passing to Gantt

@@ -5,3 +5,42 @@
 .wx-menu .wx-option.wx-disabled.wx-LU2cdPQ2 .wx-icon {
   color: var(--wx-color-font-disabled);
 }
+
+/* Context Menu styling for light/dark mode support */
+.wx-context-menu {
+  background: var(--wx-background, #ffffff);
+  border: 1px solid var(--wx-border-color, #e0e0e0);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1000;
+}
+
+/* Dark mode support for context menu */
+@media (prefers-color-scheme: dark) {
+  .wx-context-menu {
+    --wx-background: #2d2d2d;
+    --wx-border-color: #404040;
+    --wx-color-font: #e0e0e0;
+    --wx-color-font-disabled: #666666;
+  }
+}
+
+/* Dark mode class-based support (when applied to parent) */
+.dark-mode .wx-context-menu,
+[data-theme='dark'] .wx-context-menu {
+  --wx-background: #2d2d2d;
+  --wx-border-color: #404040;
+  --wx-color-font: #e0e0e0;
+  --wx-color-font-disabled: #666666;
+}
+
+/* Menu item hover states */
+.wx-menu .wx-option:hover {
+  background: var(--wx-color-primary-light, rgba(57, 131, 235, 0.1));
+}
+
+.wx-menu .wx-option.wx-selected {
+  background: var(--wx-color-primary, #3983eb);
+  color: white;
+}
