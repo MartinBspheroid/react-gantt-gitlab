@@ -71,9 +71,9 @@ function CustomVariableOverrides() {
       <div className="custom-variables-info">
         <h3>Custom Variable Overrides</h3>
         <p>
-          This example demonstrates overriding specific CSS custom properties
-          to customize the Gantt chart appearance while maintaining shadcn/ui
-          theme consistency.
+          This example demonstrates overriding specific CSS custom properties to
+          customize the Gantt chart appearance while maintaining shadcn/ui theme
+          consistency.
         </p>
 
         <div className="overrides-list">
