@@ -11,6 +11,8 @@ import Tooltip from './widgets/Tooltip.jsx';
 import Material from './themes/Material.jsx';
 import Willow from './themes/Willow.jsx';
 import WillowDark from './themes/WillowDark.jsx';
+import Shadcn from './themes/Shadcn.jsx';
+import ShadcnDark from './themes/ShadcnDark.jsx';
 
 export {
   defaultEditorItems,
@@ -35,6 +37,8 @@ export {
   Material,
   Willow,
   WillowDark,
+  Shadcn,
+  ShadcnDark,
 };
 
 // Workspace (entry point for shared data layer)
