@@ -6,6 +6,8 @@ import { Globals, Button, Segmented } from '@svar-ui/react-core';
 
 import Willow from '../src/themes/Willow.jsx';
 import WillowDark from '../src/themes/WillowDark.jsx';
+import Shadcn from '../src/themes/Shadcn.jsx';
+import ShadcnDark from '../src/themes/ShadcnDark.jsx';
 
 import '@svar-ui/react-core/style.css';
 import '@svar-ui/react-grid/style.css';
@@ -18,6 +20,8 @@ import '@svar-ui/react-tasklist/style.css';
 const skins = [
   { id: 'willow', label: 'Willow', Component: Willow },
   { id: 'willow-dark', label: 'Dark', Component: WillowDark },
+  { id: 'shadcn', label: 'Shadcn', Component: Shadcn },
+  { id: 'shadcn-dark', label: 'Shadcn Dark', Component: ShadcnDark },
 ];
 
 ReactDOM.createRoot(document.getElementById('root')).render(
