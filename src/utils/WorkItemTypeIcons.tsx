@@ -61,7 +61,8 @@ export function getWorkItemIconConfig(
   }
 
   if (task._gitlab || isMilestone) {
-    const icons = mode === 'emoji' ? GITLAB_TYPE_ICONS_EMOJI : GITLAB_TYPE_ICONS_FA;
+    const icons =
+      mode === 'emoji' ? GITLAB_TYPE_ICONS_EMOJI : GITLAB_TYPE_ICONS_FA;
 
     if (isMilestone || task._gitlab?.type === 'milestone') {
       return icons.milestone;
@@ -91,7 +92,11 @@ export function renderWorkItemIcon(
   if (!config) return null;
 
   if (mode === 'emoji' || typeof config.icon === 'string') {
-    if (config.icon.startsWith('fa-') || config.icon.startsWith('far ') || config.icon.startsWith('fa-solid ')) {
+    if (
+      config.icon.startsWith('fa-') ||
+      config.icon.startsWith('far ') ||
+      config.icon.startsWith('fa-solid ')
+    ) {
       return (
         <i
           className={config.icon}

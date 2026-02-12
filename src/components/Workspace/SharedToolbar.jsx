@@ -21,6 +21,8 @@ import './SharedToolbar.css';
  * @param {function} onSettingsClick - Callback when settings button is clicked
  * @param {boolean} showViewOptions - Whether view options panel is visible
  * @param {function} onViewOptionsToggle - Callback when view options button is clicked
+ * @param {boolean} readonly - Whether the chart is in readonly mode
+ * @param {function} onReadonlyToggle - Callback when readonly toggle is clicked
  */
 export function SharedToolbar({
   activeView,
@@ -28,6 +30,8 @@ export function SharedToolbar({
   onSettingsClick,
   showViewOptions,
   onViewOptionsToggle,
+  readonly = false,
+  onReadonlyToggle,
 }) {
   // Get data from context
   const {
@@ -108,6 +112,23 @@ export function SharedToolbar({
       >
         <i className="fas fa-cog" />
       </button>
+
+      {/* Readonly Toggle Button */}
+      <button
+        onClick={onReadonlyToggle}
+        className={`shared-toolbar-btn shared-toolbar-btn-icon ${readonly ? 'active' : ''}`}
+        title={readonly ? 'Switch to Edit Mode' : 'Switch to Read-Only Mode'}
+      >
+        <i className={`fas ${readonly ? 'fa-eye' : 'fa-edit'}`} />
+      </button>
+
+      {/* Readonly Mode Indicator */}
+      {readonly && (
+        <span className="readonly-badge">
+          <i className="fas fa-lock" />
+          <span>Read Only</span>
+        </span>
+      )}
 
       {/* View Options Toggle - Only for Gantt view, before Sync */}
       {activeView === 'gantt' && (

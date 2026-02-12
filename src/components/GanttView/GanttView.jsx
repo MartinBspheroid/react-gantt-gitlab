@@ -72,6 +72,14 @@ import {
   findLinkBySourceTarget,
   validateLinkMetadata,
 } from '../../utils/LinkUtils';
+<<<<<<< HEAD
+=======
+import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
+import { BulkOperationsBar } from '../BulkOperationsBar';
+import { useStore } from '@svar-ui/lib-react';
+>>>>>>> ralph-session/27358354
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -171,13 +179,18 @@ function sortByDeletionOrder(taskIds, allTasks) {
  *                                      FilterPanel is always shown regardless of this prop.
  * @param {boolean} showSettings - Control settings modal visibility from parent
  * @param {function} onSettingsClose - Callback when settings modal is closed
+ * @param {boolean} readonly - When true, blocks all modifications (edit, drag, delete, etc.)
  */
 export function GanttView({
   hideSharedToolbar = false,
   showSettings: externalShowSettings,
   onSettingsClose,
   externalShowViewOptions,
+<<<<<<< HEAD
   className,
+=======
+  readonly = false,
+>>>>>>> ralph-session/27358354
 }) {
   // === Get data from DataContext ===
   const {
@@ -310,6 +323,124 @@ export function GanttView({
       : internalShowViewOptions;
   const setShowViewOptions = setInternalShowViewOptions;
 
+<<<<<<< HEAD
+=======
+  // MoveInModal state
+  const [showMoveInModal, setShowMoveInModal] = useState(false);
+  const [moveInProcessing, setMoveInProcessing] = useState(false);
+
+  // Blueprint state
+  const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
+  const [showApplyBlueprintModal, setShowApplyBlueprintModal] = useState(false);
+  const [showBlueprintManager, setShowBlueprintManager] = useState(false);
+  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] =
+    useState(null);
+
+  // Dialog states for replacing native browser dialogs
+  const [createItemDialogOpen, setCreateItemDialogOpen] = useState(false);
+  const [createItemDialogType, setCreateItemDialogType] = useState('milestone');
+  const [createItemDialogContext, setCreateItemDialogContext] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteDialogItems, setDeleteDialogItems] = useState([]);
+  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] =
+    useState(false);
+
+  // Track selected tasks for bulk operations
+  const selectedIds = useStore(api, 'selected');
+  const selectedTasksForBulk = useMemo(() => {
+    if (!api || !selectedIds || selectedIds.length === 0) return [];
+    return selectedIds
+      .map((id) => api.getTask(id))
+      .filter((task) => task != null);
+  }, [api, selectedIds]);
+
+  // Handler to deselect all
+  const handleDeselectAll = useCallback(() => {
+    if (api) {
+      api.exec('clear-selection');
+    }
+  }, [api]);
+
+  // Escape key handler to deselect all
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && selectedTasksForBulk.length > 0) {
+        handleDeselectAll();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedTasksForBulk.length, handleDeselectAll]);
+
+  // Keyboard shortcuts help modal state
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    api,
+    undoRedo: {
+      canUndo: undoRedo.canUndo,
+      canRedo: undoRedo.canRedo,
+      undo: undoRedo.undo,
+      redo: undoRedo.redo,
+    },
+    onOpenEditor: (taskId) => {
+      if (api) {
+        api.exec('open-editor', { id: taskId });
+      }
+    },
+    onCloseEditor: () => {
+      if (api) {
+        api.exec('close-editor');
+      }
+    },
+    onClearSelection: handleDeselectAll,
+    onFocusSearch: () => {
+      const searchInput = document.querySelector('.filter-search-input');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    },
+    onGoToToday: () => {
+      if (api) {
+        const now = new Date();
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+        const state = api.getState();
+        const cellWidth = state?.cellWidth || 40;
+        const start = state?.start;
+
+        if (start) {
+          const daysDiff = Math.floor(
+            (today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+          );
+          const scrollLeft = Math.max(0, daysDiff * cellWidth);
+          api.exec('scroll-chart', { left: scrollLeft });
+        }
+      }
+    },
+    onShowManagedMessage: () => {
+      showToast(
+        'Delete action is managed in Azure DevOps. Please use ADO to delete items.',
+        'info',
+      );
+    },
+    onShowHelp: () => {
+      setShowKeyboardHelp(true);
+    },
+    enabled: true,
+  });
+
+  // Date editing mode state (true = dates can be edited in grid cells)
+  // NOTE: setDateEditable is not used yet but kept for future feature to toggle date editing
+  // eslint-disable-next-line no-unused-vars
+  const [dateEditable, setDateEditable] = useState(true);
+
+>>>>>>> ralph-session/27358354
   // Store reference to all tasks for event handlers
   const allTasksRef = useRef([]);
   // Store reference to links for event handlers (to avoid stale closure)
@@ -3129,7 +3260,7 @@ export function GanttView({
                         cellHeight={cellHeight}
                         highlightTime={highlightTime}
                         countWorkdays={countWorkdays}
-                        readonly={false}
+                        readonly={readonly}
                         baselines={true}
                         taskTemplate={SmartTaskContent}
                         autoScale={false}
@@ -3277,6 +3408,26 @@ export function GanttView({
         severity="warning"
         confirmLabel="Discard"
       />
+<<<<<<< HEAD
+=======
+
+      {/* Bulk Operations Bar - shows when multiple items are selected */}
+      <BulkOperationsBar
+        selectedTasks={selectedTasksForBulk}
+        api={api}
+        provider={provider}
+        assigneeOptions={assigneeOptions}
+        onSync={sync}
+        showToast={showToast}
+        onDeselectAll={handleDeselectAll}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
+      />
+>>>>>>> ralph-session/27358354
     </div>
   );
 }
