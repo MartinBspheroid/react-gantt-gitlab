@@ -29,12 +29,39 @@ export interface IUndoRedoState {
   maxHistory: number;
 }
 
+export type ExportFormat = 'json' | 'csv' | 'xlsx' | 'mspx' | 'pdf' | 'png';
+
+export interface IPDFExportOptions {
+  pageSize?: 'a4' | 'letter' | 'legal' | 'a3';
+  orientation?: 'portrait' | 'landscape';
+  fitToPage?: boolean;
+  quality?: number;
+  margin?: number;
+}
+
+export interface IPNGExportOptions {
+  quality?: number;
+  scale?: number;
+  backgroundColor?: string;
+}
+
+export interface IExcelExportOptions {
+  sheetName?: string;
+  includeLinks?: boolean;
+  includeBaselines?: boolean;
+  includeProgress?: boolean;
+}
+
 export interface IExportOptions {
-  format: 'json' | 'csv';
+  format: ExportFormat;
+  fileName?: string;
   includeLinks?: boolean;
   includeBaselines?: boolean;
   includeProgress?: boolean;
   dateFormat?: string;
+  pdf?: IPDFExportOptions;
+  png?: IPNGExportOptions;
+  excel?: IExcelExportOptions;
 }
 
 export interface IImportOptions {

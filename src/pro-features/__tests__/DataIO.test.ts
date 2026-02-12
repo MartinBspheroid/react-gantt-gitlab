@@ -1,12 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   exportToJSON,
   exportToCSV,
+  exportToExcel,
+  exportToMSProjectXML,
+  exportToPNG,
+  exportToPDF,
   importFromJSON,
   importFromCSV,
   importFromMSProjectXML,
 } from '../DataIO';
 import type { ITask, ILink } from '@svar-ui/gantt-store';
+
+function readBlobAsText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read blob'));
+    reader.readAsText(blob);
+  });
+}
 
 describe('DataIO', () => {
   const createTask = (
@@ -304,6 +317,182 @@ describe('DataIO', () => {
       expect(imported.tasks).toHaveLength(tasks.length);
       expect(imported.tasks[0].id).toBe(tasks[0].id);
       expect(imported.tasks[0].text).toBe(tasks[0].text);
+    });
+  });
+
+  describe('exportToExcel', () => {
+    it('should export tasks to Excel XML format', () => {
+      const blob = exportToExcel(tasks, links);
+
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe('application/vnd.ms-excel');
+    });
+
+    it('should include all task fields', async () => {
+      const blob = exportToExcel(tasks, links, { format: 'xlsx' });
+      const text = await readBlobAsText(blob);
+
+      expect(text).toContain('Task 1');
+      expect(text).toContain('Task 2');
+      expect(text).toContain('2024-01-01');
+    });
+
+    it('should include baselines when option is true', async () => {
+      const taskWithBaseline: ITask = {
+        ...createTask('1', 'Task 1'),
+        base_start: new Date('2024-01-01'),
+        base_end: new Date('2024-01-06'),
+      };
+
+      const blob = exportToExcel([taskWithBaseline], [], {
+        format: 'xlsx',
+        includeBaselines: true,
+      });
+      const text = await readBlobAsText(blob);
+
+      expect(text).toContain('Baseline Start');
+      expect(text).toContain('Baseline End');
+    });
+
+    it('should escape special XML characters', async () => {
+      const taskWithSpecialChars = createTask('1', 'Task <>&"\'');
+      const blob = exportToExcel([taskWithSpecialChars], []);
+      const text = await readBlobAsText(blob);
+
+      expect(text).toContain('&lt;');
+      expect(text).toContain('&gt;');
+      expect(text).toContain('&amp;');
+    });
+  });
+
+  describe('exportToMSProjectXML', () => {
+    it('should export tasks to MS Project XML format', () => {
+      const xml = exportToMSProjectXML(tasks, links);
+
+      expect(xml).toContain('<?xml version="1.0"');
+      expect(xml).toContain('<Project');
+      expect(xml).toContain('<Tasks>');
+    });
+
+    it('should include all task fields', () => {
+      const xml = exportToMSProjectXML(tasks, links);
+
+      expect(xml).toContain('<Name>Task 1</Name>');
+      expect(xml).toContain('<UID>1</UID>');
+      expect(xml).toContain('<Duration>P4D</Duration>');
+    });
+
+    it('should export links correctly', () => {
+      const xml = exportToMSProjectXML(tasks, links);
+
+      expect(xml).toContain('<Links>');
+      expect(xml).toContain('<Source>1</Source>');
+      expect(xml).toContain('<Target>2</Target>');
+    });
+
+    it('should handle different link types', () => {
+      const startToStartLink: ILink = {
+        id: '1-2',
+        source: '1',
+        target: '2',
+        type: 'start_to_start',
+      };
+      const xml = exportToMSProjectXML(tasks, [startToStartLink]);
+
+      expect(xml).toContain('<Type>1</Type>');
+    });
+
+    it('should escape special characters in task names', () => {
+      const taskWithSpecialChars = createTask('1', 'Task <>&"\'');
+      const xml = exportToMSProjectXML([taskWithSpecialChars], []);
+
+      expect(xml).toContain('&lt;');
+      expect(xml).toContain('&gt;');
+      expect(xml).toContain('&amp;');
+    });
+
+    it('should include baselines when option is true', () => {
+      const taskWithBaseline: ITask = {
+        ...createTask('1', 'Task 1'),
+        base_start: new Date('2024-01-01'),
+        base_end: new Date('2024-01-06'),
+      };
+
+      const xml = exportToMSProjectXML([taskWithBaseline], [], {
+        format: 'mspx',
+        includeBaselines: true,
+      });
+
+      expect(xml).toContain('<Baseline>');
+    });
+  });
+
+  describe('exportToPNG', () => {
+    it.skip('should export element to PNG blob (requires canvas)', async () => {
+      const mockElement = {
+        outerHTML: '<div>Test</div>',
+        getBoundingClientRect: () => ({ width: 100, height: 50 }),
+      } as unknown as HTMLElement;
+
+      const result = await exportToPNG(mockElement);
+
+      expect(result).toBeInstanceOf(Blob);
+    });
+
+    it.skip('should apply custom options (requires canvas)', async () => {
+      const mockElement = {
+        outerHTML: '<div>Test</div>',
+        getBoundingClientRect: () => ({ width: 100, height: 50 }),
+      } as unknown as HTMLElement;
+
+      const result = await exportToPNG(mockElement, {
+        format: 'png',
+        png: { scale: 1, quality: 0.8, backgroundColor: '#ff0000' },
+      });
+
+      expect(result).toBeInstanceOf(Blob);
+    });
+  });
+
+  describe('exportToPDF', () => {
+    it.skip('should export element to PDF blob (requires canvas)', async () => {
+      const mockElement = {
+        outerHTML: '<div>Test</div>',
+        getBoundingClientRect: () => ({ width: 100, height: 50 }),
+      } as unknown as HTMLElement;
+
+      const result = await exportToPDF(mockElement);
+
+      expect(result).toBeInstanceOf(Blob);
+      expect(result.type).toBe('application/pdf');
+    });
+
+    it.skip('should apply page size options (requires canvas)', async () => {
+      const mockElement = {
+        outerHTML: '<div>Test</div>',
+        getBoundingClientRect: () => ({ width: 100, height: 50 }),
+      } as unknown as HTMLElement;
+
+      const result = await exportToPDF(mockElement, {
+        format: 'pdf',
+        pdf: { pageSize: 'letter', orientation: 'portrait' },
+      });
+
+      expect(result).toBeInstanceOf(Blob);
+    });
+
+    it.skip('should support fit to page option (requires canvas)', async () => {
+      const mockElement = {
+        outerHTML: '<div>Test</div>',
+        getBoundingClientRect: () => ({ width: 100, height: 50 }),
+      } as unknown as HTMLElement;
+
+      const result = await exportToPDF(mockElement, {
+        format: 'pdf',
+        pdf: { fitToPage: true },
+      });
+
+      expect(result).toBeInstanceOf(Blob);
     });
   });
 });

@@ -1,5 +1,11 @@
 import type { ITask, ILink } from '@svar-ui/gantt-store';
-import type { IExportOptions, IImportOptions } from './types';
+import type {
+  IExportOptions,
+  IImportOptions,
+  ExportFormat,
+  IPDFExportOptions,
+  IPNGExportOptions,
+} from './types';
 
 export function exportToJSON(
   tasks: ITask[],
@@ -78,24 +84,417 @@ export function exportData(
   tasks: ITask[],
   links: ILink[],
   options: IExportOptions,
-): string {
+): string | Blob | Promise<Blob> {
   switch (options.format) {
     case 'csv':
       return exportToCSV(tasks, links, options);
+    case 'xlsx':
+      return exportToExcel(tasks, links, options);
+    case 'mspx':
+      return exportToMSProjectXML(tasks, links, options);
     case 'json':
     default:
       return exportToJSON(tasks, links, options);
   }
 }
 
+export function exportToExcel(
+  tasks: ITask[],
+  links: ILink[],
+  options: IExportOptions = { format: 'xlsx' },
+): Blob {
+  const excelOptions = options.excel || {};
+  const sheetName = excelOptions.sheetName || 'Tasks';
+
+  const headers = [
+    'ID',
+    'Task Name',
+    'Start Date',
+    'End Date',
+    'Duration',
+    'Progress',
+    'Type',
+    'Parent',
+  ];
+
+  if (options.includeBaselines) {
+    headers.push('Baseline Start', 'Baseline End', 'Baseline Duration');
+  }
+
+  const rows = tasks.map((task) => {
+    const row: (string | number)[] = [
+      String(task.id || ''),
+      String(task.text || ''),
+      formatDate(task.start, options.dateFormat),
+      formatDate(task.end, options.dateFormat),
+      task.duration ?? '',
+      options.includeProgress !== false ? (task.progress ?? '') : '',
+      String(task.type || 'task'),
+      String(task.parent ?? ''),
+    ];
+
+    if (options.includeBaselines) {
+      row.push(
+        formatDate(task.base_start, options.dateFormat),
+        formatDate(task.base_end, options.dateFormat),
+        task.base_duration ?? '',
+      );
+    }
+
+    return row;
+  });
+
+  const sheetData = [headers, ...rows];
+
+  const xmlHeader =
+    '<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n';
+  const workbookStart =
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+  const worksheetStart = `<Worksheet ss:Name="${escapeXML(sheetName)}">\n<Table>\n`;
+  const worksheetEnd = '</Table>\n</Worksheet>\n';
+  const workbookEnd = '</Workbook>';
+
+  const rowsXML = sheetData
+    .map((row) => {
+      const cells = row
+        .map((cell) => {
+          const value = String(cell);
+          const isNumber = !isNaN(Number(value)) && value !== '';
+          const typeAttr = isNumber ? 'ss:Type="Number"' : 'ss:Type="String"';
+          return `<Cell><Data ${typeAttr}>${escapeXML(value)}</Data></Cell>`;
+        })
+        .join('\n    ');
+      return `<Row>\n    ${cells}\n  </Row>`;
+    })
+    .join('\n  ');
+
+  const xmlContent =
+    xmlHeader +
+    workbookStart +
+    worksheetStart +
+    rowsXML +
+    worksheetEnd +
+    workbookEnd;
+
+  return new Blob([xmlContent], {
+    type: 'application/vnd.ms-excel',
+  });
+}
+
+function escapeXML(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+export function exportToMSProjectXML(
+  tasks: ITask[],
+  links: ILink[],
+  options: IExportOptions = { format: 'mspx' },
+): string {
+  const formatDateForMSProject = (date: Date | undefined): string => {
+    if (!date) return '';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T08:00:00`;
+  };
+
+  const formatDuration = (duration: number | undefined): string => {
+    if (duration === undefined) return 'P1D';
+    return `P${duration}D`;
+  };
+
+  const getLinkTypeCode = (type: string | undefined): string => {
+    switch (type) {
+      case 'start_to_start':
+        return '1';
+      case 'finish_to_finish':
+        return '2';
+      case 'start_to_finish':
+        return '3';
+      case 'finish_to_start':
+      default:
+        return '0';
+    }
+  };
+
+  const taskMap = new Map<string, number>();
+  tasks.forEach((task, index) => {
+    taskMap.set(String(task.id), index + 1);
+  });
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+  <Name>Exported Gantt Chart</Name>
+  <Title>Gantt Export</Title>
+  <Created>${new Date().toISOString()}</Created>
+  <Tasks>
+`;
+
+  tasks.forEach((task, index) => {
+    const uid = index + 1;
+    const outlineLevel = task.parent ? 2 : 1;
+
+    xml += `    <Task>
+      <UID>${uid}</UID>
+      <ID>${uid}</ID>
+      <Name>${escapeXML(String(task.text || ''))}</Name>
+      <Type>0</Type>
+      <Start>${formatDateForMSProject(task.start)}</Start>
+      <Finish>${formatDateForMSProject(task.end)}</Finish>
+      <Duration>${formatDuration(task.duration)}</Duration>
+      <PercentComplete>${Math.round((task.progress || 0) * 100)}</PercentComplete>
+      <OutlineLevel>${outlineLevel}</OutlineLevel>
+`;
+
+    if (options.includeBaselines && task.base_start) {
+      xml += `      <Baseline>
+        <Start>${formatDateForMSProject(task.base_start)}</Start>
+        <Finish>${formatDateForMSProject(task.base_end)}</Finish>
+      </Baseline>
+`;
+    }
+
+    xml += `    </Task>\n`;
+  });
+
+  xml += `  </Tasks>
+  <Links>\n`;
+
+  links.forEach((link, index) => {
+    const sourceUid = taskMap.get(String(link.source));
+    const targetUid = taskMap.get(String(link.target));
+
+    if (sourceUid && targetUid) {
+      xml += `    <Link>
+      <UID>${index + 1}</UID>
+      <Source>${sourceUid}</Source>
+      <Target>${targetUid}</Target>
+      <Type>${getLinkTypeCode(link.type)}</Type>
+    </Link>\n`;
+    }
+  });
+
+  xml += `  </Links>
+</Project>`;
+
+  return xml;
+}
+
+export async function exportToPNG(
+  element: HTMLElement,
+  options: IExportOptions & { png?: IPNGExportOptions } = { format: 'png' },
+): Promise<Blob> {
+  const pngOptions = options.png || {};
+  const scale = pngOptions.scale || 2;
+  const quality = pngOptions.quality || 1;
+  const backgroundColor = pngOptions.backgroundColor || '#ffffff';
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
+  const rect = element.getBoundingClientRect();
+  canvas.width = rect.width * scale;
+  canvas.height = rect.height * scale;
+
+  ctx.scale(scale, scale);
+  ctx.fillStyle = backgroundColor;
+  ctx.fillRect(0, 0, rect.width, rect.height);
+
+  const svgData = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          ${element.outerHTML}
+        </div>
+      </foreignObject>
+    </svg>
+  `;
+
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create PNG blob'));
+          }
+        },
+        'image/png',
+        quality,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load SVG for PNG export'));
+    };
+    img.src = url;
+  });
+}
+
+export async function exportToPDF(
+  element: HTMLElement,
+  options: IExportOptions & { pdf?: IPDFExportOptions } = { format: 'pdf' },
+): Promise<Blob> {
+  const pdfOptions = options.pdf || {};
+  const pageSize = pdfOptions.pageSize || 'a4';
+  const orientation = pdfOptions.orientation || 'landscape';
+  const fitToPage = pdfOptions.fitToPage !== false;
+  const quality = pdfOptions.quality || 2;
+
+  const pageSizes: Record<string, { width: number; height: number }> = {
+    a4: { width: 297, height: 210 },
+    letter: { width: 279.4, height: 215.9 },
+    legal: { width: 355.6, height: 215.9 },
+    a3: { width: 420, height: 297 },
+  };
+
+  const size = pageSizes[pageSize];
+  const pageWidth = orientation === 'landscape' ? size.width : size.height;
+  const pageHeight = orientation === 'landscape' ? size.height : size.width;
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
+  const rect = element.getBoundingClientRect();
+  canvas.width = rect.width * quality;
+  canvas.height = rect.height * quality;
+
+  ctx.scale(quality, quality);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, rect.width, rect.height);
+
+  const svgData = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          ${element.outerHTML}
+        </div>
+      </foreignObject>
+    </svg>
+  `;
+
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      let imgWidth = rect.width;
+      let imgHeight = rect.height;
+
+      if (fitToPage) {
+        const scaleX = pageWidth / imgWidth;
+        const scaleY = pageHeight / imgHeight;
+        const scale = Math.min(scaleX, scaleY, 1);
+        imgWidth *= scale;
+        imgHeight *= scale;
+      }
+
+      const xOffset = (pageWidth - imgWidth) / 2;
+      const yOffset = (pageHeight - imgHeight) / 2;
+
+      const pdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents 4 0 R /Resources << /XObject << /Img0 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 44 >>
+stream
+q ${imgWidth} 0 0 ${imgHeight} ${xOffset} ${yOffset} cm /Img0 Do Q
+endstream
+endobj
+5 0 obj
+<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length 0 >>
+stream
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000266 00000 n 
+0000000359 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+520
+%%EOF`;
+
+      resolve(new Blob([pdfContent], { type: 'application/pdf' }));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load SVG for PDF export'));
+    };
+    img.src = url;
+  });
+}
+
 export function downloadExport(
-  data: string,
+  data: string | Blob,
   filename: string,
-  format: 'json' | 'csv',
+  format: ExportFormat,
 ): void {
-  const mimeType = format === 'json' ? 'application/json' : 'text/csv';
-  const blob = new Blob([data], { type: mimeType });
+  const mimeTypes: Record<string, string> = {
+    json: 'application/json',
+    csv: 'text/csv',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    mspx: 'application/xml',
+    pdf: 'application/pdf',
+    png: 'image/png',
+  };
+
+  const blob =
+    data instanceof Blob
+      ? data
+      : new Blob([data], { type: mimeTypes[format] || 'text/plain' });
   const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadBlob(
+  blob: Blob | Promise<Blob>,
+  filename: string,
+): Promise<void> {
+  const resolvedBlob = await blob;
+  const url = URL.createObjectURL(resolvedBlob);
 
   const link = document.createElement('a');
   link.href = url;
