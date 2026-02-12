@@ -13,6 +13,7 @@ import { GanttView } from '../GanttView/GanttView';
 import { KanbanView } from '../KanbanView/KanbanView';
 import { SharedToolbar } from './SharedToolbar';
 import { SharedFilterPanel } from './SharedFilterPanel';
+import { cn } from '../../utils/cn';
 import './Workspace.css';
 
 const VIEW_MODE_KEY = 'gantt-view-mode';
@@ -37,7 +38,7 @@ function storeViewMode(mode) {
   }
 }
 
-export function Workspace({ provider, autoSync = true }) {
+export function Workspace({ provider, autoSync = true, className }) {
   const [activeView, setActiveView] = useState(getStoredViewMode); // 'gantt' | 'kanban'
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
@@ -50,7 +51,7 @@ export function Workspace({ provider, autoSync = true }) {
 
   return (
     <DataProvider provider={provider} autoSync={autoSync}>
-      <div className="gantt-workspace">
+      <div className={cn('gantt-workspace', className)}>
         {/* Shared Toolbar */}
         <SharedToolbar
           activeView={activeView}

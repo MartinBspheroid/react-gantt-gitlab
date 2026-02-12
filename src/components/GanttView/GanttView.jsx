@@ -27,6 +27,7 @@ import {
   createStartDate,
   createEndDate,
 } from '../../utils/dateUtils.js';
+import { cn } from '../../utils/cn';
 // ProjectSelector removed - data source is provided via DataProvider
 import { SyncButton } from '../SyncButton.jsx';
 import { FilterPanel } from '../FilterPanel.jsx';
@@ -176,6 +177,7 @@ export function GanttView({
   showSettings: externalShowSettings,
   onSettingsClose,
   externalShowViewOptions,
+  className,
 }) {
   // === Get data from DataContext ===
   const {
@@ -2477,7 +2479,7 @@ export function GanttView({
   }
 
   return (
-    <div className="gantt-view-container">
+    <div className={cn('gantt-view-container', className)}>
       {/* Toast notifications are now handled by DataProvider */}
 
       {/* Header section - hidden when hideSharedToolbar is true (e.g., embedded in unified toolbar) */}
