@@ -1,0 +1,117 @@
+.wx-split-segments {
+  padding: 8px 0;
+}
+
+.wx-split-segments-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--wx-color-font-secondary, #666);
+}
+
+.wx-split-segments-hint {
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.wx-split-segments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.wx-split-segments-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.wx-split-segments-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--wx-color-border, #ddd);
+  border-radius: 4px;
+  background: var(--wx-color-background, #fff);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.wx-split-segments-btn:hover {
+  background: var(--wx-color-background-hover, #f5f5f5);
+}
+
+.wx-split-segments-merge {
+  color: var(--wx-color-primary, #1d61f0);
+}
+
+.wx-split-segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wx-split-segment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--wx-color-border, #e0e0e0);
+  border-radius: 4px;
+  background: var(--wx-color-background-alt, #fafafa);
+}
+
+.wx-split-segment-number {
+  font-weight: 600;
+  color: var(--wx-color-primary, #1d61f0);
+  min-width: 24px;
+}
+
+.wx-split-segment-fields {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.wx-split-segment-fields label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--wx-color-font-secondary, #666);
+}
+
+.wx-split-segment-fields input[type='date'] {
+  padding: 4px 6px;
+  border: 1px solid var(--wx-color-border, #ddd);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.wx-split-segment-fields input[type='date']:disabled {
+  background: var(--wx-color-background-disabled, #f0f0f0);
+  cursor: not-allowed;
+}
+
+.wx-split-segment-duration {
+  font-size: 12px;
+  color: var(--wx-color-font-secondary, #666);
+  padding: 2px 6px;
+  background: var(--wx-color-background-alt, #f0f0f0);
+  border-radius: 4px;
+}
+
+.wx-split-segment-remove {
+  padding: 2px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--wx-color-danger, #dc2626);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.wx-split-segment-remove:hover {
+  background: var(--wx-color-danger-light, #fee2e2);
+}

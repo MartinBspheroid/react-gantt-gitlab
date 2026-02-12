@@ -841,6 +841,24 @@ export function GanttView({
       });
     }
 
+    // Add Split Task option - only for regular tasks (not milestones or summaries)
+    const splitIndex = options.findIndex((opt) => opt.id === 'delete-task');
+    if (splitIndex !== -1) {
+      options.splice(splitIndex, 0, {
+        id: 'split-task',
+        text: 'Split Task',
+        icon: 'wxi-split',
+        // Only show for regular tasks with dates (not milestones, summaries, or split tasks)
+        check: (task) => {
+          if (!task) return false;
+          if (task.type === 'milestone' || task.type === 'summary')
+            return false;
+          if (task.splitParts && task.splitParts.length > 1) return false;
+          return task.start != null && task.end != null;
+        },
+      });
+    }
+
     // Add Blueprint options for Milestones
     options.push({ type: 'separator' });
     options.push({
@@ -870,6 +888,22 @@ export function GanttView({
         setSelectedTasksForModal(tasks);
         // Open the Move In modal
         setShowMoveInModal(true);
+      } else if (action?.id === 'split-task') {
+        // Split task at midpoint - default split behavior
+        if (ctx && api) {
+          const task = api.getTask(ctx.id);
+          if (task?.start && task?.end) {
+            const midTime =
+              task.start.getTime() +
+              (task.end.getTime() - task.start.getTime()) / 2;
+            const splitDate = new Date(midTime);
+            api.exec('split-task', { id: ctx.id, splitDate });
+            showToast(
+              `Task "${task.text}" split at ${splitDate.toLocaleDateString()}`,
+              'success',
+            );
+          }
+        }
       } else if (action?.id === 'save-as-blueprint') {
         // Save milestone as Blueprint
         if (ctx?._source?.type === 'milestone') {
@@ -881,7 +915,7 @@ export function GanttView({
         setShowApplyBlueprintModal(true);
       }
     },
-    [getSelectedTasks],
+    [getSelectedTasks, api, showToast],
   );
 
   // Handle Move In action
@@ -1113,6 +1147,44 @@ export function GanttView({
       ganttApi.on('close-editor', () => {
         isEditorOpenRef.current = false;
         currentEditingTaskRef.current = null;
+      });
+
+      // Handle split-task action
+      ganttApi.on('split-task', (ev) => {
+        const { id, splitDate } = ev;
+        if (!id) return;
+
+        const task = ganttApi.getTask(id);
+        if (!task || !task.start || !task.end) return;
+
+        // Use provided split date or default to midpoint
+        const actualSplitDate =
+          splitDate ||
+          new Date(
+            task.start.getTime() +
+              (task.end.getTime() - task.start.getTime()) / 2,
+          );
+
+        // Validate split date is within task range
+        if (actualSplitDate <= task.start || actualSplitDate >= task.end) {
+          showToast('Split date must be within task duration', 'error');
+          return;
+        }
+
+        // Create split parts
+        const splitParts = [
+          { start: task.start, end: actualSplitDate },
+          { start: actualSplitDate, end: task.end },
+        ];
+
+        // Update task with split parts
+        ganttApi.exec('update-task', {
+          id,
+          task: {
+            splitParts,
+          },
+          skipSync: true, // Don't sync to GitLab - split is visual only
+        });
       });
 
       /**

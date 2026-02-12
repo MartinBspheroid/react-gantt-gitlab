@@ -25,6 +25,7 @@ import Links from './editor/Links.jsx';
 import DateTimePicker from './editor/DateTimePicker.jsx';
 import NullableDatePicker from './editor/NullableDatePicker.jsx';
 import WorkdaysInput from './editor/WorkdaysInput.jsx';
+import SplitSegments from './editor/SplitSegments.jsx';
 import { useStore, useWritableProp } from '@svar-ui/lib-react';
 
 // helpers
@@ -41,6 +42,7 @@ registerEditorItem('slider', Slider);
 registerEditorItem('counter', Counter);
 registerEditorItem('links', Links);
 registerEditorItem('workdays', WorkdaysInput);
+registerEditorItem('split-segments', SplitSegments);
 
 function Editor({
   api,
@@ -227,8 +229,33 @@ function Editor({
   }
 
   const editorItems = useMemo(() => {
-    const eItems = prepareEditorItems(items, taskUnscheduled);
-    return filterEditorItems(eItems);
+    let eItems = prepareEditorItems(items, taskUnscheduled);
+    eItems = filterEditorItems(eItems);
+
+    // Add split segments editor for tasks with splitParts
+    if (
+      activeTask?.splitParts &&
+      Array.isArray(activeTask.splitParts) &&
+      activeTask.splitParts.length > 0
+    ) {
+      // Find position to insert split segments (after dates section, before links)
+      const linksIndex = eItems.findIndex((item) => item.comp === 'links');
+      const insertIndex = linksIndex > 0 ? linksIndex : eItems.length;
+
+      const splitSegmentsItem = {
+        comp: 'split-segments',
+        key: 'splitParts',
+        label: 'Split Segments',
+      };
+
+      eItems = [
+        ...eItems.slice(0, insertIndex),
+        splitSegmentsItem,
+        ...eItems.slice(insertIndex),
+      ];
+    }
+
+    return eItems;
   }, [
     items,
     taskUnscheduled,
@@ -240,6 +267,7 @@ function Editor({
     _,
     api,
     autoSave,
+    activeTask?.splitParts,
   ]);
 
   const task = useMemo(() => {
