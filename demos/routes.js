@@ -56,6 +56,7 @@ import GanttProjectBoundaries from './cases/GanttProjectBoundaries.jsx';
 import GanttRowGrouping from './cases/GanttRowGrouping.jsx';
 import GanttBaselines from './cases/GanttBaselines.jsx';
 import ShadcnVisualVerification from './cases/ShadcnVisualVerification.jsx';
+import GanttColorRules from './cases/GanttColorRules.jsx';
 
 export const links = [
   [
@@ -84,6 +85,7 @@ export const links = [
     ShadcnVisualVerification,
     'ShadcnVisualVerification',
   ],
+  ['/color-rules/:skin', 'Color Rules', GanttColorRules, 'GanttColorRules'],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 
