@@ -79,7 +79,7 @@
 
 .unit-select:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .date-input {
@@ -94,7 +94,7 @@
 
 .date-input:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .project-select-compact {
@@ -192,10 +192,10 @@
   top: 100%;
   left: 0;
   margin-top: 4px;
-  background: var(--wx-gantt-dropdown-background, white);
-  border: 1px solid var(--wx-gantt-dropdown-border, #ddd);
+  background: var(--wx-gantt-dropdown-background, var(--wx-color-background, white));
+  border: 1px solid var(--wx-gantt-dropdown-border, var(--wx-color-border, #ddd));
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
   z-index: 1000;
   min-width: 180px;
 }
@@ -204,14 +204,14 @@
   padding: 8px 12px 4px;
   font-weight: 600;
   font-size: 13px;
-  color: var(--wx-gantt-dropdown-text, #333);
+  color: var(--wx-gantt-dropdown-text, var(--wx-color-text-primary, #333));
 }
 
 .column-settings-hint {
   padding: 0 12px 8px;
   font-size: 11px;
-  color: var(--wx-gantt-dropdown-hint, #888);
-  border-bottom: 1px solid var(--wx-gantt-dropdown-border, #eee);
+  color: var(--wx-gantt-dropdown-hint, var(--wx-color-text-light, #888));
+  border-bottom: 1px solid var(--wx-gantt-dropdown-border, var(--wx-color-border-minimal, #eee));
 }
 
 .column-settings-list {
@@ -227,16 +227,16 @@
 }
 
 .column-item:hover {
-  background: var(--wx-gantt-dropdown-hover, #f5f5f5);
+  background: var(--wx-gantt-dropdown-hover, var(--wx-color-background-muted, #f5f5f5));
 }
 
 .column-item.dragging {
   opacity: 0.5;
-  background: var(--wx-gantt-dropdown-hover, #f0f0f0);
+  background: var(--wx-gantt-dropdown-hover, var(--wx-color-background-neutral, #f0f0f0));
 }
 
 .column-item.drag-over {
-  border-top: 2px solid var(--wx-gantt-primary, #1f75cb);
+  border-top: 2px solid var(--wx-gantt-primary, var(--wx-color-primary, #1f75cb));
 }
 
 .column-drop-zone-end {
@@ -248,7 +248,7 @@
 
 .column-drop-zone-end.active {
   height: 12px;
-  background: var(--wx-gantt-primary, #1f75cb);
+  background: var(--wx-gantt-primary, var(--wx-color-primary, #1f75cb));
   opacity: 0.3;
 }
 
@@ -256,7 +256,7 @@
   display: flex;
   align-items: center;
   padding: 4px;
-  color: var(--wx-gantt-dropdown-hint, #999);
+  color: var(--wx-gantt-dropdown-hint, var(--wx-color-text-subtle, #999));
   cursor: grab;
 }
 
@@ -270,7 +270,7 @@
   flex: 1;
   cursor: pointer;
   font-size: 13px;
-  color: var(--wx-gantt-dropdown-text, #333);
+  color: var(--wx-gantt-dropdown-text, var(--wx-color-text-primary, #333));
 }
 
 .column-checkbox input {
@@ -297,7 +297,7 @@
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--wx-shadow-md, rgba(0, 0, 0, 0.1));
 }
 
 .settings-modal-header {
@@ -353,7 +353,7 @@
 
 .holidays-textarea:focus {
   outline: none;
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .holidays-textarea.disabled {
@@ -373,7 +373,7 @@
 .permission-warning {
   font-size: 12px;
   font-weight: normal;
-  color: #e67700;
+  color: var(--wx-color-warning-hover, #e67700);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -386,16 +386,16 @@
 .saving-indicator {
   font-size: 12px;
   font-weight: normal;
-  color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
 .holidays-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  background: var(--wx-color-background-error, #fef2f2);
+  border: 1px solid var(--wx-color-border-error, #fecaca);
+  color: var(--wx-color-status-error, #dc2626);
   padding: 8px 12px;
   border-radius: 4px;
   margin-bottom: 8px;
@@ -428,13 +428,13 @@
 }
 
 .preset-btn-clear {
-  background: #f8d7da;
+  background: var(--wx-color-background-error-alt, #f8d7da);
   border-color: #f5c6cb;
-  color: #721c24;
+  color: var(--wx-color-status-error-text, #721c24);
 }
 
 .preset-btn-clear:hover {
-  background: #f5c6cb;
+  background: var(--wx-color-border-error, #f5c6cb);
 }
 
 /* Today marker styling - see shared/TodayMarker.css */
@@ -463,22 +463,22 @@
 }
 
 .stat-completed {
-  color: #28a745;
+  color: var(--wx-color-status-success, #28a745);
 }
 
 .stat-progress {
-  color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
 }
 
 .stat-overdue {
-  color: #dc3545;
+  color: var(--wx-color-danger, #dc3545);
 }
 
 .error-banner {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--wx-color-background-error-alt, #f8d7da);
+  color: var(--wx-color-status-error-text, #721c24);
   padding: 12px 16px;
-  border-left: 4px solid #dc3545;
+  border-left: 4px solid var(--wx-color-danger, #dc3545);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -486,8 +486,8 @@
 
 .retry-btn {
   padding: 4px 12px;
-  background: #dc3545;
-  color: white;
+  background: var(--wx-color-danger, #dc3545);
+  color: var(--wx-color-text-inverse, white);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -495,7 +495,7 @@
 }
 
 .retry-btn:hover {
-  background: #c82333;
+  background: var(--wx-color-danger-hover, #c82333);
 }
 
 .gantt-wrapper {
@@ -583,8 +583,8 @@
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #1f75cb;
+  border: 4px solid var(--wx-color-background-neutral, #f3f3f3);
+  border-top: 4px solid var(--wx-color-primary, #1f75cb);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -600,12 +600,12 @@
 
 .empty-message {
   text-align: center;
-  color: #666;
+  color: var(--wx-color-text-muted, #666);
 }
 
 .empty-message h3 {
   margin: 0 0 8px 0;
-  color: #333;
+  color: var(--wx-color-text-primary, #333);
 }
 
 .empty-message p {
@@ -623,24 +623,24 @@
 /* Baseline bar styling - keep default height with padding */
 .wx-baseline {
   pointer-events: none !important;
-  background-color: #00ba94 !important; /* Green - represents Task original range */
+  background-color: var(--wx-color-success, #00ba94) !important; /* Green - represents Task original range */
   z-index: 1 !important;
   opacity: 0.7 !important;
 }
 
 /* Milestone baseline should be blue (contains issues) */
 .wx-baseline.wx-milestone {
-  background-color: #37a9ef !important; /* Blue - represents Issue original range */
+  background-color: var(--wx-color-accent-light, #37a9ef) !important; /* Blue - represents Issue original range */
 }
 
 /* Parent task bracket baseline */
 .wx-baseline-bracket {
-  color: #00ba94 !important;
+  color: var(--wx-color-success, #00ba94) !important;
   opacity: 0.5 !important;
 }
 
 .wx-baseline-bracket.wx-milestone {
-  color: #37a9ef !important;
+  color: var(--wx-color-accent-light, #37a9ef) !important;
 }
 
 /* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
@@ -673,7 +673,7 @@
 }
 
 .wx-bar.wx-group-header .wx-content {
-  color: white !important;
+  color: var(--wx-color-text-inverse, white) !important;
   font-weight: 600;
 }
 

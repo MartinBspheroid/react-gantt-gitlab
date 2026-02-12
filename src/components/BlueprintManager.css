@@ -75,11 +75,11 @@
 }
 
 .blueprint-item:hover {
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 .blueprint-item.expanded {
-  border-color: #1f75cb;
+  border-color: var(--wx-color-primary, #1f75cb);
 }
 
 /* Main row */
@@ -143,7 +143,7 @@
 
 .storage-badge.shared {
   background: rgba(31, 117, 203, 0.1);
-  color: #1f75cb;
+  color: var(--wx-color-primary, #1f75cb);
 }
 
 .storage-badge.local {
@@ -154,16 +154,16 @@
 .edit-input {
   width: 100%;
   padding: 4px 8px;
-  border: 1px solid #1f75cb;
+  border: 1px solid var(--wx-color-primary, #1f75cb);
   border-radius: 4px;
   font-size: 14px;
-  background: var(--wx-gantt-modal-background, #fff);
-  color: var(--wx-gantt-modal-text, #333);
+  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
+  color: var(--wx-gantt-modal-text, var(--wx-color-text-primary, #333));
 }
 
 .edit-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 /* Actions */
@@ -198,8 +198,8 @@
 }
 
 .action-btn.delete:hover:not(:disabled) {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--wx-color-background-error, #fef2f2);
+  color: var(--wx-color-status-error, #dc2626);
 }
 
 /* Expanded details */

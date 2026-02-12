@@ -1,136 +1,244 @@
 .wx-willow-theme {
-  --wx-gantt-border-color: #e6e6e6;
-  --wx-gantt-border: 1px solid #1d1e261a;
+  /* ============================================
+     BASE COLOR SYSTEM - Core Color Variables
+     ============================================ */
+
+  /* Primary Colors (Brand/Accent) */
+  --wx-color-primary: #1f75cb;
+  --wx-color-primary-hover: #1a65b3;
+  --wx-color-accent-blue: #3983eb;
+  --wx-color-accent-blue-hover: #1f6bd9;
+  --wx-color-accent-light: #37a9ef;
+  --wx-color-accent-blue-alt: #3b82f6;
+  --wx-color-accent-blue-alt-hover: #2563eb;
+  --wx-color-success: #00ba94;
+  --wx-color-success-hover: #099f81;
+  --wx-color-danger: #dc2626;
+  --wx-color-danger-hover: #b91c1c;
+  --wx-color-milestone: #ad44ab;
+  --wx-color-warning: #d97706;
+  --wx-color-warning-hover: #b45309;
+  --wx-color-warning-alt: #f59e0b;
+  --wx-color-purple: #a883e4;
+  --wx-color-info: #3983eb;
+  --wx-color-info-hover: #1f6bd9;
+
+  /* Background Colors */
+  --wx-color-background: #ffffff;
+  --wx-color-background-secondary: #f9fafb;
+  --wx-color-background-tertiary: #f8f9fa;
+  --wx-color-background-muted: #f5f5f5;
+  --wx-color-background-gray: #f3f4f6;
+  --wx-color-background-holiday: #f0f6fa;
+  --wx-color-background-error: #fef2f2;
+  --wx-color-background-error-light: #fee2e2;
+  --wx-color-background-error-alt: #f8d7da;
+  --wx-color-background-warning: #fef3c7;
+  --wx-color-background-info: #dbeafe;
+  --wx-color-background-sidebar: #fbfbfb;
+  --wx-color-background-hover: #f7f7f7;
+  --wx-color-background-active: #f1f1f1;
+  --wx-color-background-light: #f9f9f9;
+  --wx-color-background-neutral: #f0f0f0;
+  --wx-color-background-minimal: #fafafa;
+  --wx-color-background-tooltip: #4f525a;
+
+  /* Text/Foreground Colors */
+  --wx-color-text-primary: #333333;
+  --wx-color-text-secondary: #374151;
+  --wx-color-text-tertiary: #384047;
+  --wx-color-text-muted: #666666;
+  --wx-color-text-subtle: #9fa1ae;
+  --wx-color-text-gray: #6b7280;
+  --wx-color-text-light: #9ca3af;
+  --wx-color-text-lighter: #d1d5db;
+  --wx-color-text-inverse: #ffffff;
+  --wx-color-text-sidebar: #595b66;
+  --wx-color-text-sidebar-primary: #42454d;
+  --wx-color-text-icon: #878994;
+  --wx-color-text-placeholder: #999999;
+  --wx-color-text-tooltip: #e6e6e6;
+
+  /* Border Colors */
+  --wx-color-border: #dddddd;
+  --wx-color-border-light: #e6e6e6;
+  --wx-color-border-muted: #cccccc;
+  --wx-color-border-gray: #e5e7eb;
+  --wx-color-border-subtle: #e1e4e8;
+  --wx-color-border-light-alt: #e0e0e0;
+  --wx-color-border-sidebar: #ebebeb;
+  --wx-color-border-minimal: #eeeeee;
+  --wx-color-border-input: #d1d5db;
+  --wx-color-border-control: #c0c3ce;
+  --wx-color-border-gray-alt: #dcdcde;
+  --wx-color-border-error: #fecaca;
+
+  /* Semantic Colors (Status/States) */
+  --wx-color-status-error: #dc2626;
+  --wx-color-status-error-dark: #b91c1c;
+  --wx-color-status-error-text: #721c24;
+  --wx-color-status-error-border: #fecaca;
+  --wx-color-status-success: #28a745;
+  --wx-color-status-success-dark: #059669;
+  --wx-color-status-success-alt: #10b981;
+  --wx-color-status-warning: #d97706;
+  --wx-color-status-warning-dark: #b45309;
+  --wx-color-status-warning-light: #fcd34d;
+  --wx-color-status-info: #3b82f6;
+  --wx-color-status-info-dark: #1d4ed8;
+  --wx-color-status-info-alt: #1976d2;
+  --wx-color-status-purple: #6c5ce7;
+  --wx-color-status-purple-light: #a29bfe;
+
+  /* Shadow Colors */
+  --wx-shadow-overlay: rgba(0, 0, 0, 0.5);
+  --wx-shadow-sm: rgba(44, 47, 60, 0.06);
+  --wx-shadow-md: rgba(44, 47, 60, 0.12);
+  --wx-shadow-lg: rgba(0, 0, 0, 0.15);
+
+  /* ============================================
+     GANTT-SPECIFIC VARIABLES
+     ============================================ */
+
+  --wx-gantt-border-color: var(--wx-color-border-light);
+  --wx-gantt-border: 1px solid rgba(29, 30, 38, 0.1);
   --wx-gantt-form-header-border: none;
-  --wx-gantt-icon-color: #9fa1ae;
+  --wx-gantt-icon-color: var(--wx-color-text-subtle);
 
   /* bars */
-  --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size)
-    var(--wx-font-family);
+  --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
   --wx-gantt-bar-border-radius: 3px;
   --wx-gantt-milestone-border-radius: 3px;
 
   /* Default colors for Basic Gantt */
-  --wx-gantt-task-color: #00ba94;
-  --wx-gantt-task-font-color: #ffffff;
-  --wx-gantt-task-fill-color: #099f81;
-  --wx-gantt-task-border-color: #099f81;
+  --wx-gantt-task-color: var(--wx-color-success);
+  --wx-gantt-task-font-color: var(--wx-color-text-inverse);
+  --wx-gantt-task-fill-color: var(--wx-color-success-hover);
+  --wx-gantt-task-border-color: var(--wx-color-success-hover);
   --wx-gantt-task-border: 1px solid transparent;
 
-  --wx-gantt-summary-color: #3983eb;
-  --wx-gantt-summary-font-color: #fff;
-  --wx-gantt-summary-fill-color: #1f6bd9;
-  --wx-gantt-summary-border-color: #1f6bd9;
+  --wx-gantt-summary-color: var(--wx-color-accent-blue);
+  --wx-gantt-summary-font-color: var(--wx-color-text-inverse);
+  --wx-gantt-summary-fill-color: var(--wx-color-accent-blue-hover);
+  --wx-gantt-summary-border-color: var(--wx-color-accent-blue-hover);
   --wx-gantt-summary-border: 1px solid transparent;
 
-  --wx-gantt-milestone-color: #ad44ab;
+  --wx-gantt-milestone-color: var(--wx-color-milestone);
 
   --wx-gantt-select-color: #eaedf5;
-  --wx-gantt-link-color: #9fa1ae;
+  --wx-gantt-select-background: #eaedf5;
+  --wx-gantt-link-color: var(--wx-color-text-subtle);
   --wx-gantt-link-marker-background: #eaedf5;
-  --wx-gantt-link-marker-color: #9fa1ae;
+  --wx-gantt-link-marker-color: var(--wx-color-text-subtle);
 
-  --wx-gantt-bar-shadow:
-    0px 1px 2px rgba(44, 47, 60, 0.06), 0px 3px 10px rgba(44, 47, 60, 0.12);
+  --wx-gantt-bar-shadow: 0px 1px 2px var(--wx-shadow-sm), 0px 3px 10px var(--wx-shadow-md);
 
   --wx-gantt-progress-marker-height: 26px;
-  --wx-gantt-progress-border-color: #c0c3ce;
+  --wx-gantt-progress-border-color: var(--wx-color-border-control);
 
   --wx-gantt-baseline-border-radius: 2px;
 
   /* grid */
-  --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size)
-    var(--wx-font-family);
+  --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size) var(--wx-font-family);
   --wx-grid-header-font-color: var(--wx-color-font);
   --wx-grid-header-text-transform: capitalize;
   --wx-grid-header-shadow: none;
 
-  --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size)
-    var(--wx-font-family);
+  --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
   --wx-grid-body-font-color: var(--wx-color-font);
   --wx-grid-body-row-border: var(--wx-gantt-border);
   --wx-grid-body-cell-border: 1px solid transparent;
 
   /* timescale */
-  --wx-timescale-font: var(--wx-font-weight-md) var(--wx-font-size-sm)
-    var(--wx-font-family);
+  --wx-timescale-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
   --wx-timescale-font-color: var(--wx-color-font);
   --wx-timescale-text-transform: uppercase;
   --wx-timescale-shadow: none;
   --wx-timescale-border: var(--wx-gantt-border);
 
   /* grid and timescale */
-  --wx-gantt-holiday-background: #f0f6fa;
-  --wx-gantt-holiday-color: #9fa1ae;
+  --wx-gantt-holiday-background: var(--wx-color-background-holiday);
+  --wx-gantt-holiday-color: var(--wx-color-text-subtle);
 
   /* markers */
-  --wx-gantt-marker-font: var(--wx-font-weight-md) var(--wx-font-size-sm)
-    var(--wx-font-family);
-  --wx-gantt-marker-font-color: #fff;
+  --wx-gantt-marker-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
+  --wx-gantt-marker-font-color: var(--wx-color-text-inverse);
   --wx-gantt-marker-color: rgba(6, 189, 248, 0.77);
 
   /* tooltips */
-  --wx-tooltip-font: var(--wx-font-weight) var(--wx-font-size)
-    var(--wx-font-family);
-  --wx-tooltip-font-color: #e6e6e6;
-  --wx-tooltip-background: #4f525a;
+  --wx-tooltip-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-tooltip-font-color: var(--wx-color-text-tooltip);
+  --wx-tooltip-background: var(--wx-color-background-tooltip);
 
   /* sidebar */
-  --wx-sidebar-close-icon: #c0c3ce;
+  --wx-sidebar-close-icon: var(--wx-color-border-control);
 
   /* Gantt Header & Controls */
-  --wx-gantt-header-background: #fff;
-  --wx-gantt-header-border: #ddd;
-  --wx-gantt-control-background: #f8f9fa;
-  --wx-gantt-control-border: #e0e0e0;
-  --wx-gantt-control-text: #666;
-  --wx-gantt-control-value: #333;
-  --wx-gantt-button-background: #fff;
-  --wx-gantt-button-border: #ccc;
-  --wx-gantt-button-hover-background: #f5f5f5;
-  --wx-gantt-button-text: #666;
-  --wx-gantt-button-hover-text: #333;
+  --wx-gantt-header-background: var(--wx-color-background);
+  --wx-gantt-header-border: var(--wx-color-border);
+  --wx-gantt-control-background: var(--wx-color-background-tertiary);
+  --wx-gantt-control-border: var(--wx-color-border-light-alt);
+  --wx-gantt-control-text: var(--wx-color-text-muted);
+  --wx-gantt-control-value: var(--wx-color-text-primary);
+  --wx-gantt-button-background: var(--wx-color-background);
+  --wx-gantt-button-border: var(--wx-color-border-muted);
+  --wx-gantt-button-hover-background: var(--wx-color-background-muted);
+  --wx-gantt-button-text: var(--wx-color-text-muted);
+  --wx-gantt-button-hover-text: var(--wx-color-text-primary);
 
   /* Filter Panel */
-  --wx-gantt-filter-background: #f5f5f5;
-  --wx-gantt-filter-border: #ddd;
-  --wx-gantt-filter-text: #333;
+  --wx-gantt-filter-background: var(--wx-color-background-muted);
+  --wx-gantt-filter-border: var(--wx-color-border);
+  --wx-gantt-filter-text: var(--wx-color-text-primary);
   --wx-gantt-filter-hover-background: rgba(0, 0, 0, 0.05);
-  --wx-gantt-filter-input-background: #fff;
-  --wx-gantt-filter-input-border: #ccc;
+  --wx-gantt-filter-input-background: var(--wx-color-background);
+  --wx-gantt-filter-input-border: var(--wx-color-border-muted);
 
   /* Settings Modal */
-  --wx-gantt-modal-overlay: rgba(0, 0, 0, 0.5);
-  --wx-gantt-modal-background: #fff;
-  --wx-gantt-modal-header-background: #f8f9fa;
-  --wx-gantt-modal-border: #ddd;
-  --wx-gantt-modal-section-border: #eee;
-  --wx-gantt-modal-text: #333;
-  --wx-gantt-modal-hint-text: #666;
+  --wx-gantt-modal-overlay: var(--wx-shadow-overlay);
+  --wx-gantt-modal-background: var(--wx-color-background);
+  --wx-gantt-modal-header-background: var(--wx-color-background-tertiary);
+  --wx-gantt-modal-border: var(--wx-color-border);
+  --wx-gantt-modal-section-border: var(--wx-color-border-minimal);
+  --wx-gantt-modal-text: var(--wx-color-text-primary);
+  --wx-gantt-modal-hint-text: var(--wx-color-text-muted);
 
   /* Demo Sidebar & Top Bar */
-  --wx-demo-sidebar-background: #fbfbfb;
-  --wx-demo-sidebar-border: #ebebeb;
-  --wx-demo-text-primary: #42454d;
-  --wx-demo-text-secondary: #595b66;
-  --wx-demo-button-border: #ebebeb;
-  --wx-demo-button-hover-background: #f7f7f7;
-  --wx-demo-button-active-background: #f1f1f1;
-  --wx-demo-demo-hover-background: #f1f1f1;
+  --wx-demo-sidebar-background: var(--wx-color-background-sidebar);
+  --wx-demo-sidebar-border: var(--wx-color-border-sidebar);
+  --wx-demo-text-primary: var(--wx-color-text-sidebar-primary);
+  --wx-demo-text-secondary: var(--wx-color-text-sidebar);
+  --wx-demo-button-border: var(--wx-color-border-sidebar);
+  --wx-demo-button-hover-background: var(--wx-color-background-hover);
+  --wx-demo-button-active-background: var(--wx-color-background-active);
+  --wx-demo-demo-hover-background: var(--wx-color-background-active);
   --wx-demo-demo-active-border: #087a9f;
-  --wx-demo-segmented-background: #fff;
+  --wx-demo-segmented-background: var(--wx-color-background);
+
+  /* Kanban Colors */
+  --wx-kanban-background: var(--wx-color-background-secondary);
+  --wx-kanban-border: var(--wx-color-border-gray);
+  --wx-kanban-border-light: var(--wx-color-border-input);
+  --wx-kanban-text-primary: var(--wx-color-text-secondary);
+  --wx-kanban-text-muted: var(--wx-color-text-gray);
+
+  /* Chart Specific */
+  --wx-chart-text: #2c2f33;
+  --wx-chart-border: #1d1e26;
+  --wx-chart-row-hover: var(--wx-color-accent-blue);
+  --wx-arrow-color: var(--wx-color-accent-blue);
 }
 
 /* Integration specific styling - override default colors */
 .wx-willow-theme .wx-issue {
   /* Issue = blue */
-  color: #fff;
-  background-color: #3983eb;
+  color: var(--wx-color-text-inverse);
+  background-color: var(--wx-color-accent-blue);
   border: 1px solid transparent;
 }
 
 .wx-willow-theme .wx-issue.wx-selected {
-  border: 1px solid #1f6bd9;
+  border: 1px solid var(--wx-color-accent-blue-hover);
   box-shadow: var(--wx-gantt-bar-shadow);
 }
 
@@ -139,18 +247,18 @@
 }
 
 .wx-willow-theme .wx-issue .wx-progress-percent {
-  background-color: #1f6bd9;
+  background-color: var(--wx-color-accent-blue-hover);
 }
 
 .wx-willow-theme .wx-task {
   /* Task = green */
-  color: #ffffff;
-  background-color: #00ba94;
+  color: var(--wx-color-text-inverse);
+  background-color: var(--wx-color-success);
   border: 1px solid transparent;
 }
 
 .wx-willow-theme .wx-task.wx-selected {
-  border: 1px solid #099f81;
+  border: 1px solid var(--wx-color-success-hover);
   box-shadow: var(--wx-gantt-bar-shadow);
 }
 
@@ -159,7 +267,7 @@
 }
 
 .wx-willow-theme .wx-task .wx-progress-percent {
-  background-color: #099f81;
+  background-color: var(--wx-color-success-hover);
 }
 
 /* === Color Rules - Custom Color Stripes === */
@@ -281,7 +389,7 @@
   left: 100%;
   padding: 0 6px;
   white-space: nowrap;
-  color: #333; /* Dark text for light theme */
+  color: var(--wx-color-text-primary);
 }
 
 /* === End Color Rules === */

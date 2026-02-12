@@ -29,11 +29,11 @@
 
 /* Dialog Container */
 .draw-bar-dialog {
-  background: var(--wx-gantt-modal-background, #fff);
+  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
   border-radius: 8px;
   width: 360px;
   max-width: 90vw;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
   animation: slide-up 0.2s ease-out;
 }
 
@@ -158,7 +158,7 @@
 
 .draw-bar-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.3);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 30%, transparent);
 }
 
 .draw-bar-btn-secondary {
@@ -178,28 +178,28 @@
 }
 
 .draw-bar-btn-outline:hover {
-  background: rgba(31, 117, 203, 0.08);
+  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 8%, transparent);
 }
 
 .draw-bar-btn-primary {
   background: var(--wx-color-primary, #1f75cb);
   border-color: var(--wx-color-primary, #1f75cb);
-  color: white;
+  color: var(--wx-color-text-inverse, #fff);
 }
 
 .draw-bar-btn-primary:hover {
-  background: #1a65b3;
-  border-color: #1a65b3;
+  background: var(--wx-color-primary-hover, #1a65b3);
+  border-color: var(--wx-color-primary-hover, #1a65b3);
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .draw-bar-date-preview {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--wx-color-text-inverse, white) 5%, transparent);
+    border-color: color-mix(in srgb, var(--wx-color-text-inverse, white) 10%, transparent);
   }
 
   .date-range-row.duration {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: color-mix(in srgb, var(--wx-color-text-inverse, white) 10%, transparent);
   }
 }

@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b7280;
+  color: var(--wx-color-text-gray, #6b7280);
   text-align: center;
   padding: 40px;
 }
@@ -30,7 +30,7 @@
 .kanban-board-empty i {
   font-size: 48px;
   margin-bottom: 16px;
-  color: #d1d5db;
+  color: var(--wx-color-text-lighter, #d1d5db);
 }
 
 .kanban-board-empty p {
@@ -40,7 +40,7 @@
 
 .kanban-board-empty-hint {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--wx-color-text-light, #9ca3af);
 }
 
 /* ========== Dark Theme ========== */

@@ -15,7 +15,7 @@
 }
 
 .wx-primary.wx-TyZ1fHBj:hover {
-  background-color: #0b9db1;
+  background-color: var(--wx-color-primary-hover, #0b9db1);
 }
 
 .wx-transparent.wx-TyZ1fHBj {
@@ -23,11 +23,11 @@
   height: 40px;
 
   color: var(--wx-color-primary-font);
-  background-color: rgba(99, 99, 99, 0.45);
+  background-color: color-mix(in srgb, var(--wx-color-text-primary, #636363) 45%, transparent);
 }
 
 .wx-transparent.wx-TyZ1fHBj:hover {
-  background-color: rgba(69, 69, 69, 0.45);
+  background-color: color-mix(in srgb, var(--wx-color-text-secondary, #454545) 45%, transparent);
 }
 
 .wx-button-icon.wx-TyZ1fHBj {
