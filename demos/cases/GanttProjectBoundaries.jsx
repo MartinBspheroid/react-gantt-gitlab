@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Gantt, Editor } from '../../src/';
-import { Field, DatePicker, Locale, Alert } from '@svar-ui/react-core';
+import { Field, DatePicker, Locale } from '@svar-ui/react-core';
+import { Alert } from '../components/Alert';
 import './GanttProjectBoundaries.css';
 
 export default function GanttProjectBoundaries({ skinSettings }) {

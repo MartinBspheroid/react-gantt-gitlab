@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Gantt, Editor } from '../../src/';
-import { Alert, Locale, Field, DatePicker } from '@svar-ui/react-core';
+import { Locale, Field, DatePicker } from '@svar-ui/react-core';
+import { Alert } from '../components/Alert';
 import './GanttTimelineMarkers.css';
 
 /**

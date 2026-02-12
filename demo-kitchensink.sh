@@ -15,7 +15,7 @@ fi
 
 echo ""
 echo "Starting Kitchen Sink Demo Server..."
-echo "Demo will be available at: http://localhost:${PORT}/kitchen-sink-demo.html"
+echo "Demo will be available at: http://localhost:${PORT}/"
 echo ""
 
 # Kill any existing process on the port
@@ -30,14 +30,14 @@ sleep 2
 
 # Open browser
 if command -v xdg-open &>/dev/null; then
-  xdg-open "http://localhost:${PORT}/kitchen-sink-demo.html"
+  xdg-open "http://localhost:${PORT}/"
 elif command -v open &>/dev/null; then
-  open "http://localhost:${PORT}/kitchen-sink-demo.html"
+  open "http://localhost:${PORT}/"
 elif command -v start &>/dev/null; then
-  start "http://localhost:${PORT}/kitchen-sink-demo.html"
+  start "http://localhost:${PORT}/"
 else
   echo "Browser auto-open not supported on this system"
-  echo "Please open: http://localhost:${PORT}/kitchen-sink-demo.html"
+  echo "Please open: http://localhost:${PORT}/"
 fi
 
 echo ""

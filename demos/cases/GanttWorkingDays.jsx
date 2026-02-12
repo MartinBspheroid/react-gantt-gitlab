@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Gantt, Editor } from '../../src/';
-import { Alert, Locale } from '@svar-ui/react-core';
+import { Locale } from '@svar-ui/react-core';
+import { Alert } from '../components/Alert';
 import { useHighlightTime } from '../../src/hooks/useHighlightTime';
 import './GanttWorkingDays.css';
 
