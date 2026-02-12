@@ -7,7 +7,7 @@
   min-width: 280px;
   max-width: 280px;
   height: 100%; /* Fill parent height */
-  background: #f3f4f6;
+  background: var(--wx-color-background-gray, #f3f4f6);
   border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0; /* Prevent shrinking */
@@ -18,29 +18,29 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: #e5e7eb;
-  border-bottom: 1px solid #d1d5db;
+  background: var(--wx-color-border-gray, #e5e7eb);
+  border-bottom: 1px solid var(--wx-color-border-input, #d1d5db);
 }
 
 .kanban-list-header-others {
-  background: #fef3c7;
-  border-bottom-color: #fcd34d;
+  background: var(--wx-color-background-warning, #fef3c7);
+  border-bottom-color: var(--wx-color-status-warning-light, #fcd34d);
 }
 
 .kanban-list-header-closed {
-  background: #dbeafe;
-  border-bottom-color: #93c5fd;
+  background: var(--wx-color-background-info, #dbeafe);
+  border-bottom-color: var(--wx-color-status-info, #93c5fd);
 }
 
 .kanban-list-name {
   font-weight: 600;
   font-size: 13px;
-  color: #374151;
+  color: var(--wx-color-text-secondary, #374151);
 }
 
 .kanban-list-count {
-  background: #9ca3af;
-  color: white;
+  background: var(--wx-color-text-light, #9ca3af);
+  color: var(--wx-color-text-inverse, white);
   font-size: 11px;
   font-weight: 500;
   padding: 1px 6px;
@@ -50,11 +50,11 @@
 }
 
 .kanban-list-header-others .kanban-list-count {
-  background: #d97706;
+  background: var(--wx-color-warning, #d97706);
 }
 
 .kanban-list-header-closed .kanban-list-count {
-  background: #3b82f6;
+  background: var(--wx-color-accent-blue-alt, #3b82f6);
 }
 
 /* SortControl is positioned at end of header */
@@ -73,7 +73,7 @@
 }
 
 .kanban-list-empty {
-  color: #9ca3af;
+  color: var(--wx-color-text-light, #9ca3af);
   font-size: 12px;
   text-align: center;
   padding: 20px 10px;
@@ -82,23 +82,23 @@
 
 /* Drop target highlight styles */
 .kanban-list-over {
-  background: #dbeafe;
+  background: var(--wx-color-background-info, #dbeafe);
 }
 
 .kanban-list-over .kanban-list-content {
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 10%, var(--wx-color-background, #fff));
 }
 
 .kanban-list-over .kanban-list-empty {
-  border: 2px dashed #93c5fd;
-  background: #dbeafe;
+  border: 2px dashed var(--wx-color-status-info, #93c5fd);
+  background: var(--wx-color-background-info, #dbeafe);
   border-radius: 4px;
 }
 
 /* ========== Dark Theme ========== */
 .wx-willow-dark-theme .kanban-list {
   /* Darker background for better contrast with cards */
-  background: #25282c;
+  background: var(--wx-color-background-secondary, #25282c);
 }
 
 .wx-willow-dark-theme .kanban-list-header {
@@ -107,13 +107,13 @@
 }
 
 .wx-willow-dark-theme .kanban-list-header-others {
-  background: rgba(217, 119, 6, 0.2);
-  border-bottom-color: #d97706;
+  background: color-mix(in srgb, var(--wx-color-warning, #d97706) 20%, transparent);
+  border-bottom-color: var(--wx-color-warning, #d97706);
 }
 
 .wx-willow-dark-theme .kanban-list-header-closed {
-  background: rgba(59, 130, 246, 0.2);
-  border-bottom-color: #3b82f6;
+  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 20%, transparent);
+  border-bottom-color: var(--wx-color-accent-blue-alt, #3b82f6);
 }
 
 .wx-willow-dark-theme .kanban-list-name {
@@ -129,14 +129,14 @@
 }
 
 .wx-willow-dark-theme .kanban-list-over {
-  background: rgba(59, 130, 246, 0.15);
+  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 15%, transparent);
 }
 
 .wx-willow-dark-theme .kanban-list-over .kanban-list-content {
-  background: rgba(59, 130, 246, 0.1);
+  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 10%, transparent);
 }
 
 .wx-willow-dark-theme .kanban-list-over .kanban-list-empty {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--wx-color-accent-blue-alt, #3b82f6);
+  background: color-mix(in srgb, var(--wx-color-accent-blue-alt, #3b82f6) 20%, transparent);
 }

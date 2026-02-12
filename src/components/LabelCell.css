@@ -28,7 +28,7 @@
   border-radius: 2px;
   font-size: 10px;
   line-height: 1.3;
-  color: #fff;
+  color: var(--wx-color-text-inverse, #fff);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -40,25 +40,25 @@
   font-size: 10px;
   line-height: 1.3;
   font-weight: 500;
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--wx-color-border-gray, #e5e7eb);
+  color: var(--wx-color-text-secondary, #374151);
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
 }
 
 .label-cell-more:hover {
-  background-color: #d1d5db;
+  background-color: var(--wx-color-border-input, #d1d5db);
 }
 
 /* Tooltip (Portal) - positioned via JS with flip logic
  * position/top/left/z-index set inline by LabelTooltip component */
 .label-cell-tooltip-portal {
   padding: 8px;
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--wx-color-background, white);
+  border: 1px solid var(--wx-color-border-input, #d1d5db);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -70,6 +70,6 @@
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 11px;
-  color: #fff;
+  color: var(--wx-color-text-inverse, #fff);
   white-space: nowrap;
 }

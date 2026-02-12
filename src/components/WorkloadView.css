@@ -152,38 +152,38 @@
   user-select: none;
 }
 
-.workload-view-container .checkbox-label input[type='checkbox'] {
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
-  accent-color: #6b4fbb;
-}
+  .workload-view-container .checkbox-label input[type='checkbox'] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--wx-color-status-purple, #6b4fbb);
+  }
 
 /* Settings Modal */
-.settings-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+  .settings-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--wx-shadow-overlay, rgba(0, 0, 0, 0.5));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
 
-.settings-modal-content {
-  background: var(--wx-background, #fff);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Prevent content from breaking border-radius */
-}
+  .settings-modal-content {
+    background: var(--wx-background, var(--wx-color-background, #fff));
+    border-radius: 8px;
+    box-shadow: 0 4px 24px var(--wx-shadow-lg, rgba(0, 0, 0, 0.2));
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent content from breaking border-radius */
+  }
 
 .settings-modal-header {
   display: flex;
@@ -375,15 +375,15 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #ffeef0;
-  border-bottom: 1px solid #f97583;
-  color: #cb2431;
+  background: var(--wx-color-background-error-light, #ffeef0);
+  border-bottom: 1px solid var(--wx-color-status-error, #f97583);
+  color: var(--wx-color-status-error-dark, #cb2431);
 }
 
 .error-banner .retry-btn {
   padding: 4px 12px;
-  background: #cb2431;
-  color: white;
+  background: var(--wx-color-status-error-dark, #cb2431);
+  color: var(--wx-color-text-inverse, white);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -391,7 +391,7 @@
 }
 
 .error-banner .retry-btn:hover {
-  background: #a31d27;
+  background: var(--wx-color-danger-hover, #a31d27);
 }
 
 /* =============================================

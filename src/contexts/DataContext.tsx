@@ -170,10 +170,7 @@ export function DataProvider({
     async (id: string, filters: unknown) => {},
     [],
   );
-  const renamePreset = useCallback(
-    async (id: string, name: string) => {},
-    [],
-  );
+  const renamePreset = useCallback(async (id: string, name: string) => {}, []);
   const deletePreset = useCallback(async (id: string) => {}, []);
 
   // === createMilestone (delegates to createTask) ===

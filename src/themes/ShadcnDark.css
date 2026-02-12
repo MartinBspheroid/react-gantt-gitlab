@@ -1,0 +1,333 @@
+/** 
+ * Shadcn Bridge Theme - Dark Variant
+ * Maps shadcn/ui CSS custom properties to internal --wx-* variables
+ * No Tailwind dependency - assumes shadcn variables are already defined
+ */
+
+.wx-shadcn-dark-theme {
+  color-scheme: dark;
+
+  /* ==========================================
+     Base Variable Mapping (shadcn → wx)
+     ========================================== */
+
+  /* Background & Surfaces */
+  --wx-background: var(--background, #09090b);
+  --wx-background-alt: var(--muted, #27272a);
+
+  /* Typography - Font Families */
+  --wx-font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --wx-font-size: 14px;
+  --wx-font-size-sm: 12px;
+  --wx-font-weight: 400;
+  --wx-font-weight-md: 500;
+
+  /* Text Colors */
+  --wx-color-font: var(--foreground, #fafafa);
+  --wx-color-font-disabled: var(--muted-foreground, #a1a1aa);
+  --wx-color-font-secondary: var(--muted-foreground, #a1a1aa);
+
+  /* Primary Colors */
+  --wx-color-primary: var(--primary, #fafafa);
+  --wx-color-primary-font: var(--primary-foreground, #18181b);
+  --wx-color-primary-light: var(--accent, #27272a);
+
+  /* Secondary Colors */
+  --wx-color-secondary: var(--secondary, #27272a);
+  --wx-color-secondary-font: var(--secondary-foreground, #fafafa);
+
+  /* Utility Colors */
+  --wx-color-link: var(--primary, #fafafa);
+  --wx-color-danger: var(--destructive, #7f1d1d);
+
+  /* Borders */
+  --wx-border: 1px solid var(--border, #27272a);
+  --wx-border-color: var(--border, #27272a);
+
+  /* Sizing */
+  --wx-icon-size: 16px;
+  --wx-label-offset: 8px;
+
+  /* Radius - from shadcn */
+  --wx-radius: var(--radius, 0.5rem);
+
+  /* ==========================================
+     Gantt Component Variables
+     ========================================== */
+
+  /* General */
+  --wx-gantt-border-color: var(--border, #27272a);
+  --wx-gantt-border: 1px solid var(--border, #27272a);
+  --wx-gantt-form-header-border: none;
+  --wx-gantt-icon-color: var(--muted-foreground, #a1a1aa);
+
+  /* Bars */
+  --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-gantt-bar-border-radius: calc(var(--radius, 0.5rem) / 2);
+  --wx-gantt-milestone-border-radius: calc(var(--radius, 0.5rem) / 2);
+
+  /* Task Colors - Uses primary color */
+  --wx-gantt-task-color: var(--primary, #fafafa);
+  --wx-gantt-task-font-color: var(--primary-foreground, #18181b);
+  --wx-gantt-task-fill-color: color-mix(in srgb, var(--primary, #fafafa) 90%, white);
+  --wx-gantt-task-border-color: var(--primary, #fafafa);
+  --wx-gantt-task-border: 1px solid transparent;
+
+  /* Summary Colors - Uses accent for differentiation */
+  --wx-gantt-summary-color: var(--accent, #27272a);
+  --wx-gantt-summary-font-color: var(--accent-foreground, #fafafa);
+  --wx-gantt-summary-fill-color: color-mix(in srgb, var(--accent, #27272a) 90%, white);
+  --wx-gantt-summary-border-color: var(--accent, #27272a);
+  --wx-gantt-summary-border: 1px solid transparent;
+
+  /* Milestone - Uses destructive/ring color */
+  --wx-gantt-milestone-color: var(--ring, #a1a1aa);
+
+  /* Selection & Links */
+  --wx-gantt-select-color: var(--muted, #27272a);
+  --wx-gantt-link-color: var(--muted-foreground, #a1a1aa);
+  --wx-gantt-link-marker-background: var(--muted, #27272a);
+  --wx-gantt-link-marker-color: var(--muted-foreground, #a1a1aa);
+
+  /* Shadows */
+  --wx-gantt-bar-shadow: 
+    0 1px 3px 0 rgb(0 0 0 / 0.3), 
+    0 1px 2px -1px rgb(0 0 0 / 0.3);
+
+  /* Progress Markers */
+  --wx-gantt-progress-marker-height: 26px;
+  --wx-gantt-progress-border-color: var(--border, #27272a);
+  --wx-gantt-baseline-border-radius: calc(var(--radius, 0.5rem) / 3);
+
+  /* Grid */
+  --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size) var(--wx-font-family);
+  --wx-grid-header-font-color: var(--foreground, #fafafa);
+  --wx-grid-header-text-transform: capitalize;
+  --wx-grid-header-shadow: none;
+
+  --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-grid-body-font-color: var(--foreground, #fafafa);
+  --wx-grid-body-row-border: var(--wx-gantt-border);
+  --wx-grid-body-cell-border: 1px solid transparent;
+
+  /* Timescale */
+  --wx-timescale-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
+  --wx-timescale-font-color: var(--muted-foreground, #a1a1aa);
+  --wx-timescale-text-transform: uppercase;
+  --wx-timescale-shadow: none;
+  --wx-timescale-border: var(--wx-gantt-border);
+
+  /* Holidays */
+  --wx-gantt-holiday-background: var(--muted, #27272a);
+  --wx-gantt-holiday-color: var(--muted-foreground, #a1a1aa);
+
+  /* Markers */
+  --wx-gantt-marker-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
+  --wx-gantt-marker-font-color: var(--primary-foreground, #18181b);
+  --wx-gantt-marker-color: var(--primary, #fafafa);
+
+  /* Tooltips */
+  --wx-tooltip-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-tooltip-font-color: var(--popover-foreground, #fafafa);
+  --wx-tooltip-background: var(--popover, #18181b);
+
+  /* Sidebar */
+  --wx-sidebar-close-icon: var(--muted-foreground, #a1a1aa);
+
+  /* Gantt Header & Controls */
+  --wx-gantt-header-background: var(--card, #09090b);
+  --wx-gantt-header-border: var(--border, #27272a);
+  --wx-gantt-control-background: var(--muted, #27272a);
+  --wx-gantt-control-border: var(--border, #27272a);
+  --wx-gantt-control-text: var(--muted-foreground, #a1a1aa);
+  --wx-gantt-control-value: var(--foreground, #fafafa);
+  --wx-gantt-button-background: var(--card, #09090b);
+  --wx-gantt-button-border: var(--border, #27272a);
+  --wx-gantt-button-hover-background: var(--accent, #27272a);
+  --wx-gantt-button-text: var(--muted-foreground, #a1a1aa);
+  --wx-gantt-button-hover-text: var(--foreground, #fafafa);
+
+  /* Filter Panel */
+  --wx-gantt-filter-background: var(--muted, #27272a);
+  --wx-gantt-filter-border: var(--border, #27272a);
+  --wx-gantt-filter-text: var(--foreground, #fafafa);
+  --wx-gantt-filter-hover-background: var(--accent, #27272a);
+  --wx-gantt-filter-input-background: var(--card, #09090b);
+  --wx-gantt-filter-input-border: var(--input, #27272a);
+
+  /* Settings Modal */
+  --wx-gantt-modal-overlay: rgba(0, 0, 0, 0.7);
+  --wx-gantt-modal-background: var(--card, #09090b);
+  --wx-gantt-modal-header-background: var(--muted, #27272a);
+  --wx-gantt-modal-border: var(--border, #27272a);
+  --wx-gantt-modal-section-border: var(--border, #27272a);
+  --wx-gantt-modal-text: var(--foreground, #fafafa);
+  --wx-gantt-modal-hint-text: var(--muted-foreground, #a1a1aa);
+
+  /* Demo Sidebar & Top Bar */
+  --wx-demo-sidebar-background: var(--muted, #27272a);
+  --wx-demo-sidebar-border: var(--border, #27272a);
+  --wx-demo-text-primary: var(--foreground, #fafafa);
+  --wx-demo-text-secondary: var(--muted-foreground, #a1a1aa);
+  --wx-demo-button-border: var(--border, #27272a);
+  --wx-demo-button-hover-background: var(--accent, #27272a);
+  --wx-demo-button-active-background: var(--secondary, #27272a);
+  --wx-demo-demo-hover-background: var(--accent, #27272a);
+  --wx-demo-demo-active-border: var(--primary, #fafafa);
+  --wx-demo-segmented-background: var(--card, #09090b);
+}
+
+/* ==========================================
+   Integration Specific Styling
+   ========================================== */
+
+.wx-shadcn-dark-theme .wx-issue {
+  color: var(--primary-foreground, #18181b);
+  background-color: var(--primary, #fafafa);
+  border: 1px solid transparent;
+}
+
+.wx-shadcn-dark-theme .wx-issue.wx-selected {
+  border: 1px solid color-mix(in srgb, var(--primary, #fafafa) 80%, white);
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-shadcn-dark-theme .wx-issue:hover {
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-shadcn-dark-theme .wx-issue .wx-progress-percent {
+  background-color: color-mix(in srgb, var(--primary, #fafafa) 80%, white);
+}
+
+.wx-shadcn-dark-theme .wx-task {
+  color: var(--accent-foreground, #fafafa);
+  background-color: var(--accent, #27272a);
+  border: 1px solid transparent;
+}
+
+.wx-shadcn-dark-theme .wx-task.wx-selected {
+  border: 1px solid color-mix(in srgb, var(--accent, #27272a) 80%, white);
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-shadcn-dark-theme .wx-task:hover {
+  box-shadow: var(--wx-gantt-bar-shadow);
+}
+
+.wx-shadcn-dark-theme .wx-task .wx-progress-percent {
+  background-color: color-mix(in srgb, var(--accent, #27272a) 80%, white);
+}
+
+/* ==========================================
+   Color Rules - Custom Color Stripes
+   ========================================== */
+
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-single,
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-double,
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-triple {
+  overflow: visible;
+  border: 1px solid transparent !important;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-single {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 12px,
+    var(--wx-base-color) 12px,
+    var(--wx-base-color) 24px
+  ) !important;
+  background-size: 34px 34px !important;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-double {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 10px,
+    var(--wx-color-rule-2) 10px,
+    var(--wx-color-rule-2) 20px,
+    var(--wx-base-color) 20px,
+    var(--wx-base-color) 30px
+  ) !important;
+  background-size: 42px 42px !important;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-triple {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 8px,
+    var(--wx-color-rule-2) 8px,
+    var(--wx-color-rule-2) 16px,
+    var(--wx-color-rule-3) 16px,
+    var(--wx-color-rule-3) 24px,
+    var(--wx-base-color) 24px,
+    var(--wx-base-color) 32px
+  ) !important;
+  background-size: 45px 45px !important;
+}
+
+/* Milestone Color Rules */
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-single,
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-double,
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-triple {
+  overflow: visible;
+  border: 1px solid transparent !important;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-single {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 12px,
+    var(--wx-base-color) 12px,
+    var(--wx-base-color) 24px
+  ) !important;
+  background-size: 34px 34px !important;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-double {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 10px,
+    var(--wx-color-rule-2) 10px,
+    var(--wx-color-rule-2) 20px,
+    var(--wx-base-color) 20px,
+    var(--wx-base-color) 30px
+  ) !important;
+  background-size: 42px 42px !important;
+}
+
+.wx-shadcn-dark-theme .wx-bar.wx-milestone.wx-color-rule-triple {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--wx-color-rule-1) 0px,
+    var(--wx-color-rule-1) 8px,
+    var(--wx-color-rule-2) 8px,
+    var(--wx-color-rule-2) 16px,
+    var(--wx-color-rule-3) 16px,
+    var(--wx-color-rule-3) 24px,
+    var(--wx-base-color) 24px,
+    var(--wx-base-color) 32px
+  ) !important;
+  background-size: 45px 45px !important;
+}
+
+/* Text outside bar for color rules */
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-single .wx-text-out,
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-double .wx-text-out,
+.wx-shadcn-dark-theme .wx-bar.wx-color-rule-triple .wx-text-out {
+  left: 100%;
+  padding: 0 6px;
+  white-space: nowrap;
+  color: var(--foreground, #fafafa);
+}

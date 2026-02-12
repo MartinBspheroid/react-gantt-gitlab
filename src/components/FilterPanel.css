@@ -1,0 +1,324 @@
+/* FilterPanel Component Styles */
+
+.filter-panel {
+  background: var(--wx-gantt-filter-background);
+  border-bottom: 1px solid var(--wx-gantt-filter-border);
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+}
+
+.filter-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gantt-filter-text);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.filter-toggle:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.toggle-icon {
+  font-size: 10px;
+  color: var(--wx-gantt-control-text);
+}
+
+.btn-clear {
+  padding: 2px 8px;
+  background: var(--wx-gantt-danger-text, #dc3545);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-clear:hover {
+  background: var(--wx-gantt-danger-hover, #c82333);
+}
+
+.btn-apply-server-header {
+  padding: 2px 8px;
+  background: var(--wx-gantt-accent-color, #1f75cb);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-apply-server-header:hover {
+  background: var(--wx-gantt-accent-color-hover, #1a65b3);
+}
+
+/* Preset dirty badge */
+.preset-dirty-badge {
+  background: var(--wx-gantt-warning-background, rgba(252, 109, 38, 0.15));
+  color: var(--wx-gantt-warning-text, #fc6d26);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Revert button */
+.btn-revert {
+  padding: 2px 8px;
+  background: transparent;
+  color: var(--wx-gantt-filter-text);
+  border: 1px solid var(--wx-gantt-filter-border, #ddd);
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-revert:hover {
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+/* Save button */
+.btn-save {
+  padding: 2px 8px;
+  background: var(--wx-gantt-accent-color, #fc6d26);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save:hover {
+  background: var(--wx-gantt-accent-color-hover, #e55b1d);
+}
+
+.filter-content {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-search-section {
+  margin-bottom: 4px;
+}
+
+.filter-search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 6px 12px;
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 4px;
+  background: var(--wx-gantt-filter-input-background);
+  color: var(--wx-gantt-filter-text);
+  font-size: 13px;
+}
+
+.filter-search-input:focus {
+  outline: none;
+  border-color: var(--wx-gantt-accent-color, #1f75cb);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 1400px) {
+  .filter-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1399px) {
+  .filter-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Tab row - contains tabs and info */
+.filter-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--wx-gantt-filter-input-border);
+  margin-bottom: 12px;
+}
+
+/* Tab styles */
+.filter-tabs {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-gantt-control-text);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+
+.filter-tab:hover {
+  color: var(--wx-gantt-filter-text);
+  background: var(--wx-gantt-filter-hover-background);
+}
+
+.filter-tab.active {
+  color: var(--wx-gantt-accent-color, #1f75cb);
+  border-bottom-color: var(--wx-gantt-accent-color, #1f75cb);
+  background: transparent;
+}
+
+.filter-tab-info {
+  font-size: 12px;
+  color: var(--wx-gantt-control-text);
+  flex: 1;
+}
+
+.filter-tab-panel {
+  /* Content area styling */
+}
+
+.tab-badge {
+  background: var(--wx-gantt-filter-input-border);
+  color: var(--wx-gantt-filter-text);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter-tab.active .tab-badge {
+  background: var(--wx-gantt-accent-color, #1f75cb);
+  color: white;
+}
+
+.unsync-indicator {
+  background: var(--wx-gantt-unsync-background, rgba(255, 193, 7, 0.15));
+  color: var(--wx-gantt-unsync-text, #b8860b);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.filter-tab.active .unsync-indicator {
+  background: var(--wx-gantt-unsync-active-background, rgba(255, 193, 7, 0.2));
+  color: var(--wx-gantt-unsync-active-text, #9a7209);
+}
+
+.filter-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--wx-gantt-control-text);
+}
+
+.date-range-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-range-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wx-gantt-filter-text);
+  margin-bottom: 2px;
+}
+
+.date-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-input-group label {
+  font-size: 11px;
+  color: var(--wx-gantt-filter-text);
+  min-width: 35px;
+}
+
+.filter-date-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid var(--wx-gantt-filter-input-border);
+  border-radius: 3px;
+  background: var(--wx-gantt-filter-input-background);
+  color: var(--wx-gantt-filter-text);
+  font-size: 12px;
+}
+
+.server-filter-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wx-gantt-filter-border);
+}
+
+.btn-apply-server {
+  padding: 6px 16px;
+  background: var(--wx-gantt-accent-color, #1f75cb);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-apply-server:hover:not(:disabled) {
+  background: var(--wx-gantt-accent-color-hover, #1a65b3);
+}
+
+.btn-apply-server:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

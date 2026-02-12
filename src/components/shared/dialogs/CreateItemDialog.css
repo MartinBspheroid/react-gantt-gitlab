@@ -51,7 +51,7 @@
 .create-item-dialog .mode-btn.active {
   background: var(--wx-gantt-modal-background, #fff);
   color: var(--wx-gantt-modal-text, #333);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--wx-shadow-sm, rgba(0, 0, 0, 0.1));
 }
 
 .create-item-dialog .mode-btn:disabled {

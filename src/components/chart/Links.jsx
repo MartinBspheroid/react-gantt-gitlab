@@ -103,8 +103,7 @@ function hasVisibleBar(task) {
   }
 
   // Milestone special handling: dates exist on task.start/end
-  const isMilestone =
-    task.$isMilestone || task.type === 'milestone';
+  const isMilestone = task.$isMilestone || task.type === 'milestone';
   if (isMilestone) {
     return true;
   }

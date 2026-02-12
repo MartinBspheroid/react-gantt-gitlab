@@ -73,7 +73,7 @@
   font-size: 10px;
   padding: 1px 4px;
   background: var(--wx-color-primary, #3983eb);
-  color: #fff;
+  color: var(--wx-color-text-inverse, #fff);
   border-radius: 2px;
   margin-right: 2px;
 }
@@ -125,8 +125,8 @@
 }
 
 .color-rule-btn.danger:hover {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--wx-color-background-error-light, #fee2e2);
+  color: var(--wx-color-status-error, #dc2626);
 }
 
 /* Test Area */
@@ -178,7 +178,7 @@
   padding: 2px 8px;
   border-radius: 3px;
   font-size: 11px;
-  color: #fff;
+  color: var(--wx-color-text-inverse, #fff);
 }
 
 .no-match {
@@ -247,7 +247,7 @@
 
 .color-option.selected {
   border-color: var(--wx-color-primary, #3983eb);
-  box-shadow: 0 0 0 2px rgba(57, 131, 235, 0.3);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #3983eb) 30%, transparent);
 }
 
 .color-input {
@@ -292,10 +292,10 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--wx-color-background, #fff);
   cursor: pointer;
   border: 2px solid var(--wx-color-primary, #3983eb);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
   margin-top: -5px;
 }
 
@@ -313,10 +313,10 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--wx-color-background, #fff);
   cursor: pointer;
   border: 2px solid var(--wx-color-primary, #3983eb);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
 }
 
 .opacity-preview {
@@ -327,10 +327,10 @@
   flex-shrink: 0;
   /* Checkered background to show transparency */
   background-image:
-    linear-gradient(45deg, #ccc 25%, transparent 25%),
-    linear-gradient(-45deg, #ccc 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ccc 75%),
-    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    linear-gradient(45deg, var(--wx-color-border-muted, #ccc) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--wx-color-border-muted, #ccc) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--wx-color-border-muted, #ccc) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--wx-color-border-muted, #ccc) 75%);
   background-size: 8px 8px;
   background-position:
     0 0,
@@ -368,12 +368,12 @@
 
 .btn-primary {
   background: var(--wx-color-primary, #3983eb);
-  color: #fff;
+  color: var(--wx-color-text-inverse, #fff);
   border: none;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1f6bd9;
+  background: var(--wx-color-info-hover, #1f6bd9);
 }
 
 .btn-primary:disabled {
@@ -410,7 +410,7 @@
 }
 
 .color-rule-add-btn:hover {
-  background: rgba(57, 131, 235, 0.05);
+  background: color-mix(in srgb, var(--wx-color-primary, #3983eb) 5%, transparent);
   border-color: var(--wx-color-primary, #3983eb);
 }
 

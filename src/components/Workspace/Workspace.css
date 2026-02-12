@@ -11,8 +11,8 @@
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--wx-color-background, white);
+  border-bottom: 1px solid var(--wx-color-border-gray, #e5e7eb);
   z-index: 10;
   flex-shrink: 0; /* Prevent header from shrinking to zero */
 }

@@ -2307,13 +2307,14 @@ export function GanttView({
     // Check if this is a group header
     if (data.$groupHeader) {
       // Group header - special styling
-      const groupIcon = data.$groupType === 'assignee'
-        ? 'fa-user'
-        : data.$groupType === 'epic'
-          ? 'fa-layer-group'
-          : data.$groupType === 'sprint'
-            ? 'fa-repeat'
-            : 'fa-folder';
+      const groupIcon =
+        data.$groupType === 'assignee'
+          ? 'fa-user'
+          : data.$groupType === 'epic'
+            ? 'fa-layer-group'
+            : data.$groupType === 'sprint'
+              ? 'fa-repeat'
+              : 'fa-folder';
 
       return (
         <div
@@ -2324,7 +2325,10 @@ export function GanttView({
             color: 'var(--wx-gantt-group-header-text, #5a4fcf)',
           }}
         >
-          <i className={`fas ${groupIcon}`} style={{ marginRight: '8px', color: '#6c5ce7' }}></i>
+          <i
+            className={`fas ${groupIcon}`}
+            style={{ marginRight: '8px', color: '#6c5ce7' }}
+          ></i>
           <span>{data.$groupName}</span>
           <span
             style={{
@@ -2359,12 +2363,15 @@ export function GanttView({
     }
 
     // Add group index for alternating background styling
-    const groupIndexStyle = data.$groupIndex !== undefined
-      ? { '--group-index': data.$groupIndex }
-      : {};
+    const groupIndexStyle =
+      data.$groupIndex !== undefined
+        ? { '--group-index': data.$groupIndex }
+        : {};
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', ...groupIndexStyle }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', ...groupIndexStyle }}
+      >
         <span style={{ marginRight: '8px', color: iconColor }}>{icon}</span>
         <span>{data.text}</span>
       </div>

@@ -57,9 +57,7 @@ export function MoveInModal({
 
   // Filter tasks that can be moved to a parent Issue (only Tasks can have Issue parents)
   const tasksMovableToParent = useMemo(() => {
-    return selectedTasks.filter(
-      (task) => task.workItemType === 'Task',
-    );
+    return selectedTasks.filter((task) => task.workItemType === 'Task');
   }, [selectedTasks]);
 
   // Filter tasks that can be moved to a Milestone (both Issues and Tasks)
@@ -70,9 +68,7 @@ export function MoveInModal({
 
   // Filter tasks that can be moved to an Epic (only Issues, not Tasks)
   const tasksMovableToEpic = useMemo(() => {
-    return selectedTasks.filter(
-      (task) => task.workItemType !== 'Task',
-    );
+    return selectedTasks.filter((task) => task.workItemType !== 'Task');
   }, [selectedTasks]);
 
   // Get available parent Issues (exclude selected tasks, milestones, and Tasks)

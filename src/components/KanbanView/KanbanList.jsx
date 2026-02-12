@@ -56,12 +56,8 @@ function sortTasks(tasks, sortBy, sortOrder) {
       }
 
       case 'created_at': {
-        const createdA = a.createdAt
-          ? new Date(a.createdAt).getTime()
-          : 0;
-        const createdB = b.createdAt
-          ? new Date(b.createdAt).getTime()
-          : 0;
+        const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         comparison = createdA - createdB;
         break;
       }
@@ -95,10 +91,8 @@ function sortTasks(tasks, sortBy, sortOrder) {
 
       default: {
         // Fallback to position (same logic as 'position' case)
-        const defaultPosA =
-          a._localOrder ?? a.relativePosition ?? a.id;
-        const defaultPosB =
-          b._localOrder ?? b.relativePosition ?? b.id;
+        const defaultPosA = a._localOrder ?? a.relativePosition ?? a.id;
+        const defaultPosB = b._localOrder ?? b.relativePosition ?? b.id;
         comparison = defaultPosA - defaultPosB;
         break;
       }

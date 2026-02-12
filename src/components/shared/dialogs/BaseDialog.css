@@ -30,13 +30,13 @@
 
 /* ===== Dialog Container ===== */
 .base-dialog {
-  background: var(--wx-gantt-modal-background, #fff);
+  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
   border-radius: 8px;
   max-width: 90vw;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
   animation: dialog-slide-in 0.15s ease-out;
   outline: none;
 }
@@ -121,21 +121,21 @@
 }
 
 .base-dialog .dialog-btn-primary {
-  background: #1f75cb;
-  color: #fff;
+  background: var(--wx-color-primary, #1f75cb);
+  color: var(--wx-color-text-inverse, #fff);
 }
 
 .base-dialog .dialog-btn-primary:hover:not(:disabled) {
-  background: #1a65b3;
+  background: var(--wx-color-primary-hover, #1a65b3);
 }
 
 .base-dialog .dialog-btn-danger {
-  background: #dc2626;
-  color: #fff;
+  background: var(--wx-color-danger, #dc2626);
+  color: var(--wx-color-text-inverse, #fff);
 }
 
 .base-dialog .dialog-btn-danger:hover:not(:disabled) {
-  background: #b91c1c;
+  background: var(--wx-color-danger-hover, #b91c1c);
 }
 
 /* ===== Common Form Elements ===== */
@@ -162,12 +162,12 @@
 
 .base-dialog .dialog-input:focus {
   outline: none;
-  border-color: #1f75cb;
-  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+  border-color: var(--wx-color-primary, #1f75cb);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .base-dialog .dialog-input.error {
-  border-color: #ef4444;
+  border-color: var(--wx-color-status-error, #ef4444);
 }
 
 .base-dialog .dialog-input::placeholder {
@@ -188,8 +188,8 @@
 
 .base-dialog .dialog-textarea:focus {
   outline: none;
-  border-color: #1f75cb;
-  box-shadow: 0 0 0 2px rgba(31, 117, 203, 0.1);
+  border-color: var(--wx-color-primary, #1f75cb);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .base-dialog .dialog-textarea::placeholder {
@@ -206,10 +206,10 @@
 /* ===== Error Message ===== */
 .base-dialog .dialog-error {
   padding: 10px 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--wx-color-background-error, #fef2f2);
+  border: 1px solid var(--wx-color-border-error, #fecaca);
   border-radius: 4px;
-  color: #dc2626;
+  color: var(--wx-color-status-error, #dc2626);
   font-size: 13px;
 }
 
