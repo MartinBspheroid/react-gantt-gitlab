@@ -106,7 +106,8 @@
   --wx-gantt-icon-color: var(--wx-color-text-subtle);
 
   /* bars */
-  --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size)
+    var(--wx-font-family);
   --wx-gantt-bar-border-radius: 3px;
   --wx-gantt-milestone-border-radius: 3px;
 
@@ -131,7 +132,8 @@
   --wx-gantt-link-marker-background: #eaedf5;
   --wx-gantt-link-marker-color: var(--wx-color-text-subtle);
 
-  --wx-gantt-bar-shadow: 0px 1px 2px var(--wx-shadow-sm), 0px 3px 10px var(--wx-shadow-md);
+  --wx-gantt-bar-shadow:
+    0px 1px 2px var(--wx-shadow-sm), 0px 3px 10px var(--wx-shadow-md);
 
   --wx-gantt-progress-marker-height: 26px;
   --wx-gantt-progress-border-color: var(--wx-color-border-control);
@@ -139,18 +141,21 @@
   --wx-gantt-baseline-border-radius: 2px;
 
   /* grid */
-  --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size) var(--wx-font-family);
+  --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size)
+    var(--wx-font-family);
   --wx-grid-header-font-color: var(--wx-color-font);
   --wx-grid-header-text-transform: capitalize;
   --wx-grid-header-shadow: none;
 
-  --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size)
+    var(--wx-font-family);
   --wx-grid-body-font-color: var(--wx-color-font);
   --wx-grid-body-row-border: var(--wx-gantt-border);
   --wx-grid-body-cell-border: 1px solid transparent;
 
   /* timescale */
-  --wx-timescale-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
+  --wx-timescale-font: var(--wx-font-weight-md) var(--wx-font-size-sm)
+    var(--wx-font-family);
   --wx-timescale-font-color: var(--wx-color-font);
   --wx-timescale-text-transform: uppercase;
   --wx-timescale-shadow: none;
@@ -161,12 +166,14 @@
   --wx-gantt-holiday-color: var(--wx-color-text-subtle);
 
   /* markers */
-  --wx-gantt-marker-font: var(--wx-font-weight-md) var(--wx-font-size-sm) var(--wx-font-family);
+  --wx-gantt-marker-font: var(--wx-font-weight-md) var(--wx-font-size-sm)
+    var(--wx-font-family);
   --wx-gantt-marker-font-color: var(--wx-color-text-inverse);
   --wx-gantt-marker-color: rgba(6, 189, 248, 0.77);
 
   /* tooltips */
-  --wx-tooltip-font: var(--wx-font-weight) var(--wx-font-size) var(--wx-font-family);
+  --wx-tooltip-font: var(--wx-font-weight) var(--wx-font-size)
+    var(--wx-font-family);
   --wx-tooltip-font-color: var(--wx-color-text-tooltip);
   --wx-tooltip-background: var(--wx-color-background-tooltip);
 

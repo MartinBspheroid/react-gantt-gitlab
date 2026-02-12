@@ -247,7 +247,8 @@
 
 .color-option.selected {
   border-color: var(--wx-color-primary, #3983eb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #3983eb) 30%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--wx-color-primary, #3983eb) 30%, transparent);
 }
 
 .color-input {
@@ -295,7 +296,8 @@
   background: var(--wx-color-background, #fff);
   cursor: pointer;
   border: 2px solid var(--wx-color-primary, #3983eb);
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
+  box-shadow: 0 1px 4px
+    color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
   margin-top: -5px;
 }
 
@@ -316,7 +318,8 @@
   background: var(--wx-color-background, #fff);
   cursor: pointer;
   border: 2px solid var(--wx-color-primary, #3983eb);
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
+  box-shadow: 0 1px 4px
+    color-mix(in srgb, var(--wx-color-text-primary, #333) 30%, transparent);
 }
 
 .opacity-preview {
@@ -327,10 +330,26 @@
   flex-shrink: 0;
   /* Checkered background to show transparency */
   background-image:
-    linear-gradient(45deg, var(--wx-color-border-muted, #ccc) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--wx-color-border-muted, #ccc) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--wx-color-border-muted, #ccc) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--wx-color-border-muted, #ccc) 75%);
+    linear-gradient(
+      45deg,
+      var(--wx-color-border-muted, #ccc) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      var(--wx-color-border-muted, #ccc) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      var(--wx-color-border-muted, #ccc) 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      var(--wx-color-border-muted, #ccc) 75%
+    );
   background-size: 8px 8px;
   background-position:
     0 0,
@@ -410,7 +429,11 @@
 }
 
 .color-rule-add-btn:hover {
-  background: color-mix(in srgb, var(--wx-color-primary, #3983eb) 5%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-primary, #3983eb) 5%,
+    transparent
+  );
   border-color: var(--wx-color-primary, #3983eb);
 }
 

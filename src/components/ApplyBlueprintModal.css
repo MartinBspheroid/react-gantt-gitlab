@@ -134,7 +134,11 @@
 }
 
 .result-status.success {
-  background: color-mix(in srgb, var(--wx-color-success, #059669) 10%, var(--wx-color-background, #fff));
+  background: color-mix(
+    in srgb,
+    var(--wx-color-success, #059669) 10%,
+    var(--wx-color-background, #fff)
+  );
   color: var(--wx-color-status-success-dark, #059669);
 }
 
@@ -196,7 +200,11 @@
 }
 
 .result-item.milestone {
-  background: color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wx-color-primary, #1f75cb) 10%,
+    transparent
+  );
 }
 
 .result-item.milestone i {

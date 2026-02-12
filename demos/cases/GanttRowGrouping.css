@@ -1,0 +1,211 @@
+/**
+ * Row Grouping Demo Styles
+ * Bold visual presentation to make grouping obvious
+ */
+
+/* Explanation Banner */
+.grouping-demo-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.grouping-demo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.grouping-demo-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.grouping-demo-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.grouping-demo-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.grouping-demo-content strong {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* Custom Toolbar */
+.grouping-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.grouping-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.grouping-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.grouping-hint i {
+  color: #3b82f6;
+}
+
+.grouping-toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.grouping-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-item {
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 2px solid #e2e8f0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.stat-item strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* Gantt Container */
+.grouping-gantt-container {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Group Row Styling - Alternating colors */
+.grouping-gantt-container .gantt_row[data-group-index='0'],
+.grouping-gantt-container .gantt_row[data-group-index='2'],
+.grouping-gantt-container .gantt_row[data-group-index='4'] {
+  background-color: #f1f5f9 !important;
+}
+
+.grouping-gantt-container .gantt_row[data-group-index='1'],
+.grouping-gantt-container .gantt_row[data-group-index='3'],
+.grouping-gantt-container .gantt_row[data-group-index='5'] {
+  background-color: #ffffff !important;
+}
+
+/* Group Header Styling */
+.grouping-gantt-container .gantt_task_line[data-group-header='true'] {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  border: 2px solid #1e40af !important;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.grouping-gantt-container .gantt_task_line[data-group-header='true']:hover {
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Task Row Highlighting */
+.grouping-gantt-container .gantt_row {
+  transition: background-color 0.15s ease;
+}
+
+.grouping-gantt-container .gantt_row:hover {
+  background-color: #e0f2fe !important;
+}
+
+/* Collapsed Group Indicator */
+.grouping-gantt-container .gantt_row[data-collapsed='true'] .gantt_cell {
+  opacity: 0.7;
+}
+
+/* Group Label in Grid */
+.grouping-gantt-container .gantt_cell[data-group-name] {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.grouping-gantt-container .gantt_cell[data-group-name]::before {
+  content: '▸';
+  margin-right: 8px;
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.grouping-gantt-container
+  .gantt_cell[data-group-name][data-expanded='true']::before {
+  content: '▾';
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grouping-demo-banner {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .grouping-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .grouping-toolbar-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .grouping-stats {
+    justify-content: flex-start;
+  }
+}
+
+/* Animation for group changes */
+@keyframes groupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grouping-gantt-container .gantt_row {
+  animation: groupFadeIn 0.3s ease;
+}

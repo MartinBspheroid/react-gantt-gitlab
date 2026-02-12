@@ -5,7 +5,10 @@
   z-index: 1;
 }
 .wx-baseline.wx-milestone.wx-GKbcLEGA {
-  background-color: var(--wx-color-accent-light, #37a9ef); /* Blue color for milestone baseline (contains issues) */
+  background-color: var(
+    --wx-color-accent-light,
+    #37a9ef
+  ); /* Blue color for milestone baseline (contains issues) */
 }
 
 /* Parent task bracket baseline - 向下包覆形式 /────────\ */
@@ -261,9 +264,19 @@
   cursor: grab;
   opacity: 0;
   z-index: 5;
-  color: color-mix(in srgb, var(--wx-color-text-inverse, #fff) 95%, transparent);
-  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--wx-color-text-primary, #333) 50%, transparent))
-    drop-shadow(0 2px 3px color-mix(in srgb, var(--wx-color-text-primary, #333) 40%, transparent));
+  color: color-mix(
+    in srgb,
+    var(--wx-color-text-inverse, #fff) 95%,
+    transparent
+  );
+  filter: drop-shadow(
+      0 1px 1px
+        color-mix(in srgb, var(--wx-color-text-primary, #333) 50%, transparent)
+    )
+    drop-shadow(
+      0 2px 3px
+        color-mix(in srgb, var(--wx-color-text-primary, #333) 40%, transparent)
+    );
   transition: opacity 0.15s ease;
 }
 

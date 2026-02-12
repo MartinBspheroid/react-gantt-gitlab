@@ -30,7 +30,10 @@
 
 /* ===== Dialog Container ===== */
 .base-dialog {
-  background: var(--wx-gantt-modal-background, var(--wx-color-background, #fff));
+  background: var(
+    --wx-gantt-modal-background,
+    var(--wx-color-background, #fff)
+  );
   border-radius: 8px;
   max-width: 90vw;
   max-height: 85vh;
@@ -163,7 +166,8 @@
 .base-dialog .dialog-input:focus {
   outline: none;
   border-color: var(--wx-color-primary, #1f75cb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .base-dialog .dialog-input.error {
@@ -189,7 +193,8 @@
 .base-dialog .dialog-textarea:focus {
   outline: none;
   border-color: var(--wx-color-primary, #1f75cb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--wx-color-primary, #1f75cb) 10%, transparent);
 }
 
 .base-dialog .dialog-textarea::placeholder {

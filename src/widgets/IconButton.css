@@ -23,11 +23,19 @@
   height: 40px;
 
   color: var(--wx-color-primary-font);
-  background-color: color-mix(in srgb, var(--wx-color-text-primary, #636363) 45%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--wx-color-text-primary, #636363) 45%,
+    transparent
+  );
 }
 
 .wx-transparent.wx-TyZ1fHBj:hover {
-  background-color: color-mix(in srgb, var(--wx-color-text-secondary, #454545) 45%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--wx-color-text-secondary, #454545) 45%,
+    transparent
+  );
 }
 
 .wx-button-icon.wx-TyZ1fHBj {
