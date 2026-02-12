@@ -1,0 +1,120 @@
+/* Project Boundaries Demo Styles */
+
+.wx-boundaries-demo.demo {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.wx-boundaries-demo.explanation-banner {
+  padding: 12px 16px;
+  background: #e3f2fd;
+  border-bottom: 1px solid #bbdefb;
+}
+
+.wx-boundaries-demo.explanation-banner .svar-alert {
+  margin: 0;
+}
+
+.wx-boundaries-demo.controls-bar {
+  display: flex;
+  padding: 12px 16px;
+  gap: 20px;
+  border-bottom: var(--wx-gantt-border);
+  background: #f5f5f5;
+}
+
+.wx-boundaries-demo.gantt-container {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Project Boundary Markers */
+
+/* Start Boundary - Green */
+.wx-marker.project-start-boundary {
+  width: 3px !important;
+  background: #4caf50 !important;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.wx-marker.project-start-boundary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(76, 175, 80, 0.2) 0%,
+    rgba(76, 175, 80, 0) 100%
+  );
+  width: 60px;
+}
+
+.wx-marker.project-start-boundary .wx-content {
+  display: block;
+  position: absolute;
+  top: -24px;
+  left: 4px;
+  background: #4caf50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* End Boundary - Red */
+.wx-marker.project-end-boundary {
+  width: 3px !important;
+  background: #f44336 !important;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.wx-marker.project-end-boundary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(
+    to left,
+    rgba(244, 67, 54, 0.2) 0%,
+    rgba(244, 67, 54, 0) 100%
+  );
+}
+
+.wx-marker.project-end-boundary .wx-content {
+  display: block;
+  position: absolute;
+  top: -24px;
+  right: 4px;
+  background: #f44336;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Visual shading for outside-boundary areas */
+.wx-boundaries-demo .wx-chart::before,
+.wx-boundaries-demo .wx-chart::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+}
