@@ -3,69 +3,6 @@ import { render, screen } from '@testing-library/react';
 import SmartTaskContent from '../SmartTaskContent';
 
 describe('SmartTaskContent', () => {
-  describe('Avatar rendering', () => {
-    it('should render avatar image when avatarUrl is provided', () => {
-      const task = {
-        text: 'Test Task',
-        assigned: 'John Doe',
-        avatarUrl: 'https://example.com/avatar.jpg',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      const avatar = screen.getByAltText('John Doe');
-      expect(avatar).toBeInTheDocument();
-      expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
-      expect(avatar).toHaveClass('wx-avatar-image');
-    });
-
-    it('should render initials fallback when no avatarUrl', () => {
-      const task = {
-        text: 'Test Task',
-        assigned: 'John Doe',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      const fallback = screen.getByText('JD');
-      expect(fallback).toBeInTheDocument();
-      expect(fallback).toHaveClass('wx-avatar-fallback');
-    });
-
-    it('should render question mark when no assignee', () => {
-      const task = {
-        text: 'Test Task',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      const fallback = screen.getByText('?');
-      expect(fallback).toBeInTheDocument();
-    });
-
-    it('should get correct initials for single word name', () => {
-      const task = {
-        text: 'Test Task',
-        assigned: 'Alice',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      expect(screen.getByText('AL')).toBeInTheDocument();
-    });
-
-    it('should get correct initials for multi-word name', () => {
-      const task = {
-        text: 'Test Task',
-        assigned: 'John Paul Jones',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      expect(screen.getByText('JJ')).toBeInTheDocument();
-    });
-  });
-
   describe('Work item type icon', () => {
     it('should render Bug icon for Bug type', () => {
       const task = {
@@ -73,10 +10,10 @@ describe('SmartTaskContent', () => {
         workItemType: 'Bug',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icon = screen.getByTitle('Bug');
-      expect(icon).toHaveClass('fas', 'fa-bug', 'wx-type-icon');
+      const icon = container.querySelector('.fa-solid.fa-bug');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should render Task icon for Task type', () => {
@@ -85,10 +22,10 @@ describe('SmartTaskContent', () => {
         workItemType: 'Task',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icon = screen.getByTitle('Task');
-      expect(icon).toHaveClass('fas', 'fa-check-square');
+      const icon = container.querySelector('.fa-solid.fa-check');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should render Feature icon for Feature type', () => {
@@ -97,10 +34,10 @@ describe('SmartTaskContent', () => {
         workItemType: 'Feature',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icon = screen.getByTitle('Feature');
-      expect(icon).toHaveClass('fas', 'fa-star');
+      const icon = container.querySelector('.fa-solid.fa-star');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should render User Story icon for User Story type', () => {
@@ -109,35 +46,22 @@ describe('SmartTaskContent', () => {
         workItemType: 'User Story',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icons = screen.getAllByTitle('User Story');
-      const icon = icons.find((el) => el.tagName.toLowerCase() === 'i');
-      expect(icon).toHaveClass('fas', 'fa-book');
+      const icon = container.querySelector('.fa-solid.fa-book');
+      expect(icon).toBeInTheDocument();
     });
 
-    it('should render Issue icon (default) for Issue type', () => {
+    it('should render Epic icon for Epic type', () => {
       const task = {
-        text: 'Issue Item',
-        workItemType: 'Issue',
+        text: 'Epic Item',
+        workItemType: 'Epic',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icon = screen.getByTitle('Issue');
-      expect(icon).toHaveClass('fas', 'fa-circle');
-    });
-
-    it('should render Issue icon (default) for unknown type', () => {
-      const task = {
-        text: 'Unknown Item',
-        workItemType: 'UnknownType',
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      const icon = screen.getByTitle('UnknownType');
-      expect(icon).toHaveClass('fas', 'fa-circle');
+      const icon = container.querySelector('.fa-solid.fa-mountain');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should handle lowercase workItemType', () => {
@@ -146,57 +70,33 @@ describe('SmartTaskContent', () => {
         workItemType: 'bug',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      const icon = screen.getByTitle('bug');
-      expect(icon).toHaveClass('fas', 'fa-bug');
-    });
-  });
-
-  describe('Story points badge', () => {
-    it('should render story points badge when provided', () => {
-      const task = {
-        text: 'Test Task',
-        storyPoints: 5,
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      expect(screen.getByText('5')).toBeInTheDocument();
+      const icon = container.querySelector('.fa-solid.fa-bug');
+      expect(icon).toBeInTheDocument();
     });
 
-    it('should not render story points badge when undefined', () => {
+    it('should not render icon when workItemType is unknown', () => {
       const task = {
-        text: 'Test Task',
-        storyPoints: undefined,
+        text: 'Unknown Item',
+        workItemType: 'UnknownType',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      // Only the task text and avatar initials should be present
-      expect(screen.queryByText('0')).not.toBeInTheDocument();
+      const iconSpan = container.querySelector('.wx-task-type-icon');
+      expect(iconSpan).toBeNull();
     });
 
-    it('should not render story points badge when null', () => {
+    it('should not render icon when no workItemType provided', () => {
       const task = {
-        text: 'Test Task',
-        storyPoints: null,
+        text: 'Plain Task',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      expect(screen.queryByText('0')).not.toBeInTheDocument();
-    });
-
-    it('should render story points badge with value 0', () => {
-      const task = {
-        text: 'Test Task',
-        storyPoints: 0,
-      };
-
-      render(<SmartTaskContent data={task} />);
-
-      expect(screen.getByText('0')).toBeInTheDocument();
+      const iconSpan = container.querySelector('.wx-task-type-icon');
+      expect(iconSpan).toBeNull();
     });
   });
 
@@ -204,6 +104,7 @@ describe('SmartTaskContent', () => {
     it('should render task text', () => {
       const task = {
         text: 'My Task Title',
+        workItemType: 'Task',
       };
 
       render(<SmartTaskContent data={task} />);
@@ -214,67 +115,100 @@ describe('SmartTaskContent', () => {
     it('should handle empty text', () => {
       const task = {
         text: '',
+        workItemType: 'Task',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      // Component should still render without crashing
-      expect(
-        document.querySelector('.wx-smart-task-container'),
-      ).toBeInTheDocument();
+      const textSpan = container.querySelector('.wx-task-text');
+      expect(textSpan).toBeInTheDocument();
+      expect(textSpan).toHaveTextContent('');
     });
 
     it('should handle undefined text', () => {
-      const task = {};
+      const task = {
+        workItemType: 'Task',
+      };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      expect(
-        document.querySelector('.wx-smart-task-container'),
-      ).toBeInTheDocument();
+      const textSpan = container.querySelector('.wx-task-text');
+      expect(textSpan).toBeInTheDocument();
+      expect(textSpan).toHaveTextContent('');
     });
   });
 
-  describe('Full integration', () => {
-    it('should render all elements together', () => {
+  describe('Container structure', () => {
+    it('should have correct container class', () => {
+      const task = {
+        text: 'Test Task',
+        workItemType: 'Task',
+      };
+
+      const { container } = render(<SmartTaskContent data={task} />);
+
+      const wrapper = container.firstChild;
+      expect(wrapper).toHaveClass('wx-smart-task', 'wx-text-out');
+    });
+
+    it('should render icon and text together', () => {
       const task = {
         text: 'Complete implementation',
-        assigned: 'John Doe',
-        avatarUrl: 'https://example.com/avatar.jpg',
-        storyPoints: 8,
         workItemType: 'Feature',
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      // Avatar
-      expect(screen.getByAltText('John Doe')).toBeInTheDocument();
-      // Type icon
-      expect(screen.getByTitle('Feature')).toHaveClass('fa-star');
-      // Task text
+      // Icon should be present
+      const icon = container.querySelector('.fa-star');
+      expect(icon).toBeInTheDocument();
+
+      // Text should be present
       expect(screen.getByText('Complete implementation')).toBeInTheDocument();
-      // Story points
-      expect(screen.getByText('8')).toBeInTheDocument();
     });
+  });
 
-    it('should render without avatar but with other elements', () => {
+  describe('ADO metadata', () => {
+    it('should render icon for ADO work item type', () => {
       const task = {
-        text: 'Fix bug',
-        assigned: 'Jane Smith',
-        storyPoints: 3,
-        workItemType: 'Bug',
+        text: 'ADO Task',
+        _ado: {
+          workItemType: 'Bug',
+        },
       };
 
-      render(<SmartTaskContent data={task} />);
+      const { container } = render(<SmartTaskContent data={task} />);
 
-      // Initials fallback
-      expect(screen.getByText('JS')).toBeInTheDocument();
-      // Type icon
-      expect(screen.getByTitle('Bug')).toHaveClass('fa-bug');
-      // Task text
-      expect(screen.getByText('Fix bug')).toBeInTheDocument();
-      // Story points
-      expect(screen.getByText('3')).toBeInTheDocument();
+      const icon = container.querySelector('.fa-solid.fa-bug');
+      expect(icon).toBeInTheDocument();
+    });
+  });
+
+  describe('GitLab metadata', () => {
+    it('should render milestone icon for milestones', () => {
+      const task = {
+        text: 'Milestone',
+        $isMilestone: true,
+      };
+
+      const { container } = render(<SmartTaskContent data={task} />);
+
+      const icon = container.querySelector('.far.fa-flag');
+      expect(icon).toBeInTheDocument();
+    });
+
+    it('should render issue icon for GitLab issues', () => {
+      const task = {
+        text: 'GitLab Issue',
+        _gitlab: {
+          type: 'issue',
+        },
+      };
+
+      const { container } = render(<SmartTaskContent data={task} />);
+
+      const icon = container.querySelector('.far.fa-clipboard');
+      expect(icon).toBeInTheDocument();
     });
   });
 });
