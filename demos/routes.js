@@ -57,6 +57,7 @@ import GanttRowGrouping from './cases/GanttRowGrouping.jsx';
 import GanttBaselines from './cases/GanttBaselines.jsx';
 import ShadcnVisualVerification from './cases/ShadcnVisualVerification.jsx';
 import GanttColorRules from './cases/GanttColorRules.jsx';
+import GanttTimelineMarkers from './cases/GanttTimelineMarkers.jsx';
 
 export const links = [
   [
@@ -86,6 +87,12 @@ export const links = [
     'ShadcnVisualVerification',
   ],
   ['/color-rules/:skin', 'Color Rules', GanttColorRules, 'GanttColorRules'],
+  [
+    '/timeline-markers/:skin',
+    'Timeline Markers',
+    GanttTimelineMarkers,
+    'GanttTimelineMarkers',
+  ],
   ['Demos', null, null, null],
   ['/base/:skin', 'Basic Gantt', BasicInit, 'BasicInit'],
 

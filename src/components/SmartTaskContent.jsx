@@ -1,4 +1,4 @@
-import { renderWorkItemIcon } from '../../utils/WorkItemTypeIcons';
+import { renderWorkItemIcon } from '../../utils/WorkItemTypeIcons.tsx';
 import './SmartTaskContent.css';
 
 function SmartTaskContent({ data }) {

@@ -1,0 +1,156 @@
+/* Timeline Markers Demo Styles */
+
+.wx-markers-demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.wx-markers-demo.explanation-banner {
+  padding: 16px;
+  background: var(--wx-background-alt, #f5f5f5);
+  border-bottom: 1px solid var(--wx-border-color, #e0e0e0);
+}
+
+.wx-markers-demo.controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  background: var(--wx-background, #ffffff);
+  border-bottom: 1px solid var(--wx-border-color, #e0e0e0);
+  align-items: flex-end;
+}
+
+.wx-markers-demo.legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 12px 16px;
+  background: var(--wx-background-alt, #f8f9fa);
+  border-bottom: 1px solid var(--wx-border-color, #e0e0e0);
+}
+
+.wx-markers-demo .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--wx-color-font, #333);
+}
+
+.wx-markers-demo .legend-marker {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.wx-markers-demo .legend-marker.milestone {
+  background: #4caf50;
+}
+
+.wx-markers-demo .legend-marker.release {
+  background: #2196f3;
+}
+
+.wx-markers-demo .legend-marker.review {
+  background: #ff9800;
+}
+
+.wx-markers-demo .legend-marker.deadline {
+  background: #f44336;
+}
+
+.wx-markers-demo.gantt-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* Marker Styles - Applied to the Gantt chart markers */
+.wx-mR7v2Xag .wx-marker.milestone-marker {
+  background: linear-gradient(
+    180deg,
+    rgba(76, 175, 80, 0.9) 0%,
+    rgba(76, 175, 80, 0.6) 100%
+  );
+  border-left: 3px solid #4caf50;
+}
+
+.wx-mR7v2Xag .wx-marker.milestone-marker .wx-content {
+  background: #4caf50;
+  color: white;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wx-mR7v2Xag .wx-marker.release-marker {
+  background: linear-gradient(
+    180deg,
+    rgba(33, 150, 243, 0.9) 0%,
+    rgba(33, 150, 243, 0.6) 100%
+  );
+  border-left: 3px solid #2196f3;
+}
+
+.wx-mR7v2Xag .wx-marker.release-marker .wx-content {
+  background: #2196f3;
+  color: white;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wx-mR7v2Xag .wx-marker.review-marker {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 152, 0, 0.9) 0%,
+    rgba(255, 152, 0, 0.6) 100%
+  );
+  border-left: 3px solid #ff9800;
+}
+
+.wx-mR7v2Xag .wx-marker.review-marker .wx-content {
+  background: #ff9800;
+  color: white;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wx-mR7v2Xag .wx-marker.deadline-marker {
+  background: linear-gradient(
+    180deg,
+    rgba(244, 67, 54, 0.9) 0%,
+    rgba(244, 67, 54, 0.6) 100%
+  );
+  border-left: 3px solid #f44336;
+}
+
+.wx-mR7v2Xag .wx-marker.deadline-marker .wx-content {
+  background: #f44336;
+  color: white;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark theme adjustments */
+.wx-willow-dark .wx-markers-demo.explanation-banner,
+.wx-shadcn-dark .wx-markers-demo.explanation-banner {
+  background: var(--wx-background-alt, #2a2a2a);
+}
+
+.wx-willow-dark .wx-markers-demo.legend-bar,
+.wx-shadcn-dark .wx-markers-demo.legend-bar {
+  background: var(--wx-background-alt, #1e1e1e);
+}

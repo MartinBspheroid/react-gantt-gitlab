@@ -72,14 +72,11 @@ import {
   findLinkBySourceTarget,
   validateLinkMetadata,
 } from '../../utils/LinkUtils';
-<<<<<<< HEAD
-=======
 import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { BulkOperationsBar } from '../BulkOperationsBar';
 import { useStore } from '@svar-ui/lib-react';
->>>>>>> ralph-session/27358354
 
 /**
  * Extract tasks array from SVAR Gantt store state
@@ -186,11 +183,8 @@ export function GanttView({
   showSettings: externalShowSettings,
   onSettingsClose,
   externalShowViewOptions,
-<<<<<<< HEAD
   className,
-=======
   readonly = false,
->>>>>>> ralph-session/27358354
 }) {
   // === Get data from DataContext ===
   const {
@@ -323,28 +317,6 @@ export function GanttView({
       : internalShowViewOptions;
   const setShowViewOptions = setInternalShowViewOptions;
 
-<<<<<<< HEAD
-=======
-  // MoveInModal state
-  const [showMoveInModal, setShowMoveInModal] = useState(false);
-  const [moveInProcessing, setMoveInProcessing] = useState(false);
-
-  // Blueprint state
-  const [showSaveBlueprintModal, setShowSaveBlueprintModal] = useState(false);
-  const [showApplyBlueprintModal, setShowApplyBlueprintModal] = useState(false);
-  const [showBlueprintManager, setShowBlueprintManager] = useState(false);
-  const [selectedMilestoneForBlueprint, setSelectedMilestoneForBlueprint] =
-    useState(null);
-
-  // Dialog states for replacing native browser dialogs
-  const [createItemDialogOpen, setCreateItemDialogOpen] = useState(false);
-  const [createItemDialogType, setCreateItemDialogType] = useState('milestone');
-  const [createItemDialogContext, setCreateItemDialogContext] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteDialogItems, setDeleteDialogItems] = useState([]);
-  const [discardChangesDialogOpen, setDiscardChangesDialogOpen] =
-    useState(false);
-
   // Track selected tasks for bulk operations
   const selectedIds = useStore(api, 'selected');
   const selectedTasksForBulk = useMemo(() => {
@@ -435,12 +407,6 @@ export function GanttView({
     enabled: true,
   });
 
-  // Date editing mode state (true = dates can be edited in grid cells)
-  // NOTE: setDateEditable is not used yet but kept for future feature to toggle date editing
-  // eslint-disable-next-line no-unused-vars
-  const [dateEditable, setDateEditable] = useState(true);
-
->>>>>>> ralph-session/27358354
   // Store reference to all tasks for event handlers
   const allTasksRef = useRef([]);
   // Store reference to links for event handlers (to avoid stale closure)
@@ -1151,11 +1117,7 @@ export function GanttView({
         }
       }
     },
-<<<<<<< HEAD
-    [getSelectedTasks, api, showToast],
-=======
-    [getSelectedTasks, syncTask, sync, showToast],
->>>>>>> ralph-session/f5ae8dc2
+    [getSelectedTasks, syncTask, sync, api, showToast],
   );
 
   // Handle Move In action
@@ -3290,49 +3252,6 @@ export function GanttView({
 
                 try {
                   return (
-<<<<<<< HEAD
-                    <Gantt
-                      key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
-                      init={(api) => {
-                        try {
-                          const result = init(api);
-                          return result;
-                        } catch (error) {
-                          console.error(
-                            '[Gantt init] ERROR in init callback:',
-                            error,
-                          );
-                          console.error('[Gantt init] ERROR name:', error.name);
-                          console.error(
-                            '[Gantt init] ERROR message:',
-                            error.message,
-                          );
-                          console.error(
-                            '[Gantt init] ERROR stack:',
-                            error.stack,
-                          );
-                          throw error;
-                        }
-                      }}
-                      tasks={groupedTasks}
-                      links={links}
-                      markers={markers}
-                      scales={scales}
-                      lengthUnit={lengthUnit}
-                      start={dateRange.start}
-                      end={dateRange.end}
-                      columns={columns}
-                      cellWidth={effectiveCellWidth}
-                      cellHeight={cellHeight}
-                      highlightTime={highlightTime}
-                      countWorkdays={countWorkdays}
-                      readonly={false}
-                      baselines={true}
-                      taskTemplate={SmartTaskContent}
-                      autoScale={false}
-                      colorRules={colorRules}
-                    />
-=======
                     <Tooltip api={api} content={TaskTooltipContent}>
                       <Gantt
                         key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
@@ -3380,7 +3299,6 @@ export function GanttView({
                         sprints={sprints}
                       />
                     </Tooltip>
->>>>>>> ralph-parallel/react-gantt-gitlab-qgl.17
                   );
                 } catch (error) {
                   console.error(
@@ -3520,8 +3438,6 @@ export function GanttView({
         severity="warning"
         confirmLabel="Discard"
       />
-<<<<<<< HEAD
-=======
 
       {/* Bulk Operations Bar - shows when multiple items are selected */}
       <BulkOperationsBar
@@ -3539,7 +3455,6 @@ export function GanttView({
         isOpen={showKeyboardHelp}
         onClose={() => setShowKeyboardHelp(false)}
       />
->>>>>>> ralph-session/27358354
     </div>
   );
 }

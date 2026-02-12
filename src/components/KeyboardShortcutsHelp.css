@@ -85,8 +85,8 @@
 .ksh-key {
   display: inline-block;
   padding: 4px 8px;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1;
   color: var(--wx-font-color, #24292f);
