@@ -133,7 +133,9 @@ function TimelineMarkersAdvanced() {
           <button onClick={addMarker} className="btn-add">
             + Add Random Marker
           </button>
-          <button onClick={removeLastMarker} className="btn-remove"
+          <button
+            onClick={removeLastMarker}
+            className="btn-remove"
             disabled={markers.length <= 1}
           >
             - Remove Last

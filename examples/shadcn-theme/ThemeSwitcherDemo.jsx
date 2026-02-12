@@ -76,8 +76,8 @@ function ThemeSwitcherDemo() {
         <h3>Theme Switcher Demo</h3>
         <p className="theme-description">
           Toggle between light and dark themes. The Gantt chart automatically
-          adapts to the selected shadcn/ui theme with proper color contrasts
-          and visual hierarchy.
+          adapts to the selected shadcn/ui theme with proper color contrasts and
+          visual hierarchy.
         </p>
 
         <div className="theme-toggle">
@@ -99,7 +99,8 @@ function ThemeSwitcherDemo() {
 
         <div className="theme-info">
           <p>
-            Current theme class: <code>
+            Current theme class:{' '}
+            <code>
               {theme === 'dark' ? 'wx-shadcn-dark-theme' : 'wx-shadcn-theme'}
             </code>
           </p>

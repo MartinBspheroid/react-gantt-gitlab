@@ -62,8 +62,16 @@ function DateBasedFormatting() {
       // Overdue tasks
       {
         id: 1,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 5),
-        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 5,
+        ),
+        end: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 1,
+        ),
         text: '[OVERDUE] Fix Critical Bug',
         progress: 80,
         type: 'task',
@@ -71,8 +79,16 @@ function DateBasedFormatting() {
       },
       {
         id: 2,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 3),
-        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 3,
+        ),
+        end: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 1,
+        ),
         text: '[OVERDUE] Update Documentation',
         progress: 60,
         type: 'task',
@@ -81,7 +97,11 @@ function DateBasedFormatting() {
       // Due soon (today or tomorrow)
       {
         id: 3,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 2,
+        ),
         end: today,
         text: '[DUE-SOON] Code Review',
         progress: 90,
@@ -100,8 +120,16 @@ function DateBasedFormatting() {
       // Upcoming (within a week)
       {
         id: 5,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2),
-        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 4),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 2,
+        ),
+        end: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 4,
+        ),
         text: '[UPCOMING] Sprint Planning',
         progress: 0,
         type: 'task',
@@ -109,8 +137,16 @@ function DateBasedFormatting() {
       },
       {
         id: 6,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3),
-        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 6),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 3,
+        ),
+        end: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 6,
+        ),
         text: '[UPCOMING] Feature Implementation',
         progress: 10,
         type: 'task',
@@ -119,8 +155,16 @@ function DateBasedFormatting() {
       // Normal tasks
       {
         id: 7,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5),
-        end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 10),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 5,
+        ),
+        end: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 10,
+        ),
         text: 'Future Task',
         progress: 0,
         type: 'task',
@@ -128,7 +172,11 @@ function DateBasedFormatting() {
       },
       {
         id: 8,
-        start: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 8),
+        start: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 8,
+        ),
         text: 'Release Milestone',
         progress: 0,
         type: 'milestone',
@@ -176,9 +224,9 @@ function DateBasedFormatting() {
       <div className="formatting-info">
         <h3>Date-Based Conditional Formatting</h3>
         <p>
-          Tasks are styled based on their due dates relative to today.
-          Color rules can be dynamically applied based on date calculations
-          to highlight time-sensitive work.
+          Tasks are styled based on their due dates relative to today. Color
+          rules can be dynamically applied based on date calculations to
+          highlight time-sensitive work.
         </p>
 
         <div className="date-legend">
@@ -206,10 +254,10 @@ function DateBasedFormatting() {
         </div>
 
         <div className="implementation-note">
-          <strong>Implementation Note:</strong> In a real application, date-based
-          rules would be computed dynamically based on actual end dates rather
-          than title patterns. This example uses title matching for demonstration
-          purposes.
+          <strong>Implementation Note:</strong> In a real application,
+          date-based rules would be computed dynamically based on actual end
+          dates rather than title patterns. This example uses title matching for
+          demonstration purposes.
         </div>
       </div>
 

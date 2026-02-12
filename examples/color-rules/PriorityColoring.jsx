@@ -156,9 +156,9 @@ function PriorityColoring() {
       <div className="coloring-info">
         <h3>Priority-Based Coloring</h3>
         <p>
-          Tasks are automatically styled based on their priority labels.
-          Color rules match task labels and apply colored stripes to indicate
-          priority levels at a glance.
+          Tasks are automatically styled based on their priority labels. Color
+          rules match task labels and apply colored stripes to indicate priority
+          levels at a glance.
         </p>
 
         <div className="priority-legend">

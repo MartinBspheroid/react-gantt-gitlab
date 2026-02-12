@@ -88,7 +88,9 @@ function GroupByAssignee() {
 
   // Create groups with headers
   const groupedTasks = useMemo(() => {
-    const assignees = [...new Set(tasks.map((t) => t.assigned || 'Unassigned'))];
+    const assignees = [
+      ...new Set(tasks.map((t) => t.assigned || 'Unassigned')),
+    ];
     const result = [];
     let groupId = 1000;
 
@@ -150,7 +152,10 @@ function GroupByAssignee() {
           </div>
           <div className="stat-card">
             <span className="stat-value">
-              {[...new Set(tasks.map((t) => t.assigned || 'Unassigned'))].length}
+              {
+                [...new Set(tasks.map((t) => t.assigned || 'Unassigned'))]
+                  .length
+              }
             </span>
             <span className="stat-label">Team Members</span>
           </div>

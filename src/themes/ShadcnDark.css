@@ -25,10 +25,31 @@
     Roboto,
     sans-serif
   );
-  --wx-font-size: 14px;
-  --wx-font-size-sm: 12px;
-  --wx-font-weight: 400;
-  --wx-font-weight-md: 500;
+
+  /* Typography - Font Sizes (mapped to shadcn tokens) */
+  --wx-font-size-xs: var(--font-size-xs, 0.75rem);
+  --wx-font-size-sm: var(--font-size-sm, 0.875rem);
+  --wx-font-size: var(--font-size-base, 0.875rem);
+  --wx-font-size-md: var(--font-size-base, 0.875rem);
+  --wx-font-size-lg: var(--font-size-lg, 1.125rem);
+  --wx-font-size-xl: var(--font-size-xl, 1.25rem);
+  --wx-font-size-2xl: var(--font-size-2xl, 1.5rem);
+
+  /* Typography - Font Weights (mapped to shadcn tokens) */
+  --wx-font-weight: var(--font-weight-normal, 400);
+  --wx-font-weight-normal: var(--font-weight-normal, 400);
+  --wx-font-weight-md: var(--font-weight-medium, 500);
+  --wx-font-weight-medium: var(--font-weight-medium, 500);
+  --wx-font-weight-semibold: var(--font-weight-semibold, 600);
+  --wx-font-weight-bold: var(--font-weight-bold, 700);
+
+  /* Typography - Line Heights (mapped to shadcn tokens) */
+  --wx-line-height-none: var(--line-height-none, 1);
+  --wx-line-height-tight: var(--line-height-tight, 1.25);
+  --wx-line-height-snug: var(--line-height-snug, 1.375);
+  --wx-line-height-normal: var(--line-height-normal, 1.5);
+  --wx-line-height-relaxed: var(--line-height-relaxed, 1.625);
+  --wx-line-height-loose: var(--line-height-loose, 2);
 
   /* Text Colors */
   --wx-color-font: var(--foreground, #fafafa);
@@ -56,8 +77,16 @@
   --wx-icon-size: 16px;
   --wx-label-offset: 8px;
 
-  /* Radius - from shadcn */
+  /* Radius - mapped to shadcn tokens */
+  --wx-radius-sm: var(--radius-sm, 0.125rem);
   --wx-radius: var(--radius, 0.5rem);
+  --wx-radius-md: var(--radius, 0.5rem);
+  --wx-radius-lg: var(--radius-lg, 0.5rem);
+  --wx-radius-xl: var(--radius-xl, 0.75rem);
+  --wx-radius-2xl: var(--radius-2xl, 1rem);
+  --wx-radius-3xl: var(--radius-3xl, 1.5rem);
+  --wx-radius-4xl: var(--radius-4xl, 2rem);
+  --wx-radius-full: 9999px;
 
   /* ==========================================
      Gantt Component Variables
@@ -72,8 +101,8 @@
   /* Bars */
   --wx-gantt-bar-font: var(--wx-font-weight) var(--wx-font-size)
     var(--wx-font-family);
-  --wx-gantt-bar-border-radius: calc(var(--radius, 0.5rem) / 2);
-  --wx-gantt-milestone-border-radius: calc(var(--radius, 0.5rem) / 2);
+  --wx-gantt-bar-border-radius: calc(var(--wx-radius) / 2);
+  --wx-gantt-milestone-border-radius: calc(var(--wx-radius) / 2);
 
   /* Task Colors - Uses primary color */
   --wx-gantt-task-color: var(--primary, #fafafa);
@@ -106,21 +135,46 @@
   --wx-gantt-link-marker-background: var(--muted, #27272a);
   --wx-gantt-link-marker-color: var(--muted-foreground, #a1a1aa);
 
-  /* Shadows */
-  --wx-gantt-bar-shadow:
-    0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  /* Shadows - mapped to shadcn tokens */
+  --wx-shadow-none: none;
+  --wx-shadow-sm: var(--shadow-sm, 0 1px 2px 0 rgb(0 0 0 / 0.3));
+  --wx-shadow: var(
+    --shadow,
+    0 1px 3px 0 rgb(0 0 0 / 0.3),
+    0 1px 2px -1px rgb(0 0 0 / 0.3)
+  );
+  --wx-shadow-md: var(
+    --shadow-md,
+    0 4px 6px -1px rgb(0 0 0 / 0.3),
+    0 2px 4px -2px rgb(0 0 0 / 0.3)
+  );
+  --wx-shadow-lg: var(
+    --shadow-lg,
+    0 10px 15px -3px rgb(0 0 0 / 0.3),
+    0 4px 6px -4px rgb(0 0 0 / 0.3)
+  );
+  --wx-shadow-xl: var(
+    --shadow-xl,
+    0 20px 25px -5px rgb(0 0 0 / 0.3),
+    0 8px 10px -6px rgb(0 0 0 / 0.3)
+  );
+  --wx-shadow-2xl: var(--shadow-2xl, 0 25px 50px -12px rgb(0 0 0 / 0.5));
+  --wx-shadow-inner: var(--shadow-inner, inset 0 2px 4px 0 rgb(0 0 0 / 0.3));
+
+  /* Component-specific shadows using shadcn tokens */
+  --wx-gantt-bar-shadow: var(--wx-shadow);
 
   /* Progress Markers */
   --wx-gantt-progress-marker-height: 26px;
   --wx-gantt-progress-border-color: var(--border, #27272a);
-  --wx-gantt-baseline-border-radius: calc(var(--radius, 0.5rem) / 3);
+  --wx-gantt-baseline-border-radius: calc(var(--wx-radius) / 3);
 
   /* Grid */
   --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size)
     var(--wx-font-family);
   --wx-grid-header-font-color: var(--foreground, #fafafa);
   --wx-grid-header-text-transform: capitalize;
-  --wx-grid-header-shadow: none;
+  --wx-grid-header-shadow: var(--wx-shadow-none);
 
   --wx-grid-body-font: var(--wx-font-weight) var(--wx-font-size)
     var(--wx-font-family);
@@ -133,7 +187,7 @@
     var(--wx-font-family);
   --wx-timescale-font-color: var(--muted-foreground, #a1a1aa);
   --wx-timescale-text-transform: uppercase;
-  --wx-timescale-shadow: none;
+  --wx-timescale-shadow: var(--wx-shadow-none);
   --wx-timescale-border: var(--wx-gantt-border);
 
   /* Holidays */

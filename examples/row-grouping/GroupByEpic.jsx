@@ -213,8 +213,8 @@ function GroupByEpic() {
         <div className="grouping-info">
           <h3>Group by Epic</h3>
           <p>
-            Tasks are organized by epic/feature group. Each epic shows a
-            summary bar spanning all its tasks. Click headers to expand/collapse.
+            Tasks are organized by epic/feature group. Each epic shows a summary
+            bar spanning all its tasks. Click headers to expand/collapse.
           </p>
         </div>
 

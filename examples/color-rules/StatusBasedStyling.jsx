@@ -188,9 +188,9 @@ function StatusBasedStyling() {
       <div className="styling-info">
         <h3>Status-Based Task Styling</h3>
         <p>
-          Tasks are styled based on their workflow status. This makes it easy
-          to identify blocked work, completed items, and tasks pending review
-          at a glance.
+          Tasks are styled based on their workflow status. This makes it easy to
+          identify blocked work, completed items, and tasks pending review at a
+          glance.
         </p>
 
         <div className="status-legend">
