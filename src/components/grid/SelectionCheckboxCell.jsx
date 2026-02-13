@@ -39,8 +39,27 @@ export function SelectionCheckboxCell({ row }) {
     e.stopPropagation();
   }, []);
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Focus the checkbox and trigger click
+      const checkbox = e.currentTarget.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.click();
+      }
+    }
+  }, []);
+
   return (
-    <div className="selection-checkbox-cell" onClick={handleClick}>
+    <div
+      className="selection-checkbox-cell"
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label="Select task"
+    >
       <input
         type="checkbox"
         checked={isSelected}
@@ -89,8 +108,28 @@ export function SelectionHeaderCell({ api, visibleTasks }) {
     [api, visibleTasks, allSelected],
   );
 
+  const handleHeaderKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSelectAll(e);
+      }
+    },
+    [handleSelectAll],
+  );
+
   return (
-    <div className="selection-header-cell" onClick={handleSelectAll}>
+    <div
+      className="selection-header-cell"
+      onClick={handleSelectAll}
+      onKeyDown={handleHeaderKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={
+        allSelected ? 'Deselect all tasks' : 'Select all visible tasks'
+      }
+    >
       <input
         type="checkbox"
         checked={allSelected}
