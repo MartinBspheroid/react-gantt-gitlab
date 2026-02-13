@@ -68,13 +68,9 @@ function assignTasksToRows(tasks: ITask[]): Map<number, ITask[]> {
   // Sort by start date
   const sorted = [...tasks].sort((a, b) => {
     const aStart =
-      a.start instanceof Date
-        ? a.start
-        : new Date(a.start || Date.now());
+      a.start instanceof Date ? a.start : new Date(a.start || Date.now());
     const bStart =
-      b.start instanceof Date
-        ? b.start
-        : new Date(b.start || Date.now());
+      b.start instanceof Date ? b.start : new Date(b.start || Date.now());
     return aStart.getTime() - bStart.getTime();
   });
 

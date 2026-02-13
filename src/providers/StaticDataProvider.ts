@@ -121,7 +121,9 @@ export class StaticDataProvider implements DataProviderInterface {
           if (a && !members.has(a)) {
             members.set(
               a,
-              a.replace('.', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+              a
+                .replace('.', ' ')
+                .replace(/\b\w/g, (c: string) => c.toUpperCase()),
             );
           }
         }

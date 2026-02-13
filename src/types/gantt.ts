@@ -81,11 +81,7 @@ export type ExtendedTask = GanttTask;
  * Type guard to check if a task is a GanttTask with extended properties
  */
 export function isGanttTask(task: ITask): task is GanttTask {
-  return (
-    task !== null &&
-    typeof task === 'object' &&
-    'id' in task
-  );
+  return task !== null && typeof task === 'object' && 'id' in task;
 }
 
 /**

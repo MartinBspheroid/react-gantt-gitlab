@@ -224,12 +224,17 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
         target?.isContentEditable;
 
       for (const shortcut of shortcuts) {
-        const keyMatch = keyboardEvent.key.toLowerCase() === shortcut.key.toLowerCase();
+        const keyMatch =
+          keyboardEvent.key.toLowerCase() === shortcut.key.toLowerCase();
         const ctrlMatch = shortcut.ctrl
           ? keyboardEvent.ctrlKey || keyboardEvent.metaKey
           : !keyboardEvent.ctrlKey && !keyboardEvent.metaKey;
-        const shiftMatch = shortcut.shift ? keyboardEvent.shiftKey : !keyboardEvent.shiftKey;
-        const altMatch = shortcut.alt ? keyboardEvent.altKey : !keyboardEvent.altKey;
+        const shiftMatch = shortcut.shift
+          ? keyboardEvent.shiftKey
+          : !keyboardEvent.shiftKey;
+        const altMatch = shortcut.alt
+          ? keyboardEvent.altKey
+          : !keyboardEvent.altKey;
 
         if (keyMatch && ctrlMatch && shiftMatch && altMatch) {
           if (shortcut.key === 'escape' || !isInput) {

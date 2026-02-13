@@ -516,20 +516,24 @@ export function importFromJSON(
 ): { tasks: ITask[]; links: ILink[] } {
   const data = JSON.parse(jsonString);
 
-  const tasks: ITask[] = (data.tasks || []).map((t: Record<string, unknown>) => ({
-    ...t,
-    start: t.start ? new Date(t.start as string) : undefined,
-    end: t.end ? new Date(t.end as string) : undefined,
-    base_start: t.base_start ? new Date(t.base_start as string) : undefined,
-    base_end: t.base_end ? new Date(t.base_end as string) : undefined,
-  }));
+  const tasks: ITask[] = (data.tasks || []).map(
+    (t: Record<string, unknown>) => ({
+      ...t,
+      start: t.start ? new Date(t.start as string) : undefined,
+      end: t.end ? new Date(t.end as string) : undefined,
+      base_start: t.base_start ? new Date(t.base_start as string) : undefined,
+      base_end: t.base_end ? new Date(t.base_end as string) : undefined,
+    }),
+  );
 
-  const links: ILink[] = (data.links || []).map((l: Record<string, unknown>) => ({
-    id: l.id as string | number,
-    type: l.type as 'e2s' | 's2e' | 'e2e' | 's2s',
-    source: l.source as string | number,
-    target: l.target as string | number,
-  }));
+  const links: ILink[] = (data.links || []).map(
+    (l: Record<string, unknown>) => ({
+      id: l.id as string | number,
+      type: l.type as 'e2s' | 's2e' | 'e2e' | 's2s',
+      source: l.source as string | number,
+      target: l.target as string | number,
+    }),
+  );
 
   return { tasks, links };
 }
