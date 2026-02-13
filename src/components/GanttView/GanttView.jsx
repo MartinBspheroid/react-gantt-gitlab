@@ -196,6 +196,8 @@ export function GanttView({
   externalShowViewOptions,
   className,
   readonly = false,
+  filterSearchInputRef,
+  viewOptionsContainerRef,
 }) {
   // === Get data from DataContext ===
   const {
@@ -382,7 +384,7 @@ export function GanttView({
     },
     onClearSelection: handleDeselectAll,
     onFocusSearch: () => {
-      const searchInput = document.querySelector('.filter-search-input');
+      const searchInput = filterSearchInputRef?.current;
       if (searchInput) {
         searchInput.focus();
         searchInput.select();
@@ -429,6 +431,8 @@ export function GanttView({
   const pendingDeleteTaskIdsRef = useRef([]);
   // Store pending add-task context for create dialog confirmation
   const pendingAddTaskContextRef = useRef(null);
+  // Ref to the gantt chart container for querying editor elements
+  const ganttContainerRef = useRef(null);
 
   // Column settings (visibility + order) from extracted hook
   const { columnSettings, toggleColumn, reorderColumns } = useColumnSettings();
@@ -1299,7 +1303,10 @@ export function GanttView({
 
         // Disable browser extensions (like Grammarly) on editor inputs
         setTimeout(() => {
-          const editorInputs = document.querySelectorAll(
+          // Query within the gantt container to avoid affecting other instances
+          const container = ganttContainerRef.current;
+          if (!container) return;
+          const editorInputs = container.querySelectorAll(
             '.wx-editor input, .wx-editor textarea',
           );
           editorInputs.forEach((input) => {
@@ -2933,9 +2940,7 @@ export function GanttView({
           );
 
           // If embedded in workspace, render via portal to the container above FilterPanel
-          const portalContainer = document.getElementById(
-            'view-options-container',
-          );
+          const portalContainer = viewOptionsContainerRef?.current;
           if (hideSharedToolbar && portalContainer) {
             return createPortal(viewControlsContent, portalContainer);
           }
@@ -3151,7 +3156,7 @@ export function GanttView({
             onOpenBlueprints={() => setShowBlueprintManager(true)}
           />
         </div>
-        <div className="gantt-chart-container">
+        <div ref={ganttContainerRef} className="gantt-chart-container">
           {syncState.isLoading ? (
             <div className="loading-message">
               <p>Loading data...</p>
