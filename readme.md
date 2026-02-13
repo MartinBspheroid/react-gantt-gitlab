@@ -7,11 +7,11 @@ A data-source-agnostic Gantt chart component for React. Supports multiple data b
 ## Quick Start
 
 ```jsx
-import { 
-  Workspace, 
-  DataProvider, 
-  GanttView, 
-  StaticDataProvider 
+import {
+  Workspace,
+  DataProvider,
+  GanttView,
+  StaticDataProvider
 } from 'react-gantt-gitlab';
 
 // Create a data provider
@@ -38,22 +38,22 @@ function App() {
 
 These are the main components for building Gantt chart applications:
 
-| Component | Description |
-|-----------|-------------|
-| `Workspace` | Main layout container with sidebar, toolbar, and content area |
-| `GanttView` | The main Gantt chart view component |
-| `KanbanView` | Kanban board view for task management |
+| Component    | Description                                                   |
+| ------------ | ------------------------------------------------------------- |
+| `Workspace`  | Main layout container with sidebar, toolbar, and content area |
+| `GanttView`  | The main Gantt chart view component                           |
+| `KanbanView` | Kanban board view for task management                         |
 
 ### Data Layer
 
 Connect to your data source using these exports:
 
-| Export | Description |
-|--------|-------------|
-| `DataProvider` | React context provider that manages data state |
-| `useData` | Hook to access data context (throws if outside provider) |
-| `useDataOptional` | Hook to optionally access data context (returns null if outside) |
-| `StaticDataProvider` | Built-in in-memory provider for demos/testing |
+| Export               | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `DataProvider`       | React context provider that manages data state                   |
+| `useData`            | Hook to access data context (throws if outside provider)         |
+| `useDataOptional`    | Hook to optionally access data context (returns null if outside) |
+| `StaticDataProvider` | Built-in in-memory provider for demos/testing                    |
 
 ### Custom Data Providers
 
@@ -68,7 +68,11 @@ interface DataProviderInterface {
   deleteTask(id: string | number): Promise<void>;
   createLink(link: Partial<ILink>): Promise<ILink>;
   deleteLink(linkId: string | number): Promise<void>;
-  reorderTask(taskId: string | number, targetId: string | number, position: 'before' | 'after'): Promise<void>;
+  reorderTask(
+    taskId: string | number,
+    targetId: string | number,
+    position: 'before' | 'after',
+  ): Promise<void>;
   getFilterOptions(): Promise<FilterOptionsData>;
   checkCanEdit(): Promise<boolean>;
   getConfig(): DataProviderConfig;
@@ -82,21 +86,27 @@ See `src/providers/StaticDataProvider.ts` for a reference implementation.
 Visual themes for the Gantt chart:
 
 ```jsx
-import { Material, Willow, WillowDark, Shadcn, ShadcnDark } from 'react-gantt-gitlab';
+import {
+  Material,
+  Willow,
+  WillowDark,
+  Shadcn,
+  ShadcnDark,
+} from 'react-gantt-gitlab';
 
 // Apply theme by wrapping your app
 <Material>
   <App />
-</Material>
+</Material>;
 ```
 
-| Theme | Description |
-|-------|-------------|
-| `Material` | Material Design theme |
-| `Willow` | Light theme with clean aesthetics |
-| `WillowDark` | Dark variant of Willow theme |
-| `Shadcn` | shadcn/ui compatible light theme |
-| `ShadcnDark` | shadcn/ui compatible dark theme |
+| Theme        | Description                       |
+| ------------ | --------------------------------- |
+| `Material`   | Material Design theme             |
+| `Willow`     | Light theme with clean aesthetics |
+| `WillowDark` | Dark variant of Willow theme      |
+| `Shadcn`     | shadcn/ui compatible light theme  |
+| `ShadcnDark` | shadcn/ui compatible dark theme   |
 
 ## Features
 
