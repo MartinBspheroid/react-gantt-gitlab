@@ -48,6 +48,36 @@
       "require": "./dist/index.cjs.js",
       "default": "./dist/index.es.js"
     },
+    "./kanban": {
+      "types": "./types/kanban.d.ts",
+      "import": "./dist/kanban.es.js",
+      "require": "./dist/kanban.cjs",
+      "default": "./dist/kanban.es.js"
+    },
+    "./workload": {
+      "types": "./types/workload.d.ts",
+      "import": "./dist/workload.es.js",
+      "require": "./dist/workload.cjs",
+      "default": "./dist/workload.es.js"
+    },
+    "./themes/willow": {
+      "types": "./types/themes/willow.d.ts",
+      "import": "./dist/themes/willow.es.js",
+      "require": "./dist/themes/willow.cjs",
+      "default": "./dist/themes/willow.es.js"
+    },
+    "./themes/material": {
+      "types": "./types/themes/material.d.ts",
+      "import": "./dist/themes/material.es.js",
+      "require": "./dist/themes/material.cjs",
+      "default": "./dist/themes/material.es.js"
+    },
+    "./themes/shadcn": {
+      "types": "./types/themes/shadcn.d.ts",
+      "import": "./dist/themes/shadcn.es.js",
+      "require": "./dist/themes/shadcn.cjs",
+      "default": "./dist/themes/shadcn.es.js"
+    },
     "./style.css": "./dist/index.css",
     "./all.css": "./dist-full/index.css"
   },

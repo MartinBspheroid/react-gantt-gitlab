@@ -75,7 +75,7 @@ export default defineConfig(({ command, mode }) => {
     };
   }
 
-  // Library build configuration (default)
+  // Library build configuration (default) - Multiple entry points
   return {
     plugins: [react()],
     resolve: resolveConfig,
@@ -101,8 +101,18 @@ export default defineConfig(({ command, mode }) => {
     build: {
       sourcemap: true,
       lib: {
-        entry: resolve(__dirname, 'src/index.js'),
-        fileName: (format) => (format === 'cjs' ? 'index.cjs' : 'index.es.js'),
+        entry: {
+          index: resolve(__dirname, 'src/index.js'),
+          kanban: resolve(__dirname, 'src/kanban.js'),
+          workload: resolve(__dirname, 'src/workload.js'),
+          'themes/willow': resolve(__dirname, 'src/themes/willow.js'),
+          'themes/material': resolve(__dirname, 'src/themes/material.js'),
+          'themes/shadcn': resolve(__dirname, 'src/themes/shadcn.js'),
+        },
+        fileName: (format, entryName) => {
+          const ext = format === 'cjs' ? 'cjs' : 'es.js';
+          return `${entryName}.${ext}`;
+        },
         formats: ['es', 'cjs'],
       },
       rollupOptions: rollupOptionsStrict,
