@@ -5,7 +5,7 @@
  * 其他對話框元件應該基於此元件建構
  */
 
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useId } from 'react';
 import './BaseDialog.css';
 import '../modal-close-button.css';
 
@@ -37,6 +37,9 @@ export function BaseDialog({
   // 用於追蹤 mousedown 是否發生在 overlay 上，避免拖曳選取文字時意外關閉
   const mouseDownOnOverlay = useRef(false);
   const dialogRef = useRef(null);
+
+  // Generate unique ID for aria-labelledby to avoid conflicts with multiple dialogs
+  const titleId = useId();
 
   // Escape 鍵處理
   useEffect(() => {
@@ -108,12 +111,12 @@ export function BaseDialog({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="dialog-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
       >
         {/* Header */}
         <div className="base-dialog-header">
-          <h3 id="dialog-title">{title}</h3>
+          <h3 id={titleId}>{title}</h3>
           {showCloseButton && (
             <button
               className="modal-close-btn"
