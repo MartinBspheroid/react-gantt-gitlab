@@ -79,8 +79,8 @@ export function DataProvider({
   const [currentConfig, setCurrentConfig] = useState<DataSourceConfig | null>(
     null,
   );
-  const [configs, setConfigs] = useState<DataSourceConfig[]>([]);
-  const [projectPath, setProjectPath] = useState('');
+  const [configs] = useState<DataSourceConfig[]>([]);
+  const [projectPath] = useState('');
 
   // === Filter State ===
   const [filterOptions, setFilterOptions] = useState<Record<string, unknown>>(
@@ -94,8 +94,8 @@ export function DataProvider({
     useState<SyncOptions | null>(null);
 
   // === Permissions ===
-  const [canEdit, setCanEdit] = useState(true);
-  const [canEditHolidays, setCanEditHolidays] = useState(false);
+  const [canEdit] = useState(true);
+  const [canEditHolidays] = useState(false);
 
   // === Holidays & Workdays (local state, no API) ===
   const [holidays, setHolidays] = useState<HolidayEntry[]>([]);
