@@ -3,7 +3,45 @@
  * Shared hook for weekend/holiday highlighting logic
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+
+/**
+ * Simple LRU Cache implementation
+ */
+class LRUCache<K, V> {
+  private cache: Map<K, V>;
+  private maxSize: number;
+
+  constructor(maxSize: number) {
+    this.cache = new Map();
+    this.maxSize = maxSize;
+  }
+
+  get(key: K): V | undefined {
+    const value = this.cache.get(key);
+    if (value !== undefined) {
+      // Move to end (most recently used)
+      this.cache.delete(key);
+      this.cache.set(key, value);
+    }
+    return value;
+  }
+
+  set(key: K, value: V): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      // Remove least recently used (first item)
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(key, value);
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
 
 interface Holiday {
   date: string;
@@ -72,6 +110,15 @@ export function useHighlightTime({
       JSON.stringify(workdays.map((w) => (typeof w === 'string' ? w : w.date))),
     [workdays],
   );
+
+  // LRU cache for workday counting results
+  // Cache key: startDate + endDate + holidaysKey + workdaysKey
+  const workdayCacheRef = useRef<LRUCache<string, number>>(new LRUCache(1000));
+
+  // Clear cache when holidays or workdays change
+  useMemo(() => {
+    workdayCacheRef.current.clear();
+  }, [holidaysKey, workdaysKey]);
 
   const holidaySet = useMemo(() => {
     const set = new Set<string>();
@@ -149,6 +196,17 @@ export function useHighlightTime({
 
       if (start > end) return 0;
 
+      // Generate cache key
+      const startStr = formatLocalDate(start);
+      const endStr = formatLocalDate(end);
+      const cacheKey = `${startStr}|${endStr}|${holidaysKey}|${workdaysKey}`;
+
+      // Check cache first
+      const cached = workdayCacheRef.current.get(cacheKey);
+      if (cached !== undefined) {
+        return cached;
+      }
+
       let count = 0;
       const current = new Date(start);
 
@@ -159,9 +217,12 @@ export function useHighlightTime({
         current.setDate(current.getDate() + 1);
       }
 
+      // Store in cache
+      workdayCacheRef.current.set(cacheKey, count);
+
       return count;
     },
-    [isNonWorkday],
+    [isNonWorkday, holidaysKey, workdaysKey],
   );
 
   /**
