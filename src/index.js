@@ -1,18 +1,18 @@
-import Gantt from './components/Gantt.jsx';
-import Fullscreen from './components/Fullscreen.jsx';
-import Toolbar from './components/Toolbar.jsx';
-import ContextMenu from './components/ContextMenu.jsx';
-import Editor from './components/Editor.jsx';
-import HeaderMenu from './components/grid/HeaderMenu.jsx';
-import SmartTaskContent from './components/SmartTaskContent.jsx';
+import Gantt from './components/Gantt.tsx';
+import Fullscreen from './components/Fullscreen.tsx';
+import Toolbar from './components/Toolbar.tsx';
+import ContextMenu from './components/ContextMenu.tsx';
+import Editor from './components/Editor.tsx';
+import HeaderMenu from './components/grid/HeaderMenu.tsx';
+import SmartTaskContent from './components/SmartTaskContent.tsx';
 
-import Tooltip from './widgets/Tooltip.jsx';
+import Tooltip from './widgets/Tooltip.tsx';
 
-import Material from './themes/Material.jsx';
-import Willow from './themes/Willow.jsx';
-import WillowDark from './themes/WillowDark.jsx';
-import Shadcn from './themes/Shadcn.jsx';
-import ShadcnDark from './themes/ShadcnDark.jsx';
+import Material from './themes/Material.tsx';
+import Willow from './themes/Willow.tsx';
+import WillowDark from './themes/WillowDark.tsx';
+import Shadcn from './themes/Shadcn.tsx';
+import ShadcnDark from './themes/ShadcnDark.tsx';
 
 export {
   defaultEditorItems,

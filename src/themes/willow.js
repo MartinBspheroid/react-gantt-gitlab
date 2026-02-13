@@ -5,5 +5,5 @@
  *   import { Willow, WillowDark } from '@svar-ui/react-gantt/themes/willow';
  */
 
-export { default as Willow } from './Willow.jsx';
-export { default as WillowDark } from './WillowDark.jsx';
+export { default as Willow } from './Willow.tsx';
+export { default as WillowDark } from './WillowDark.tsx';

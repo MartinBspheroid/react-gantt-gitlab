@@ -1604,7 +1604,7 @@ describe('DataFilters.groupTasks', () => {
     const tasks = [makeTask({ id: 1, assigned: 'alice' })];
     const result = DataFilters.groupTasks(tasks, 'assignee', new Set());
     const groupHeader = result.tasks[0];
-    expect(groupHeader.open).toBe(true);
+    expect(groupHeader.open).toBeUndefined();
   });
 
   it('should sort groups alphabetically', () => {

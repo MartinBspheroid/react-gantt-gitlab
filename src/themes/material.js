@@ -5,4 +5,4 @@
  *   import { Material } from '@svar-ui/react-gantt/themes/material';
  */
 
-export { default as Material } from './Material.jsx';
+export { default as Material } from './Material.tsx';

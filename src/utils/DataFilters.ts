@@ -899,9 +899,13 @@ export class DataFilters {
 
     const result: ITask[] = [];
     let groupIndex = 0;
+    // Use negative numeric IDs for group headers to avoid conflicts
+    // with real task IDs and ensure store compatibility
+    let nextGroupNumericId = -1000;
 
     sortedGroups.forEach(([groupName, groupTasks]) => {
       const groupId = `group-${groupBy}-${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const numericGroupId = nextGroupNumericId--;
       const isCollapsed = collapsedGroups.has(groupId);
 
       const tasksWithDates = groupTasks.filter((t) => t.start && t.end);
@@ -924,14 +928,15 @@ export class DataFilters {
       });
 
       const groupHeader: ITask = {
-        id: groupId,
+        id: numericGroupId,
         text: groupName,
         start: dateRange?.start || new Date(),
         end: dateRange?.end || new Date(),
         parent: 0,
-        open: !isCollapsed,
+        open: isCollapsed ? false : undefined,
         $groupHeader: true,
         $groupName: groupName,
+        $groupId: groupId,
         $groupIndex: groupIndex,
         $groupType: groupBy,
         $taskCount: groupTasks.length,
@@ -942,8 +947,15 @@ export class DataFilters {
       result.push(groupHeader);
 
       if (!isCollapsed) {
+        // Flatten all tasks as direct children of the group header.
+        // Original parent-child relationships are broken across groups,
+        // so we re-parent everything under the group header.
         const childTasks = groupTasks.map((task) => ({
           ...task,
+          parent: numericGroupId,
+          // Demote summaries to regular tasks since their children
+          // may be in different groups
+          type: task.type === 'summary' ? 'task' : task.type,
           $groupIndex: groupIndex,
         }));
         result.push(...childTasks);

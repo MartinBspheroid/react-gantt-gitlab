@@ -7,7 +7,7 @@ import { useMemo } from 'react';
  * @param {Array} tasks - Array of tasks to validate
  * @returns {Object} Validation results and filtered valid tasks
  */
-export function useTaskValidation(tasks) {
+export function useTaskValidation(tasks: any[]) {
   return useMemo(() => {
     // Validate tasks structure
     const invalidTasks = tasks.filter((task) => {

@@ -5,4 +5,4 @@
  *   import { WorkloadView } from '@svar-ui/react-gantt/workload';
  */
 
-export { WorkloadView } from './components/WorkloadView.jsx';
+export { WorkloadView } from './components/WorkloadView.tsx';

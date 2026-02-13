@@ -6,4 +6,4 @@
  * is managed by DataProvider.
  */
 
-export { GanttView } from './GanttView.jsx';
+export { GanttView } from './GanttView.tsx';
