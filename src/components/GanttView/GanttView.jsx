@@ -3179,7 +3179,6 @@ export function GanttView({
             >
               <Tooltip api={api} content={TaskTooltipContent}>
                 <Gantt
-                  key={`gantt-${lengthUnit}-${effectiveCellWidth}`}
                   init={(api) => {
                     try {
                       const result = init(api);
