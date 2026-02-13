@@ -4,6 +4,7 @@
  */
 
 import type { ITask } from '@svar-ui/gantt-store';
+import type { GanttTask } from '../types/gantt';
 
 /**
  * Server filter options for Preset storage
@@ -86,7 +87,7 @@ export class DataFilters {
       }
 
       // Issue/Task - check by milestone association stored in milestoneIid
-      const taskMilestoneIid = (task as any).milestoneIid;
+      const taskMilestoneIid = (task as GanttTask).milestoneIid;
 
       // Check for no milestone
       if (includeNoMilestone && !taskMilestoneIid) {
@@ -117,7 +118,7 @@ export class DataFilters {
 
     return tasks.filter((task) => {
       // Check if task has epic parent ID stored
-      const epicParentId = (task as any).epicParentId;
+      const epicParentId = (task as GanttTask).epicParentId;
 
       // Check for no epic
       if (includeNoEpic && !epicParentId) {
@@ -355,9 +356,9 @@ export class DataFilters {
       if (task.parent && task.parent !== 0) {
         // Check if this is an Issue (Issue's parent in Gantt = Milestone)
         const isIssue =
-          task.$isIssue ||
-          (task as any).workItemType === 'Issue' ||
-          ((task as any).workItemType !== 'Task' && !(task as any).type);
+          (task as GanttTask).$isIssue ||
+          (task as GanttTask).workItemType === 'Issue' ||
+          ((task as GanttTask).workItemType !== 'Task' && !(task as GanttTask).type);
 
         if (isIssue) {
           // Issue's parent in Gantt context is Milestone
@@ -470,7 +471,7 @@ export class DataFilters {
 
     // Assign tasks to groups
     tasks.forEach((task) => {
-      const epicId = (task as any).epicId || 0;
+      const epicId = (task as GanttTask).epicId || 0;
       const group = groups.get(epicId);
       if (group) {
         group.push(task);
@@ -493,7 +494,7 @@ export class DataFilters {
             ? task.labels.split(',').map((l) => l.trim())
             : task.labels;
 
-        taskLabels.forEach((label) => {
+        taskLabels.forEach((label: string) => {
           if (label) {
             labelsSet.add(label);
           }
@@ -859,9 +860,9 @@ export class DataFilters {
         case 'assignee':
           return (task.assigned as string) || 'Unassigned';
         case 'epic':
-          return ((task as any).epic as string) || 'No Epic';
+          return ((task as GanttTask).epic as string) || 'No Epic';
         case 'sprint':
-          return ((task as any).iteration as string) || 'No Sprint';
+          return ((task as GanttTask).iteration as string) || 'No Sprint';
         default:
           return 'Other';
       }
@@ -935,7 +936,7 @@ export class DataFilters {
         $taskCount: groupTasks.length,
         progress: 0,
         type: 'project',
-      } as any;
+      } as GanttTask;
 
       result.push(groupHeader);
 
@@ -977,17 +978,23 @@ export class DataFilters {
           }
           break;
         case 'epic':
-          if ((task as any).epic) {
-            values.add((task as any).epic);
-          } else {
-            values.add('No Epic');
+          {
+            const epic = (task as GanttTask).epic;
+            if (epic) {
+              values.add(epic);
+            } else {
+              values.add('No Epic');
+            }
           }
           break;
         case 'sprint':
-          if ((task as any).iteration) {
-            values.add((task as any).iteration);
-          } else {
-            values.add('No Sprint');
+          {
+            const iteration = (task as GanttTask).iteration;
+            if (iteration) {
+              values.add(iteration);
+            } else {
+              values.add('No Sprint');
+            }
           }
           break;
       }

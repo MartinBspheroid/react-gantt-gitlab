@@ -11,9 +11,9 @@
  * @param {...(string|boolean|undefined|null)} inputs - Class names or conditional expressions
  * @returns {string} - Concatenated className string
  */
-export function cn(...inputs) {
+export function cn(...inputs: (string | boolean | undefined | null)[]) {
   return inputs
-    .filter((input) => Boolean(input) && typeof input === 'string')
+    .filter((input): input is string => Boolean(input) && typeof input === 'string')
     .join(' ')
     .trim();
 }

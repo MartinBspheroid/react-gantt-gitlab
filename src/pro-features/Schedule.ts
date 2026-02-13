@@ -143,13 +143,17 @@ export function scheduleTasks(
     taskConstraints.forEach((constraint) => {
       switch (constraint.type) {
         case 'start-no-earlier-than':
-          earliestStart = maxDate(earliestStart, constraint.date);
+          if (earliestStart) {
+            earliestStart = maxDate(earliestStart, constraint.date);
+          } else {
+            earliestStart = constraint.date;
+          }
           break;
         case 'must-start-on':
           earliestStart = constraint.date;
           break;
         case 'start-no-later-than':
-          if (earliestStart > constraint.date) {
+          if (earliestStart && earliestStart > constraint.date) {
             conflicts.push({
               taskId,
               type: 'constraint_violation',

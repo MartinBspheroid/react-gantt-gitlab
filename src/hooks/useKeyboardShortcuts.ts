@@ -1,7 +1,17 @@
 import { useEffect, useCallback, useRef } from 'react';
 
+// Minimal API interface for keyboard shortcuts
+interface GanttApi {
+  getState: () => {
+    _selected?: Array<{ id: string | number }>;
+    cellWidth?: number;
+    start?: Date;
+  } | null;
+  exec: (action: string, params?: Record<string, unknown>) => void;
+}
+
 export interface KeyboardShortcutsConfig {
-  api: any;
+  api: GanttApi | null;
   undoRedo?: {
     canUndo: boolean;
     canRedo: boolean;
@@ -202,10 +212,11 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
   ];
 
   const handleKeyDown = useCallback(
-    (ev: KeyboardEvent) => {
+    (ev: Event) => {
       if (!enabled) return;
 
-      const target = ev.target as HTMLElement | null;
+      const keyboardEvent = ev as KeyboardEvent;
+      const target = keyboardEvent.target as HTMLElement | null;
       const tagName = target?.tagName?.toLowerCase() || '';
       const isInput =
         tagName === 'input' ||
@@ -213,17 +224,17 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
         target?.isContentEditable;
 
       for (const shortcut of shortcuts) {
-        const keyMatch = ev.key.toLowerCase() === shortcut.key.toLowerCase();
+        const keyMatch = keyboardEvent.key.toLowerCase() === shortcut.key.toLowerCase();
         const ctrlMatch = shortcut.ctrl
-          ? ev.ctrlKey || ev.metaKey
-          : !ev.ctrlKey && !ev.metaKey;
-        const shiftMatch = shortcut.shift ? ev.shiftKey : !ev.shiftKey;
-        const altMatch = shortcut.alt ? ev.altKey : !ev.altKey;
+          ? keyboardEvent.ctrlKey || keyboardEvent.metaKey
+          : !keyboardEvent.ctrlKey && !keyboardEvent.metaKey;
+        const shiftMatch = shortcut.shift ? keyboardEvent.shiftKey : !keyboardEvent.shiftKey;
+        const altMatch = shortcut.alt ? keyboardEvent.altKey : !keyboardEvent.altKey;
 
         if (keyMatch && ctrlMatch && shiftMatch && altMatch) {
           if (shortcut.key === 'escape' || !isInput) {
-            ev.preventDefault();
-            shortcut.handler(ev);
+            keyboardEvent.preventDefault();
+            shortcut.handler(keyboardEvent);
             return;
           }
         }

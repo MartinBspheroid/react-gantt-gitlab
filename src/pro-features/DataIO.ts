@@ -1,4 +1,5 @@
 import type { ITask, ILink } from '@svar-ui/gantt-store';
+import type { GanttTask } from '../types/gantt';
 import type {
   IExportOptions,
   IImportOptions,
@@ -12,7 +13,7 @@ export function exportToJSON(
   links: ILink[],
   options: IExportOptions = { format: 'json' },
 ): string {
-  const data: any = {
+  const data: Record<string, unknown> = {
     version: '1.0',
     exportedAt: new Date().toISOString(),
     tasks: tasks.map((task) => formatTaskForExport(task, options)),
@@ -515,19 +516,19 @@ export function importFromJSON(
 ): { tasks: ITask[]; links: ILink[] } {
   const data = JSON.parse(jsonString);
 
-  const tasks: ITask[] = (data.tasks || []).map((t: any) => ({
+  const tasks: ITask[] = (data.tasks || []).map((t: Record<string, unknown>) => ({
     ...t,
-    start: t.start ? new Date(t.start) : undefined,
-    end: t.end ? new Date(t.end) : undefined,
-    base_start: t.base_start ? new Date(t.base_start) : undefined,
-    base_end: t.base_end ? new Date(t.base_end) : undefined,
+    start: t.start ? new Date(t.start as string) : undefined,
+    end: t.end ? new Date(t.end as string) : undefined,
+    base_start: t.base_start ? new Date(t.base_start as string) : undefined,
+    base_end: t.base_end ? new Date(t.base_end as string) : undefined,
   }));
 
-  const links: ILink[] = (data.links || []).map((l: any) => ({
-    id: l.id,
-    type: l.type,
-    source: l.source,
-    target: l.target,
+  const links: ILink[] = (data.links || []).map((l: Record<string, unknown>) => ({
+    id: l.id as string | number,
+    type: l.type as 'e2s' | 's2e' | 'e2e' | 's2s',
+    source: l.source as string | number,
+    target: l.target as string | number,
   }));
 
   return { tasks, links };
@@ -547,7 +548,7 @@ export function importFromCSV(
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
-    const task: any = {};
+    const task: Record<string, unknown> = {};
 
     headers.forEach((header, index) => {
       const value = values[index];
@@ -813,8 +814,11 @@ export async function importFromFile(
   return importData(content, { ...options, format });
 }
 
-function formatTaskForExport(task: ITask, options: IExportOptions): any {
-  const result: any = {
+function formatTaskForExport(
+  task: ITask,
+  options: IExportOptions,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {
     id: task.id,
     text: task.text,
     start: formatDate(task.start, options.dateFormat),
@@ -836,7 +840,7 @@ function formatTaskForExport(task: ITask, options: IExportOptions): any {
 
   Object.keys(task).forEach((key) => {
     if (!result.hasOwnProperty(key) && key !== 'data') {
-      result[key] = (task as any)[key];
+      result[key] = (task as GanttTask)[key as keyof GanttTask];
     }
   });
 

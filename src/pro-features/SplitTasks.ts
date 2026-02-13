@@ -1,4 +1,5 @@
 import type { ITask, TID } from '@svar-ui/gantt-store';
+import type { GanttTask } from '../types/gantt';
 import type { ISplitTask, ISplitTaskPart } from './types';
 
 export function createSplitTask(
@@ -44,13 +45,13 @@ export function mergeSplitTask(splitTask: ISplitTask): ITask {
 
 export function isSplitTask(task: ITask): boolean {
   return (
-    Array.isArray((task as any).splitParts) &&
-    (task as any).splitParts.length > 1
+    Array.isArray((task as GanttTask).splitParts) &&
+    (task as GanttTask).splitParts!.length > 1
   );
 }
 
 export function getSplitParts(task: ITask): ISplitTaskPart[] {
-  return (task as any).splitParts || [];
+  return (task as GanttTask).splitParts || [];
 }
 
 export function addSplitPart(

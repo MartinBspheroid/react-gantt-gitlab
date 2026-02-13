@@ -42,7 +42,7 @@ export function useGanttState() {
 
   // Display value for slider (updates immediately for smooth UX)
   const [cellWidthDisplay, setCellWidthDisplay] = useState(cellWidth);
-  const cellWidthTimerRef = useRef(null);
+  const cellWidthTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [cellHeight, setCellHeight] = useState(() => {
     const saved = localStorage.getItem('gantt-cell-height');
@@ -51,10 +51,10 @@ export function useGanttState() {
 
   // Display value for slider (updates immediately for smooth UX)
   const [cellHeightDisplay, setCellHeightDisplay] = useState(cellHeight);
-  const cellHeightTimerRef = useRef(null);
+  const cellHeightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced cell width update to reduce re-renders
-  const handleCellWidthChange = useCallback((value) => {
+  const handleCellWidthChange = useCallback((value: number) => {
     setCellWidthDisplay(value);
     if (cellWidthTimerRef.current) {
       clearTimeout(cellWidthTimerRef.current);
@@ -65,7 +65,7 @@ export function useGanttState() {
   }, []);
 
   // Debounced cell height update to reduce re-renders
-  const handleCellHeightChange = useCallback((value) => {
+  const handleCellHeightChange = useCallback((value: number) => {
     setCellHeightDisplay(value);
     if (cellHeightTimerRef.current) {
       clearTimeout(cellHeightTimerRef.current);

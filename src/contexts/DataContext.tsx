@@ -26,6 +26,7 @@ import type {
   SyncOptions,
   DataProviderInterface,
 } from '../providers/core/DataProviderInterface';
+import type { ITask } from '@svar-ui/gantt-store';
 import { useDataSync } from '../hooks/useDataSync';
 import { useHighlightTime } from '../hooks/useHighlightTime';
 import { ToastContainer, useToast } from '../components/Toast';
@@ -175,7 +176,7 @@ export function DataProvider({
 
   // === createMilestone (delegates to createTask) ===
   const createMilestone = useCallback(
-    async (milestone: any) => {
+    async (milestone: Partial<ITask>) => {
       return createTask(milestone);
     },
     [createTask],
