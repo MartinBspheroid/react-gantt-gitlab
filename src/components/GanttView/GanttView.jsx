@@ -11,7 +11,14 @@ import '../LabelCell.css';
 import './GanttView.css';
 import '../shared/modal-close-button.css';
 import '../shared/SettingsModal.css';
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useContext,
+} from 'react';
 import { useGanttState } from './useGanttState.ts';
 import { createPortal } from 'react-dom';
 import Gantt from '../Gantt.jsx';
@@ -78,6 +85,7 @@ import { useTaskValidation } from './useTaskValidation';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { BulkOperationsBar } from '../BulkOperationsBar';
 import { useStore } from '@svar-ui/lib-react';
+import storeContext from '../../context';
 import Tooltip from '../../widgets/Tooltip.jsx';
 import TaskTooltipContent from '../TaskTooltipContent.jsx';
 
@@ -253,6 +261,9 @@ export function GanttView({
     highlightTime,
   } = useData();
 
+  // Get api from storeContext (same pattern as other components: Layout, Grid, Chart, etc.)
+  const apiFromContext = useContext(storeContext);
+
   // === GanttView-specific State (from useGanttState hook) ===
   const {
     api,
@@ -321,7 +332,7 @@ export function GanttView({
   const setShowViewOptions = setInternalShowViewOptions;
 
   // Track selected tasks for bulk operations
-  const selectedIds = useStore(api, 'selected');
+  const selectedIds = useStore(apiFromContext, 'selected');
   const selectedTasksForBulk = useMemo(() => {
     if (!api || !selectedIds || selectedIds.length === 0) return [];
     return selectedIds

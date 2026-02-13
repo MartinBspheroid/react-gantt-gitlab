@@ -22,11 +22,11 @@
   border: none;
 }
 .wx-table.wx-rHj6070p .wx-grid .wx-scroll {
-	overflow: visible;
+  overflow: visible;
 }
 .wx-table.wx-rHj6070p .wx-grid .wx-scroll .wx-body,
 .wx-table.wx-rHj6070p .wx-grid .wx-scroll .wx-header {
-	width: 100%;
+  width: 100%;
 }
 .wx-table .wx-grid {
   font: var(--wx-grid-body-font);

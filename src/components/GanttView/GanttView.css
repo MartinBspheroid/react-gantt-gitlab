@@ -569,16 +569,18 @@
 /* Milestone styling - use class-based selector for milestones */
 /* Exclude milestones with color rules (they use striped backgrounds) */
 /* Increased specificity by using .gantt-chart-container as parent */
-.gantt-chart-container .wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
-    .wx-color-rule-triple
-  ) {
+.gantt-chart-container
+  .wx-bar.wx-milestone:not(.wx-color-rule-single):not(
+    .wx-color-rule-double
+  ):not(.wx-color-rule-triple) {
   background-color: var(--wx-gantt-milestone-color);
   border-color: var(--wx-gantt-milestone-color);
 }
 
-.gantt-chart-container .wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
-    .wx-color-rule-triple
-  )
+.gantt-chart-container
+  .wx-bar.wx-milestone:not(.wx-color-rule-single):not(
+    .wx-color-rule-double
+  ):not(.wx-color-rule-triple)
   .wx-content {
   background-color: var(--wx-gantt-milestone-color);
 }
