@@ -147,15 +147,15 @@ export function BlueprintManager({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="modal-header">
+        <header className="modal-header">
           <h3>Blueprints</h3>
           <button className="modal-close-btn" onClick={onClose} title="Close">
             &times;
           </button>
-        </div>
+        </header>
 
         {/* Body */}
-        <div className="modal-body">
+        <section className="modal-body">
           {loading ? (
             <div className="loading-state">
               <i className="fas fa-spinner fa-spin" />
@@ -315,7 +315,7 @@ export function BlueprintManager({
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Delete Confirmation Dialog */}

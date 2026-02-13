@@ -64,7 +64,7 @@ export function SharedToolbar({
   };
 
   return (
-    <div className="shared-toolbar">
+    <nav className="shared-toolbar" role="toolbar" aria-label="Main toolbar">
       {/* View Switcher - Toggle between Gantt and Kanban */}
       <div className="shared-toolbar-view-switcher">
         <button
@@ -182,6 +182,6 @@ export function SharedToolbar({
           </span>
         )}
       </div>
-    </div>
+    </nav>
   );
 }

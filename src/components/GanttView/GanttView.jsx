@@ -2942,7 +2942,7 @@ export function GanttView({
             className="settings-modal-content"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="settings-modal-header">
+            <header className="settings-modal-header">
               <h3>Settings</h3>
               <button
                 onClick={() => setShowSettings(false)}
@@ -2950,7 +2950,7 @@ export function GanttView({
               >
                 &times;
               </button>
-            </div>
+            </header>
 
             <div className="settings-modal-body">
               <div className="settings-section">

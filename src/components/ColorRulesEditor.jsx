@@ -499,7 +499,7 @@ export function ColorRulesEditor({
             className="color-rule-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
+            <header className="modal-header">
               <h3>Edit Rule</h3>
               <button
                 className="modal-close-btn"
@@ -507,8 +507,8 @@ export function ColorRulesEditor({
               >
                 &times;
               </button>
-            </div>
-            <div className="modal-body">
+            </header>
+            <section className="modal-body">
               <div className="form-row">
                 <label>Rule Name</label>
                 <input
@@ -608,8 +608,8 @@ export function ColorRulesEditor({
                   />
                 </div>
               </div>
-            </div>
-            <div className="modal-footer">
+            </section>
+            <footer className="modal-footer">
               <button
                 className="btn btn-primary"
                 onClick={() => handleUpdateRule(editingRule.id, editingRule)}
@@ -622,7 +622,7 @@ export function ColorRulesEditor({
               >
                 Cancel
               </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}

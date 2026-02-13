@@ -277,7 +277,7 @@ export function ApplyBlueprintModal({ isOpen, onClose, blueprints, onApply }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="modal-header">
+        <header className="modal-header">
           <h3>Create from Blueprint</h3>
           <button
             className="modal-close-btn"
@@ -287,10 +287,10 @@ export function ApplyBlueprintModal({ isOpen, onClose, blueprints, onApply }) {
           >
             &times;
           </button>
-        </div>
+        </header>
 
         {/* Body */}
-        <div className="modal-body">
+        <section className="modal-body">
           {/* 結果顯示 */}
           {result ? (
             <ApplyResultView result={result} />
@@ -471,10 +471,10 @@ export function ApplyBlueprintModal({ isOpen, onClose, blueprints, onApply }) {
               {error && <div className="error-message">{error}</div>}
             </>
           )}
-        </div>
+        </section>
 
         {/* Footer */}
-        <div className="modal-footer">
+        <footer className="modal-footer">
           {result ? (
             <button className="btn btn-primary" onClick={handleClose}>
               Close
@@ -502,7 +502,7 @@ export function ApplyBlueprintModal({ isOpen, onClose, blueprints, onApply }) {
               </button>
             </>
           )}
-        </div>
+        </footer>
       </div>
     </div>
   );

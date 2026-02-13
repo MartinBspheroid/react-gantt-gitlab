@@ -373,12 +373,12 @@ export function KanbanView({ showSettings, onSettingsClose, className }) {
             className="settings-modal-content"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="settings-modal-header">
+            <header className="settings-modal-header">
               <h3>Settings</h3>
               <button onClick={onSettingsClose} className="modal-close-btn">
                 &times;
               </button>
-            </div>
+            </header>
 
             <div className="settings-modal-body">
               <div className="settings-section">

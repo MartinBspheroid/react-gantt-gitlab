@@ -154,15 +154,15 @@ export function SaveBlueprintModal({
         onKeyDown={handleKeyDown}
       >
         {/* Header */}
-        <div className="modal-header">
+        <header className="modal-header">
           <h3>Save as Blueprint</h3>
           <button className="modal-close-btn" onClick={onClose} title="Close">
             &times;
           </button>
-        </div>
+        </header>
 
         {/* Body */}
-        <div className="modal-body">
+        <section className="modal-body">
           {/* Blueprint Name */}
           <div className="form-group">
             <label htmlFor="blueprint-name">Blueprint Name</label>
@@ -265,10 +265,10 @@ export function SaveBlueprintModal({
 
           {/* Error */}
           {error && <div className="error-message">{error}</div>}
-        </div>
+        </section>
 
         {/* Footer */}
-        <div className="modal-footer">
+        <footer className="modal-footer">
           <button
             className="btn btn-secondary"
             onClick={onClose}
@@ -283,7 +283,7 @@ export function SaveBlueprintModal({
           >
             {saving ? 'Saving...' : 'Save Blueprint'}
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

@@ -68,7 +68,7 @@ export function Workspace({ provider, autoSync = true, className }) {
         <SharedFilterPanel />
 
         {/* View Content */}
-        <div className="gantt-workspace-content">
+        <main className="gantt-workspace-content">
           {activeView === 'gantt' && (
             <GanttView
               hideSharedToolbar={true}
@@ -83,7 +83,7 @@ export function Workspace({ provider, autoSync = true, className }) {
               onSettingsClose={() => setShowSettings(false)}
             />
           )}
-        </div>
+        </main>
       </div>
     </DataProvider>
   );

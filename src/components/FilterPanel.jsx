@@ -484,8 +484,8 @@ export function FilterPanel({
   };
 
   return (
-    <div className="filter-panel">
-      <div className="filter-header">
+    <aside className="filter-panel" aria-label="Filter panel">
+      <header className="filter-header">
         <div className="filter-actions-group">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -606,7 +606,7 @@ export function FilterPanel({
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {isExpanded && (
         <div className="filter-content">
@@ -855,6 +855,6 @@ export function FilterPanel({
           </div>
         </div>
       )}
-    </div>
+    </aside>
   );
 }

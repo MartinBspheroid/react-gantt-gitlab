@@ -281,13 +281,13 @@ export function MoveInModal({
     return (
       <div className="move-in-modal-overlay" onClick={handleClose}>
         <div className="move-in-modal" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
+          <header className="modal-header">
             <h3>Move In...</h3>
             <button className="modal-close-btn" onClick={handleClose}>
               &times;
             </button>
-          </div>
-          <div className="modal-body">
+          </header>
+          <section className="modal-body">
             <div className="move-in-empty-state">
               <i className="fas fa-info-circle" />
               <p>No items can be moved.</p>
@@ -296,15 +296,15 @@ export function MoveInModal({
                 Milestone or Epic.
               </p>
             </div>
-          </div>
-          <div className="modal-footer">
+          </section>
+          <footer className="modal-footer">
             <div className="selected-summary" />
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={handleClose}>
                 Close
               </button>
             </div>
-          </div>
+          </footer>
         </div>
       </div>
     );
@@ -313,14 +313,14 @@ export function MoveInModal({
   return (
     <div className="move-in-modal-overlay" onClick={handleClose}>
       <div className="move-in-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+        <header className="modal-header">
           <h3>Move In...</h3>
           <button className="modal-close-btn" onClick={handleClose}>
             &times;
           </button>
-        </div>
+        </header>
 
-        <div className="modal-body">
+        <section className="modal-body">
           {/* Tab Navigation */}
           <div className="move-in-tabs">
             <button
@@ -574,11 +574,11 @@ export function MoveInModal({
                     </div>
                   ))}
               </div>
-            </div>
           </div>
         </div>
+      </section>
 
-        <div className="modal-footer">
+        <footer className="modal-footer">
           <div className="selected-summary">
             {getCurrentSelection() !== undefined && (
               <span>Target: {getSelectedTargetText()}</span>
@@ -602,7 +602,7 @@ export function MoveInModal({
                 : `Move ${getCurrentMovableCount()} item(s)`}
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
