@@ -574,9 +574,9 @@ export function MoveInModal({
                     </div>
                   ))}
               </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
         <footer className="modal-footer">
           <div className="selected-summary">

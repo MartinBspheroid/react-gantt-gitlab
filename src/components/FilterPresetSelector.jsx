@@ -4,7 +4,13 @@
  * Features: Search, folder structure (using "/" delimiter), override save
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import { Toast } from './Toast.jsx';
 import { ConfirmDialog } from './shared/dialogs/ConfirmDialog';
 import './FilterPresetSelector.css';

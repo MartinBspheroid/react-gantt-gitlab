@@ -4,7 +4,13 @@
  * Supports multiple stacked toasts
  */
 
-import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react';
+import {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import './Toast.css';
 
@@ -71,7 +77,13 @@ const TOAST_TYPES: Record<ToastType, { icon: string; className: string }> = {
 /**
  * Single Toast Item Component
  */
-function ToastItem({ id, message, type, onClose, duration }: ToastItemProps): ReactNode {
+function ToastItem({
+  id,
+  message,
+  type,
+  onClose,
+  duration,
+}: ToastItemProps): ReactNode {
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.error;
 
   useEffect(() => {
@@ -150,11 +162,14 @@ export function useToast(): ToastHookReturn {
   const [toasts, setToasts] = useState<ToastItemData[]>([]);
   const idCounter = useRef(0);
 
-  const showToast = useCallback((message: string, type: ToastType = 'error'): number => {
-    const id = ++idCounter.current;
-    setToasts((prev) => [...prev, { id, message, type }]);
-    return id;
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: ToastType = 'error'): number => {
+      const id = ++idCounter.current;
+      setToasts((prev) => [...prev, { id, message, type }]);
+      return id;
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: number): void => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

@@ -36,11 +36,7 @@ export function Alert({ type = 'info', children }) {
     },
   };
 
-  return (
-    <div style={styles[type] || styles.info}>
-      {children}
-    </div>
-  );
+  return <div style={styles[type] || styles.info}>{children}</div>;
 }
 
 export default Alert;

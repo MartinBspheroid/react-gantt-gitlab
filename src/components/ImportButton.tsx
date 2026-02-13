@@ -81,7 +81,10 @@ function readFileAsText(file: File): Promise<string> {
   });
 }
 
-function detectFormat(filename: string, content: string): 'json' | 'csv' | 'ms-xml' {
+function detectFormat(
+  filename: string,
+  content: string,
+): 'json' | 'csv' | 'ms-xml' {
   if (filename.endsWith('.csv')) return 'csv';
   if (filename.endsWith('.xml')) return 'ms-xml';
   const trimmed = content.trim();
