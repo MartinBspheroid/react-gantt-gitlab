@@ -292,51 +292,36 @@
   cursor: grabbing;
 }
 
-/* Priority visual indicators - colored left border on task bars */
-.wx-bar.wx-priority-0.wx-GKbcLEGA {
-  border-left: 4px solid #dc2626 !important;
+/* Priority visual indicators - colored left border on task bars
+   Using CSS custom properties with high specificity instead of !important */
+.wx-bars.wx-GKbcLEGA .wx-bar.wx-priority-0.wx-GKbcLEGA {
+  border-left: 4px solid var(--wx-gantt-priority-0-color, #dc2626);
 }
 
-.wx-bar.wx-priority-1.wx-GKbcLEGA {
-  border-left: 4px solid #ea580c !important;
+.wx-bars.wx-GKbcLEGA .wx-bar.wx-priority-1.wx-GKbcLEGA {
+  border-left: 4px solid var(--wx-gantt-priority-1-color, #ea580c);
 }
 
-.wx-bar.wx-priority-2.wx-GKbcLEGA {
-  border-left: 4px solid #ca8a04 !important;
+.wx-bars.wx-GKbcLEGA .wx-bar.wx-priority-2.wx-GKbcLEGA {
+  border-left: 4px solid var(--wx-gantt-priority-2-color, #ca8a04);
 }
 
-.wx-bar.wx-priority-3.wx-GKbcLEGA {
-  border-left: 4px solid #2563eb !important;
+.wx-bars.wx-GKbcLEGA .wx-bar.wx-priority-3.wx-GKbcLEGA {
+  border-left: 4px solid var(--wx-gantt-priority-3-color, #2563eb);
 }
 
-.wx-bar.wx-priority-4.wx-GKbcLEGA {
-  border-left: 4px solid #9ca3af !important;
+.wx-bars.wx-GKbcLEGA .wx-bar.wx-priority-4.wx-GKbcLEGA {
+  border-left: 4px solid var(--wx-gantt-priority-4-color, #9ca3af);
 }
 
-/* Dark mode priority colors */
-[data-theme='dark'] .wx-bar.wx-priority-0.wx-GKbcLEGA,
-.wx-gantt-dark .wx-bar.wx-priority-0.wx-GKbcLEGA {
-  border-left: 4px solid #ef4444 !important;
-}
-
-[data-theme='dark'] .wx-bar.wx-priority-1.wx-GKbcLEGA,
-.wx-gantt-dark .wx-bar.wx-priority-1.wx-GKbcLEGA {
-  border-left: 4px solid #f97316 !important;
-}
-
-[data-theme='dark'] .wx-bar.wx-priority-2.wx-GKbcLEGA,
-.wx-gantt-dark .wx-bar.wx-priority-2.wx-GKbcLEGA {
-  border-left: 4px solid #eab308 !important;
-}
-
-[data-theme='dark'] .wx-bar.wx-priority-3.wx-GKbcLEGA,
-.wx-gantt-dark .wx-bar.wx-priority-3.wx-GKbcLEGA {
-  border-left: 4px solid #3b82f6 !important;
-}
-
-[data-theme='dark'] .wx-bar.wx-priority-4.wx-GKbcLEGA,
-.wx-gantt-dark .wx-bar.wx-priority-4.wx-GKbcLEGA {
-  border-left: 4px solid #6b7280 !important;
+/* Dark mode priority colors - override custom properties */
+[data-theme='dark'],
+.wx-gantt-dark {
+  --wx-gantt-priority-0-color: #ef4444;
+  --wx-gantt-priority-1-color: #f97316;
+  --wx-gantt-priority-2-color: #eab308;
+  --wx-gantt-priority-3-color: #3b82f6;
+  --wx-gantt-priority-4-color: #6b7280;
 }
 
 /* Split task styles - segmented bars with gap connectors */

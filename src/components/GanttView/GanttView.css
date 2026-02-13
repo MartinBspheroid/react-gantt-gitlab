@@ -568,18 +568,19 @@
 
 /* Milestone styling - use class-based selector for milestones */
 /* Exclude milestones with color rules (they use striped backgrounds) */
-.wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
+/* Increased specificity by using .gantt-chart-container as parent */
+.gantt-chart-container .wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
     .wx-color-rule-triple
   ) {
-  background-color: var(--wx-gantt-milestone-color) !important;
-  border-color: var(--wx-gantt-milestone-color) !important;
+  background-color: var(--wx-gantt-milestone-color);
+  border-color: var(--wx-gantt-milestone-color);
 }
 
-.wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
+.gantt-chart-container .wx-bar.wx-milestone:not(.wx-color-rule-single):not(.wx-color-rule-double):not(
     .wx-color-rule-triple
   )
   .wx-content {
-  background-color: var(--wx-gantt-milestone-color) !important;
+  background-color: var(--wx-gantt-milestone-color);
 }
 
 .gantt-view-loading,
@@ -625,73 +626,78 @@
 }
 
 /* Weekend and holiday highlighting */
-.wx-gantt-holidays .wx-weekend {
-  background-color: var(--wx-gantt-holiday-background) !important;
-  position: absolute !important;
-  height: 100% !important;
-  z-index: 0 !important;
+/* Increased specificity with .wx-area parent selector */
+.wx-area .wx-gantt-holidays .wx-weekend {
+  background-color: var(--wx-gantt-holiday-background);
+  position: absolute;
+  height: 100%;
+  z-index: 0;
 }
 
 /* Baseline bar styling - keep default height with padding */
-.wx-baseline {
-  pointer-events: none !important;
+/* Increased specificity with .wx-chart parent selector */
+.wx-chart .wx-baseline {
+  pointer-events: none;
   background-color: var(
     --wx-color-success,
     #00ba94
-  ) !important; /* Green - represents Task original range */
-  z-index: 1 !important;
-  opacity: 0.7 !important;
+  ); /* Green - represents Task original range */
+  z-index: 1;
+  opacity: 0.7;
 }
 
 /* Milestone baseline should be blue (contains issues) */
-.wx-baseline.wx-milestone {
+.wx-chart .wx-baseline.wx-milestone {
   background-color: var(
     --wx-color-accent-light,
     #37a9ef
-  ) !important; /* Blue - represents Issue original range */
+  ); /* Blue - represents Issue original range */
 }
 
 /* Parent task bracket baseline */
-.wx-baseline-bracket {
-  color: var(--wx-color-success, #00ba94) !important;
-  opacity: 0.5 !important;
+.wx-chart .wx-baseline-bracket {
+  color: var(--wx-color-success, #00ba94);
+  opacity: 0.5;
 }
 
-.wx-baseline-bracket.wx-milestone {
-  color: var(--wx-color-accent-light, #37a9ef) !important;
+.wx-chart .wx-baseline-bracket.wx-milestone {
+  color: var(--wx-color-accent-light, #37a9ef);
 }
 
 /* Parent task bar z-index (color is controlled by theme CSS via .wx-summary) */
-.wx-bar.wx-parent-task {
-  z-index: 2 !important;
+/* Increased specificity with .wx-bars parent selector */
+.wx-bars .wx-bar.wx-parent-task {
+  z-index: 2;
 }
 
 /* Group header row styling */
-.wx-row[data-group-header='true'] {
-  background-color: var(--wx-gantt-group-header-background, #f0f4f8) !important;
+/* Increased specificity with .wx-table parent selector */
+.wx-table .wx-row[data-group-header='true'] {
+  background-color: var(--wx-gantt-group-header-background, #f0f4f8);
   font-weight: 600;
 }
 
-.wx-row[data-group-header='true']:hover {
-  background-color: var(--wx-gantt-group-header-hover, #e4eaf1) !important;
+.wx-table .wx-row[data-group-header='true']:hover {
+  background-color: var(--wx-gantt-group-header-hover, #e4eaf1);
 }
 
-.wx-row[data-group-header='true'] .wx-cell {
+.wx-table .wx-row[data-group-header='true'] .wx-cell {
   border-bottom: 2px solid var(--wx-gantt-group-header-border, #c8d6e5);
 }
 
 /* Group header task bar styling */
-.wx-bar.wx-group-header {
+/* Increased specificity with .wx-bars parent selector */
+.wx-bars .wx-bar.wx-group-header {
   background: linear-gradient(
     135deg,
     var(--wx-gantt-group-bar-start, #6c5ce7) 0%,
     var(--wx-gantt-group-bar-end, #a29bfe) 100%
-  ) !important;
-  border-radius: 4px !important;
+  );
+  border-radius: 4px;
 }
 
-.wx-bar.wx-group-header .wx-content {
-  color: var(--wx-color-text-inverse, white) !important;
+.wx-bars .wx-bar.wx-group-header .wx-content {
+  color: var(--wx-color-text-inverse, white);
   font-weight: 600;
 }
 

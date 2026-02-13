@@ -14,10 +14,11 @@
   box-shadow: none;
 }
 
-/* For wx-gantt marker: override default width and transform */
-.wx-marker.today-marker {
-  width: 2px !important;
-  transform: none !important;
+/* For wx-gantt marker: override default width and transform
+   Increased specificity to avoid !important */
+.wx-markers .wx-marker.today-marker {
+  width: 2px;
+  transform: none;
 }
 
 /* Hide marker label/content */

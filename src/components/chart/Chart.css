@@ -11,7 +11,7 @@
 }
 
 .wx-chart.wx-mR7v2Xag.wx-dragging * {
-  cursor: grabbing !important;
+  cursor: grabbing;
   pointer-events: none;
 }
 

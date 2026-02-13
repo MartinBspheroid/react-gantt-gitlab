@@ -298,7 +298,7 @@
 .wx-willow-theme .wx-bar.wx-color-rule-double,
 .wx-willow-theme .wx-bar.wx-color-rule-triple {
   overflow: visible;
-  border: 1px solid transparent !important;
+  border: 1px solid transparent;
   /* GPU acceleration for smoother rendering */
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
@@ -313,8 +313,8 @@
     var(--wx-color-rule-1) 12px,
     var(--wx-base-color) 12px,
     var(--wx-base-color) 24px
-  ) !important;
-  background-size: 34px 34px !important;
+  );
+  background-size: 34px 34px;
 }
 
 /* Double color stripe (2 rule matches) */
@@ -327,8 +327,8 @@
     var(--wx-color-rule-2) 20px,
     var(--wx-base-color) 20px,
     var(--wx-base-color) 30px
-  ) !important;
-  background-size: 42px 42px !important;
+  );
+  background-size: 42px 42px;
 }
 
 /* Triple color stripe (3 rule matches) */
@@ -343,8 +343,8 @@
     var(--wx-color-rule-3) 24px,
     var(--wx-base-color) 24px,
     var(--wx-base-color) 32px
-  ) !important;
-  background-size: 45px 45px !important;
+  );
+  background-size: 45px 45px;
 }
 
 /* === Milestone Color Rules === */
@@ -354,7 +354,7 @@
 .wx-willow-theme .wx-bar.wx-milestone.wx-color-rule-double,
 .wx-willow-theme .wx-bar.wx-milestone.wx-color-rule-triple {
   overflow: visible;
-  border: 1px solid transparent !important;
+  border: 1px solid transparent;
   /* GPU acceleration for smoother rendering */
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
@@ -369,8 +369,8 @@
     var(--wx-color-rule-1) 12px,
     var(--wx-base-color) 12px,
     var(--wx-base-color) 24px
-  ) !important;
-  background-size: 34px 34px !important;
+  );
+  background-size: 34px 34px;
 }
 
 /* Double color stripe for milestone */
@@ -383,8 +383,8 @@
     var(--wx-color-rule-2) 20px,
     var(--wx-base-color) 20px,
     var(--wx-base-color) 30px
-  ) !important;
-  background-size: 42px 42px !important;
+  );
+  background-size: 42px 42px;
 }
 
 /* Triple color stripe for milestone */
@@ -399,8 +399,8 @@
     var(--wx-color-rule-3) 24px,
     var(--wx-base-color) 24px,
     var(--wx-base-color) 32px
-  ) !important;
-  background-size: 45px 45px !important;
+  );
+  background-size: 45px 45px;
 }
 
 /* Text outside bar for color rules - positioned to the right */

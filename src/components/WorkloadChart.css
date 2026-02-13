@@ -185,7 +185,7 @@
 }
 
 .workload-chart-scroll.wx-dragging * {
-  cursor: grabbing !important;
+  cursor: grabbing;
   pointer-events: none;
 }
 

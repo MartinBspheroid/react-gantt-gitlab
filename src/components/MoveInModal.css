@@ -388,7 +388,7 @@
   color: var(--wx-gantt-filter-text, #333);
 }
 
-.move-in-empty-hint {
-  font-size: 12px !important;
-  color: var(--wx-gantt-control-text, #666) !important;
+.move-in-empty-state .move-in-empty-hint {
+  font-size: 12px;
+  color: var(--wx-gantt-control-text, #666);
 }

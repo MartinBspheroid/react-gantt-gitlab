@@ -46,8 +46,8 @@
   margin-left: 4px;
 }
 
-.chevron {
-  font-size: 10px !important;
+.grouping-dropdown-trigger .chevron {
+  font-size: 10px;
   margin-left: 2px;
 }
 
