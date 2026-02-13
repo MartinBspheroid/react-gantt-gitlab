@@ -18,7 +18,7 @@
 
 .settings-modal-content {
   background: var(--wx-gantt-modal-background);
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
@@ -68,7 +68,7 @@
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--wx-gantt-filter-input-border);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-gantt-filter-input-background);
   color: var(--wx-gantt-modal-text);
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
@@ -123,7 +123,7 @@
   border: 1px solid #fecaca;
   color: #dc2626;
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   margin-bottom: 8px;
   font-size: 13px;
   display: flex;
@@ -140,7 +140,7 @@
 .preset-btn {
   padding: 6px 12px;
   border: 1px solid var(--wx-gantt-button-border);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-gantt-button-background);
   color: var(--wx-gantt-button-text);
   cursor: pointer;

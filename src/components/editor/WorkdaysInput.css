@@ -8,7 +8,7 @@
   width: 60px;
   padding: 6px 8px;
   border: 1px solid var(--wx-border-color, #e1e4e8);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 14px;
   text-align: center;
   background: var(--wx-background, #fff);
@@ -52,7 +52,7 @@
   height: 28px;
   padding: 0;
   border: 1px solid var(--wx-border-color, #e1e4e8);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-background, #fff);
   color: var(--wx-color-font, #333);
   cursor: pointer;

@@ -33,7 +33,7 @@
     --wx-gantt-modal-background,
     var(--wx-color-background, #fff)
   );
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   width: 360px;
   max-width: 90vw;
   box-shadow: 0 4px 20px var(--wx-shadow-lg, rgba(0, 0, 0, 0.15));
@@ -59,7 +59,7 @@
   padding: 12px 16px;
   background: var(--wx-gantt-modal-header-background, #f8f9fa);
   border-bottom: 1px solid var(--wx-gantt-modal-border, #ddd);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--wx-radius-lg) var(--wx-radius-lg) 0 0;
 }
 
 .draw-bar-dialog-header h3 {
@@ -74,7 +74,7 @@
   height: 28px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   cursor: pointer;
   color: var(--wx-gantt-button-text, #666);
   display: flex;
@@ -96,7 +96,7 @@
 .draw-bar-date-preview {
   background: var(--wx-gantt-filter-hover-background, #f9f9f9);
   border: 1px solid var(--wx-gantt-filter-input-border, #e0e0e0);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   padding: 12px;
   margin-bottom: 12px;
 }
@@ -145,13 +145,13 @@
   padding: 12px 16px;
   border-top: 1px solid var(--wx-gantt-modal-border, #ddd);
   background: var(--wx-gantt-modal-header-background, #f8f9fa);
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 var(--wx-radius-lg) var(--wx-radius-lg);
 }
 
 /* Buttons */
 .draw-bar-btn {
   padding: 8px 14px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

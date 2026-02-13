@@ -3,7 +3,7 @@
 .kanban-card {
   background: var(--wx-color-background, white);
   border: 1px solid var(--wx-color-border-gray, #e5e7eb);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   padding: 6px 8px;
   cursor: grab;
   font-size: 12px;
@@ -51,7 +51,7 @@
   color: var(--wx-color-text-gray, #6b7280);
   background: var(--wx-color-background-gray, #f3f4f6);
   padding: 1px 4px;
-  border-radius: 2px;
+  border-radius: var(--wx-radius-2xs);
 }
 
 .kanban-card-due-overdue {
@@ -103,7 +103,7 @@
 .kanban-card-label {
   display: inline-block;
   padding: 1px 4px;
-  border-radius: 2px;
+  border-radius: var(--wx-radius-2xs);
   font-size: 10px;
   color: var(--wx-color-text-inverse, white);
   white-space: nowrap;

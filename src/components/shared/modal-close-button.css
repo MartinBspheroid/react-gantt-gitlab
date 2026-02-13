@@ -12,7 +12,7 @@
   height: 28px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   cursor: pointer;
   color: var(--wx-gantt-modal-hint-text, #666);
   display: flex;

@@ -79,13 +79,13 @@
   right: 8px;
   height: 8px;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   overflow: hidden;
 }
 
 .sprint-capacity-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   transition: width 0.3s ease;
 }
 
@@ -104,7 +104,7 @@
 .sprint-detail-modal {
   background: var(--wx-gantt-modal-background, #ffffff);
   border: 1px solid var(--wx-gantt-modal-border, #e2e8f0);
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 220px;
   max-width: 300px;
@@ -118,7 +118,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--wx-gantt-modal-border, #e2e8f0);
   background: var(--wx-gantt-modal-header-background, #f8fafc);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--wx-radius-lg) var(--wx-radius-lg) 0 0;
 }
 
 .sprint-detail-name {
@@ -166,13 +166,13 @@
 .sprint-detail-progress-bar {
   height: 6px;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
   overflow: hidden;
 }
 
 .sprint-detail-progress-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
 }
 
 .sprint-detail-progress-fill.sprint-status-under {

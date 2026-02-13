@@ -13,7 +13,7 @@
   padding: 10px 16px;
   background: var(--wx-background, #1f1f1f);
   border: 1px solid var(--wx-gantt-border, #444);
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   animation: slideUp 0.2s ease-out;
@@ -70,7 +70,7 @@
   padding: 6px 12px;
   background: transparent;
   border: 1px solid var(--wx-gantt-border, #444);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   color: var(--wx-grid-body-font-color, #fafafa);
   font-size: 13px;
   cursor: pointer;
@@ -115,7 +115,7 @@
   height: 28px;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   color: var(--wx-gantt-icon-color, #999);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -130,7 +130,7 @@
 .bulk-dialog-info {
   padding: 12px;
   background: var(--wx-background-alt, #2d2d2d);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   margin-bottom: 16px;
 }
 
@@ -157,7 +157,7 @@
   padding: 8px 12px;
   background: var(--wx-background-alt, #2d2d2d);
   border: 1px solid var(--wx-gantt-border, #444);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   color: var(--wx-grid-body-font-color, #fafafa);
   font-size: 14px;
 }
@@ -182,7 +182,7 @@
   padding: 6px 12px;
   background: var(--wx-background-alt, #2d2d2d);
   border: 1px solid var(--wx-gantt-border, #444);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   color: var(--wx-grid-body-font-color, #fafafa);
   font-size: 12px;
   cursor: pointer;
@@ -214,7 +214,7 @@
   padding: 12px 16px;
   background: var(--wx-background-alt, #2d2d2d);
   border: 1px solid var(--wx-gantt-border, #444);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
 }

@@ -31,7 +31,7 @@
 .workload-view-header .project-select-compact {
   height: 24px;
   padding: 0 6px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   border: 1px solid var(--wx-gantt-button-border, #d1d5da);
   background: var(--wx-gantt-button-background, #fff);
   font-size: 12px;
@@ -44,7 +44,7 @@
   height: 24px;
   width: 24px;
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   border: 1px solid var(--wx-gantt-button-border, #d1d5da);
   background: var(--wx-gantt-button-background, #fff);
   cursor: pointer;
@@ -68,7 +68,7 @@
   align-items: center;
   gap: 4px;
   padding: 0 6px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   border: 1px solid var(--wx-gantt-button-border, #d1d5da);
   background: var(--wx-gantt-button-background, #fff);
   cursor: pointer;
@@ -128,7 +128,7 @@
 .workload-view-container .unit-select {
   height: 24px;
   padding: 0 6px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   border: 1px solid var(--wx-border-color, #d1d5da);
   background: var(--wx-background, #fff);
   font-size: 12px;
@@ -139,7 +139,7 @@
 .workload-view-container .date-input {
   height: 24px;
   padding: 0 6px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   border: 1px solid var(--wx-border-color, #d1d5da);
   background: var(--wx-background, #fff);
   font-size: 12px;
@@ -175,7 +175,7 @@
 
 .settings-modal-content {
   background: var(--wx-background, var(--wx-color-background, #fff));
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   box-shadow: 0 4px 24px var(--wx-shadow-lg, rgba(0, 0, 0, 0.2));
   width: 90%;
   max-width: 600px;
@@ -247,7 +247,7 @@
 
 .sidebar-section {
   background: var(--wx-background, #fff);
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   padding: 12px;
   border: 1px solid var(--wx-gantt-border-color, #e1e4e8);
 }
@@ -322,7 +322,7 @@
   height: 40px;
   border: 3px solid var(--wx-border-color, #e1e4e8);
   border-top-color: var(--wx-color-primary, #0366d6);
-  border-radius: 50%;
+  border-radius: var(--wx-radius-full);
   animation: spin 1s linear infinite;
 }
 
@@ -385,7 +385,7 @@
   background: var(--wx-color-status-error-dark, #cb2431);
   color: var(--wx-color-text-inverse, white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   cursor: pointer;
   margin-left: auto;
 }

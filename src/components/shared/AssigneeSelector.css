@@ -24,7 +24,7 @@
   width: 100%;
   padding: 6px 28px 6px 8px;
   border: 1px solid var(--wx-gantt-filter-input-border, #dcdcde);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-gantt-filter-input-background, #fff);
   color: var(--wx-gantt-filter-text, #303030);
   font-size: 13px;
@@ -61,7 +61,7 @@
 .as-options {
   overflow-y: auto;
   border: 1px solid var(--wx-gantt-filter-input-border, #dcdcde);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-gantt-filter-input-background, #fff);
 }
 
@@ -75,7 +75,7 @@
 
 .as-options::-webkit-scrollbar-thumb {
   background: var(--wx-gantt-control-text, #999);
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
 }
 
 /* Option item */
@@ -154,7 +154,7 @@
   padding: 4px 8px;
   background: var(--wx-gantt-filter-input-background, #fff);
   border: 1px solid var(--wx-gantt-filter-input-border, #dcdcde);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 11px;
   color: var(--wx-gantt-filter-text, #303030);
   cursor: pointer;

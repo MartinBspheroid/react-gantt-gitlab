@@ -21,7 +21,7 @@
 .shared-toolbar-view-switcher {
   display: flex;
   background: var(--wx-color-background-gray, #f3f4f6);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   padding: 2px;
   gap: 2px;
 }
@@ -36,7 +36,7 @@
   color: var(--wx-color-text-gray, #6b7280);
   font-size: 13px;
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -74,7 +74,7 @@
   height: 28px;
   padding: 0 8px;
   border: 1px solid var(--wx-color-border-input, #d1d5db);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
   background: var(--wx-color-background, white);
   color: var(--wx-color-text-primary, #1f2937);
@@ -108,7 +108,7 @@
   height: 28px;
   padding: 0 10px;
   border: 1px solid var(--wx-color-border-input, #d1d5db);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   background: var(--wx-color-background, white);
   color: var(--wx-color-text-gray, #6b7280);
   font-size: 13px;
@@ -160,7 +160,7 @@
   padding: 4px 8px;
   background: #fef3c7;
   border: 1px solid #f59e0b;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 11px;
   font-weight: 600;
   color: #b45309;

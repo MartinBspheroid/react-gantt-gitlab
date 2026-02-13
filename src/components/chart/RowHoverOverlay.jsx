@@ -441,7 +441,7 @@ function RowHoverOverlay({
                 background: 'var(--wx-color-primary, #3983eb)',
                 opacity: 0.7,
                 pointerEvents: 'none',
-                borderRadius: '1px',
+                borderRadius: 'var(--wx-radius-2xs)',
                 boxShadow: '0 0 4px rgba(57, 131, 235, 0.4)',
                 zIndex: 51,
               }}

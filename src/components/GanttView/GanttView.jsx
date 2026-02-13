@@ -2613,7 +2613,7 @@ export function GanttView({
               padding: '1px 6px',
               background: '#6c5ce7',
               color: 'white',
-              borderRadius: '8px',
+              borderRadius: 'var(--wx-radius-lg)',
               fontSize: '10px',
               fontWeight: 600,
             }}

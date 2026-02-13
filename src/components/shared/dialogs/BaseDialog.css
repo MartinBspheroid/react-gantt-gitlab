@@ -34,7 +34,7 @@
     --wx-gantt-modal-background,
     var(--wx-color-background, #fff)
   );
-  border-radius: 8px;
+  border-radius: var(--wx-radius-lg);
   max-width: 90vw;
   max-height: 85vh;
   display: flex;
@@ -63,7 +63,7 @@
   padding: 12px 16px;
   background: var(--wx-gantt-modal-header-background, #f8f9fa);
   border-bottom: 1px solid var(--wx-gantt-modal-border, #ddd);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--wx-radius-lg) var(--wx-radius-lg) 0 0;
   flex-shrink: 0;
 }
 
@@ -93,14 +93,14 @@
   padding: 12px 16px;
   border-top: 1px solid var(--wx-gantt-modal-border, #ddd);
   background: var(--wx-gantt-modal-header-background, #f8f9fa);
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 var(--wx-radius-lg) var(--wx-radius-lg);
   flex-shrink: 0;
 }
 
 /* ===== Common Button Styles ===== */
 .base-dialog .dialog-btn {
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -157,7 +157,7 @@
 .base-dialog .dialog-input {
   padding: 8px 12px;
   border: 1px solid var(--wx-gantt-filter-input-border, #ddd);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 14px;
   background: var(--wx-gantt-filter-input-background, #fff);
   color: var(--wx-gantt-modal-text, #333);
@@ -181,7 +181,7 @@
 .base-dialog .dialog-textarea {
   padding: 8px 12px;
   border: 1px solid var(--wx-gantt-filter-input-border, #ddd);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 14px;
   background: var(--wx-gantt-filter-input-background, #fff);
   color: var(--wx-gantt-modal-text, #333);
@@ -213,7 +213,7 @@
   padding: 10px 12px;
   background: var(--wx-color-background-error, #fef2f2);
   border: 1px solid var(--wx-color-border-error, #fecaca);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   color: var(--wx-color-status-error, #dc2626);
   font-size: 13px;
 }

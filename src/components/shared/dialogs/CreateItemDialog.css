@@ -9,7 +9,7 @@
   gap: 8px;
   padding: 8px 12px;
   background: var(--wx-gantt-filter-background, #f5f5f5);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
 }
 
@@ -28,7 +28,7 @@
   gap: 4px;
   background: var(--wx-gantt-filter-background, #f5f5f5);
   padding: 4px;
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
 }
 
 .create-item-dialog .mode-btn {
@@ -36,7 +36,7 @@
   padding: 6px 12px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
   font-weight: 500;
   color: var(--wx-gantt-modal-hint-text, #666);
@@ -86,14 +86,14 @@
   font-family: monospace;
   background: var(--wx-gantt-filter-background, #f5f5f5);
   border: 1px solid var(--wx-gantt-modal-border, #ddd);
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
 }
 
 /* Batch preview */
 .create-item-dialog .batch-preview {
   background: var(--wx-gantt-filter-background, #f5f5f5);
   border: 1px solid var(--wx-gantt-modal-border, #eee);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   padding: 12px;
   /* Fixed height to prevent layout shifts when item count changes */
   height: 160px;
@@ -127,7 +127,7 @@
   gap: 8px;
   padding: 6px 8px;
   background: var(--wx-gantt-modal-background, #fff);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   font-size: 13px;
 }
 

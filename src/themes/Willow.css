@@ -140,6 +140,20 @@
 
   --wx-gantt-baseline-border-radius: 2px;
 
+  /* ============================================
+     RADIUS DESIGN TOKENS
+     Standardized border-radius scale
+     ============================================ */
+  --wx-radius-2xs: 2px;
+  --wx-radius-xs: 3px;
+  --wx-radius-sm: 4px;
+  --wx-radius: 8px;
+  --wx-radius-md: 6px;
+  --wx-radius-lg: 8px;
+  --wx-radius-xl: 10px;
+  --wx-radius-2xl: 12px;
+  --wx-radius-full: 9999px;
+
   /* grid */
   --wx-grid-header-font: var(--wx-font-weight-md) var(--wx-font-size)
     var(--wx-font-family);

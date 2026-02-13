@@ -10,7 +10,7 @@
 .date-edit-cell-value {
   cursor: pointer;
   padding: 2px 4px;
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
   transition: background-color 0.15s ease;
 }
 

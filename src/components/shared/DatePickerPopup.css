@@ -8,7 +8,7 @@
 .date-picker-popup {
   background: var(--wx-background, #fff);
   border: 1px solid var(--wx-border, #dcdcde);
-  border-radius: 6px;
+  border-radius: var(--wx-radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 8px;
   z-index: 1000;
@@ -28,7 +28,7 @@
   min-width: 28px;
   padding: 0;
   border: 1px solid var(--wx-color-danger, #dc3545);
-  border-radius: 50%;
+  border-radius: var(--wx-radius-full);
   background: transparent;
   color: var(--wx-color-danger, #dc3545);
   font-size: 13px;

@@ -52,5 +52,5 @@
 
 .wx-color-indicator {
   width: 8px;
-  border-radius: 3px;
+  border-radius: var(--wx-radius-xs);
 }

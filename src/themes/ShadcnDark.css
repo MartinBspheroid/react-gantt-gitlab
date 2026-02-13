@@ -78,9 +78,11 @@
   --wx-label-offset: 8px;
 
   /* Radius - mapped to shadcn tokens */
+  --wx-radius-2xs: 2px;
+  --wx-radius-xs: 3px;
   --wx-radius-sm: var(--radius-sm, 0.125rem);
   --wx-radius: var(--radius, 0.5rem);
-  --wx-radius-md: var(--radius, 0.5rem);
+  --wx-radius-md: 6px;
   --wx-radius-lg: var(--radius-lg, 0.5rem);
   --wx-radius-xl: var(--radius-xl, 0.75rem);
   --wx-radius-2xl: var(--radius-2xl, 1rem);

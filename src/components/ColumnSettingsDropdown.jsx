@@ -353,7 +353,7 @@ export const PriorityCell = ({ row }) => {
         color: colors.text,
         borderLeft: `3px solid ${colors.border}`,
         padding: '2px 6px',
-        borderRadius: '3px',
+        borderRadius: 'var(--wx-radius-xs)',
         fontSize: '11px',
         fontWeight: 600,
         display: 'inline-block',

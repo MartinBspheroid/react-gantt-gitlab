@@ -9,7 +9,7 @@
   position: absolute;
   z-index: 10;
   box-shadow: var(--wx-box-shadow);
-  border-radius: 2px;
+  border-radius: var(--wx-radius-2xs);
   overflow: hidden;
 }
 

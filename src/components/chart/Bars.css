@@ -147,7 +147,7 @@
   color: var(--wx-color-font);
   z-index: 3;
   font-size: calc(var(--wx-font-size-sm) - 2px);
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
   cursor: ew-resize;
   text-align: center;
   line-height: 3;
@@ -163,7 +163,7 @@
   left: 1px;
   background: var(--wx-gantt-link-marker-background);
   z-index: -1;
-  border-radius: 4px;
+  border-radius: var(--wx-radius-sm);
 }
 .wx-bar:hover .wx-progress-marker.wx-GKbcLEGA,
 .wx-progress-marker.wx-progress-in-drag.wx-GKbcLEGA {
@@ -185,7 +185,7 @@
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: var(--wx-radius-full);
   border: 1px solid var(--wx-gantt-link-marker-color);
   background-color: var(--wx-gantt-link-marker-background);
   opacity: 0;
@@ -199,7 +199,7 @@
   transform: translate(-50%, -50%);
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--wx-radius-full);
   border: 4px solid var(--wx-gantt-link-marker-color);
   pointer-events: none;
 }
