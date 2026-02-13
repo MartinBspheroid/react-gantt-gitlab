@@ -9,6 +9,7 @@ lerna-debug.log*
 yarn.lock
 
 node_modules
+coverage
 dist
 dist-demos
 dist-full
