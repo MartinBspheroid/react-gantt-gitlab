@@ -13,7 +13,9 @@
  */
 export function cn(...inputs: (string | boolean | undefined | null)[]) {
   return inputs
-    .filter((input): input is string => Boolean(input) && typeof input === 'string')
+    .filter(
+      (input): input is string => Boolean(input) && typeof input === 'string',
+    )
     .join(' ')
     .trim();
 }

@@ -358,7 +358,8 @@ export class DataFilters {
         const isIssue =
           (task as GanttTask).$isIssue ||
           (task as GanttTask).workItemType === 'Issue' ||
-          ((task as GanttTask).workItemType !== 'Task' && !(task as GanttTask).type);
+          ((task as GanttTask).workItemType !== 'Task' &&
+            !(task as GanttTask).type);
 
         if (isIssue) {
           // Issue's parent in Gantt context is Milestone
