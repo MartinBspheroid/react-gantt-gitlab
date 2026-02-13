@@ -30,6 +30,7 @@ export default defineConfig(({ command, mode }) => {
       resolve: resolveConfig,
       build: {
         outDir: 'dist-demos',
+        sourcemap: true,
         rollupOptions: {
           input: {
             main: resolve(__dirname, 'index.html'),
@@ -63,6 +64,7 @@ export default defineConfig(({ command, mode }) => {
       resolve: resolveConfig,
       build: {
         outDir: 'dist-full',
+        sourcemap: true,
         lib: {
           entry: resolve(__dirname, 'src/full-css.js'),
           fileName: 'index',
@@ -97,6 +99,7 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     build: {
+      sourcemap: true,
       lib: {
         entry: resolve(__dirname, 'src/index.js'),
         fileName: (format) => (format === 'cjs' ? 'index.cjs' : 'index.es.js'),
