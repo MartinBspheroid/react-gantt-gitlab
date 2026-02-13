@@ -79,7 +79,6 @@ import {
   findLinkBySourceTarget,
   validateLinkMetadata,
 } from '../../utils/LinkUtils';
-import { useUndoRedoActions } from '../../hooks/useUndoRedoActions';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useTaskValidation } from './useTaskValidation';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
@@ -366,12 +365,6 @@ export function GanttView({
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
     api,
-    undoRedo: {
-      canUndo: undoRedo.canUndo,
-      canRedo: undoRedo.canRedo,
-      undo: undoRedo.undo,
-      redo: undoRedo.redo,
-    },
     onOpenEditor: (taskId) => {
       if (api) {
         api.exec('open-editor', { id: taskId });
@@ -744,27 +737,7 @@ export function GanttView({
   const isEditorOpenRef = useRef(false);
   const currentEditingTaskRef = useRef(null);
 
-  // Track pending date changes for debounce
-  // NOTE: These refs are reserved for future debounced date change feature
-  // eslint-disable-next-line no-unused-vars
-  const pendingDateChangesRef = useRef(new Map());
-  // eslint-disable-next-line no-unused-vars
-  const dateChangeTimersRef = useRef(new Map());
 
-  // Custom editor bottom bar with Save and Close buttons
-  // NOTE: editorBottomBar is defined but not currently used (Editor uses bottomBar={false})
-  // Kept for potential future use when custom editor bottom bar is needed
-  // eslint-disable-next-line no-unused-vars
-  const editorBottomBar = useMemo(
-    () => ({
-      items: [
-        { comp: 'button', type: 'secondary', text: 'Close', id: 'close' },
-        { comp: 'spacer' },
-        { comp: 'button', type: 'primary', text: 'Save', id: 'save' },
-      ],
-    }),
-    [],
-  );
 
   // Blueprint hook (stubbed - no backend needed for demo)
   const {
