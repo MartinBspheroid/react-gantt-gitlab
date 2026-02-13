@@ -7,7 +7,7 @@
  * Provides shared data context, toolbar, and view switching.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { DataProvider } from '../../contexts/DataContext';
 import { GanttView } from '../GanttView/GanttView';
 import { KanbanView } from '../KanbanView/KanbanView';
@@ -43,6 +43,10 @@ export function Workspace({ provider, autoSync = true, className }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showViewOptions, setShowViewOptions] = useState(false);
 
+  // Refs for child components
+  const filterSearchInputRef = useRef(null);
+  const viewOptionsContainerRef = useRef(null);
+
   // Handle view change and persist to localStorage
   const handleViewChange = useCallback((newView) => {
     setActiveView(newView);
@@ -62,10 +66,10 @@ export function Workspace({ provider, autoSync = true, className }) {
         />
 
         {/* View Options Container - GanttView will render its controls here via portal */}
-        <div id="view-options-container" />
+        <div ref={viewOptionsContainerRef} />
 
         {/* Shared Filter Panel */}
-        <SharedFilterPanel />
+        <SharedFilterPanel ref={filterSearchInputRef} />
 
         {/* View Content */}
         <main className="gantt-workspace-content">
@@ -75,6 +79,8 @@ export function Workspace({ provider, autoSync = true, className }) {
               showSettings={showSettings}
               onSettingsClose={() => setShowSettings(false)}
               externalShowViewOptions={showViewOptions}
+              filterSearchInputRef={filterSearchInputRef}
+              viewOptionsContainerRef={viewOptionsContainerRef}
             />
           )}
           {activeView === 'kanban' && (

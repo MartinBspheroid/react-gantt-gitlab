@@ -8,11 +8,11 @@
  * shared between Gantt and Kanban views.
  */
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { FilterPanel } from '../FilterPanel';
 
-export function SharedFilterPanel() {
+export const SharedFilterPanel = forwardRef(function SharedFilterPanel(_props, ref) {
   const {
     // Core Data
     tasks: allTasks,
@@ -44,6 +44,7 @@ export function SharedFilterPanel() {
 
   return (
     <FilterPanel
+      ref={ref}
       key={currentConfig?.id || 'no-config'}
       milestones={milestones}
       epics={epics}
@@ -68,4 +69,4 @@ export function SharedFilterPanel() {
       isDirty={filterDirty}
     />
   );
-}
+});
