@@ -13,6 +13,7 @@ import type {
   DataResponse,
   SyncOptions,
   FilterOptionsData,
+  BatchOperationResult,
 } from './core/DataProviderInterface';
 
 export interface StaticDataProviderOptions {
@@ -149,6 +150,36 @@ export class StaticDataProvider implements DataProviderInterface {
         .map((title) => ({ title })),
       milestones: [],
     };
+  }
+
+  async reorderWorkItem(
+    _taskId: string | number,
+    _targetId: string | number,
+    _position: 'before' | 'after',
+  ): Promise<void> {
+    // Static provider doesn't support source-system ordering
+    throw new Error('reorderWorkItem not supported in StaticDataProvider');
+  }
+
+  async batchUpdateParent(
+    _iids: number[],
+    _parentId: string | number,
+  ): Promise<BatchOperationResult> {
+    throw new Error('batchUpdateParent not supported in StaticDataProvider');
+  }
+
+  async batchUpdateMilestone(
+    _iids: number[],
+    _milestoneId: string | number,
+  ): Promise<BatchOperationResult> {
+    throw new Error('batchUpdateMilestone not supported in StaticDataProvider');
+  }
+
+  async batchUpdateEpic(
+    _iids: number[],
+    _epicId: string | number,
+  ): Promise<BatchOperationResult> {
+    throw new Error('batchUpdateEpic not supported in StaticDataProvider');
   }
 
   async checkCanEdit(): Promise<boolean> {

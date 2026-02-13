@@ -119,6 +119,20 @@ export interface SyncProgress {
 }
 
 /**
+ * Result of a batch operation
+ */
+export interface BatchOperationResult {
+  /** Successfully updated item IIDs */
+  success: number[];
+
+  /** Failed items with error details */
+  failed: Array<{
+    iid: number;
+    error: string;
+  }>;
+}
+
+/**
  * Generic interface that all data providers must implement
  *
  * This is the contract that UI components use to fetch and modify data.
@@ -173,6 +187,50 @@ export interface DataProviderInterface {
    * Used to populate filter UI
    */
   getFilterOptions(): Promise<FilterOptionsData>;
+
+  /**
+   * Reorder a work item relative to another work item
+   * Similar to reorderTask but uses source system IIDs
+   * Used for kanban-style ordering in the source system
+   */
+  reorderWorkItem(
+    taskId: string | number,
+    targetId: string | number,
+    position: 'before' | 'after',
+  ): Promise<void>;
+
+  /**
+   * Batch update parent for multiple items
+   * @param iids - Array of item IIDs to update
+   * @param parentId - The new parent ID to set
+   * @returns Result with success and failed arrays
+   */
+  batchUpdateParent(
+    iids: number[],
+    parentId: string | number,
+  ): Promise<BatchOperationResult>;
+
+  /**
+   * Batch update milestone for multiple items
+   * @param iids - Array of item IIDs to update
+   * @param milestoneId - The new milestone ID to set
+   * @returns Result with success and failed arrays
+   */
+  batchUpdateMilestone(
+    iids: number[],
+    milestoneId: string | number,
+  ): Promise<BatchOperationResult>;
+
+  /**
+   * Batch update epic for multiple items
+   * @param iids - Array of item IIDs to update
+   * @param epicId - The new epic ID to set
+   * @returns Result with success and failed arrays
+   */
+  batchUpdateEpic(
+    iids: number[],
+    epicId: string | number,
+  ): Promise<BatchOperationResult>;
 
   /**
    * Check if current user can edit data

@@ -6,6 +6,7 @@ import type {
   FilterOptions,
   FilterOptionsData,
   SyncOptions,
+  BatchOperationResult,
 } from '../core/DataProviderInterface';
 import type {
   ADOConfig,
@@ -347,6 +348,38 @@ export class ADOAdapter implements DataProviderInterface {
     position: 'before' | 'after',
   ): Promise<void> {
     console.warn('[ADO] reorderTask not implemented for ADO');
+  }
+
+  async reorderWorkItem(
+    _taskId: string | number,
+    _targetId: string | number,
+    _position: 'before' | 'after',
+  ): Promise<void> {
+    console.warn('[ADO] reorderWorkItem not implemented');
+  }
+
+  async batchUpdateParent(
+    _iids: number[],
+    _parentId: string | number,
+  ): Promise<BatchOperationResult> {
+    console.warn('[ADO] batchUpdateParent not implemented');
+    return { success: [], failed: [] };
+  }
+
+  async batchUpdateMilestone(
+    _iids: number[],
+    _milestoneId: string | number,
+  ): Promise<BatchOperationResult> {
+    console.warn('[ADO] batchUpdateMilestone not implemented');
+    return { success: [], failed: [] };
+  }
+
+  async batchUpdateEpic(
+    _iids: number[],
+    _epicId: string | number,
+  ): Promise<BatchOperationResult> {
+    console.warn('[ADO] batchUpdateEpic not implemented');
+    return { success: [], failed: [] };
   }
 
   async getFilterOptions(): Promise<FilterOptionsData> {
