@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -25,7 +26,7 @@ export default defineConfig(({ command, mode }) => {
     const base = process.env.VITE_BASE_PATH || '/';
 
     return {
-      plugins: [react()],
+      plugins: [react(), tsconfigPaths()],
       base: base,
       resolve: resolveConfig,
       build: {
@@ -60,7 +61,7 @@ export default defineConfig(({ command, mode }) => {
   if (isFullCssBuild) {
     // Full CSS build configuration
     return {
-      plugins: [react()],
+      plugins: [react(), tsconfigPaths()],
       resolve: resolveConfig,
       build: {
         outDir: 'dist-full',
@@ -77,7 +78,7 @@ export default defineConfig(({ command, mode }) => {
 
   // Library build configuration (default) - Multiple entry points
   return {
-    plugins: [react()],
+    plugins: [react(), tsconfigPaths()],
     resolve: resolveConfig,
     server: {
       proxy: {
