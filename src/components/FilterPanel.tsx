@@ -62,7 +62,7 @@ const parseClientFiltersFromPreset = (presetFilters) => ({
   search: presetFilters?.search || '',
 });
 
-export const FilterPanel = React.forwardRef(function FilterPanel({
+export function FilterPanel({
   milestones,
   epics,
   tasks,
@@ -87,7 +87,8 @@ export const FilterPanel = React.forwardRef(function FilterPanel({
   onServerFilterApply, // Callback to apply server filters and trigger sync
   // Dirty state for preset modification indicator
   isDirty = false, // Whether preset has been modified
-}, ref) {
+}) {
+  const ref = useRef(null);
   // Tab state: 'client' or 'server'
   const [activeTab, setActiveTab] = useState('client');
 
@@ -859,4 +860,4 @@ export const FilterPanel = React.forwardRef(function FilterPanel({
       )}
     </aside>
   );
-});
+}
